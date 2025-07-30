@@ -37,6 +37,36 @@ EMAIL_PASS="your-app-password"
 NEXTAUTH_URL="http://localhost:3000"
 ```
 
+### Gmail App Password Setup
+
+For Gmail, you'll need to use an App Password instead of your regular password:
+
+1. **Enable 2-Step Verification** (if not already enabled)
+   - Go to your Google Account settings: [myaccount.google.com](https://myaccount.google.com)
+   - Navigate to **Security** > **2-Step Verification**
+   - Click "Turn on 2-step verification" if not already enabled
+   - Set up at least one verification method (Google prompt, phone number, or authenticator app)
+
+2. **Generate App Password**
+   - Go to **Security** > **App passwords**
+   - Select "Mail" as the app
+   - Click "Generate"
+   - Copy the 16-character password (it will look like: `abcd efgh ijkl mnop`)
+
+3. **Use in Environment**
+   - Replace `your-app-password` with the generated app password
+   - Keep this password secure and don't commit it to version control
+   - The app password is different from your regular Gmail password
+
+### Email Features
+
+The application sends automatic email notifications for:
+- ✅ **Order Confirmations** - Sent to buyers when orders are placed
+- ✅ **Payment Confirmations** - Sent to buyers when payments are successful
+- ✅ **Seller Notifications** - Sent to sellers when new orders are received
+- ✅ **Order Status Updates** - Sent when order status changes
+- ✅ **Payment Failure Alerts** - Sent when payments fail
+
 **Note**: For Gmail, you'll need to use an App Password instead of your regular password.
 
 ## Guest Checkout Flow

@@ -269,7 +269,18 @@ export default function ProductDetail() {
 
             {/* Order Form */}
             <div className="bg-white p-6 rounded-xl border">
-              <h3 className="font-semibold text-gray-900 mb-4">Place Your Order</h3>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-semibold text-gray-900">Place Your Order</h3>
+                <button 
+                  onClick={() => router.push('/order-tracking')}
+                  className="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center gap-1"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path>
+                  </svg>
+                  Track Order
+                </button>
+              </div>
               
               {outOfStock ? (
                 <div className="bg-red-50 border border-red-200 rounded-lg p-4">

@@ -1,5 +1,6 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import MainNavigation from "./components/MainNavigation";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -22,6 +23,7 @@ export default function RootLayout({ children }) {
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        <MainNavigation />
         {children}
         
         {/* Global Footer */}
@@ -35,7 +37,7 @@ export default function RootLayout({ children }) {
                 <span className="text-xl font-bold">Livesalez</span>
               </div>
               <div className="text-sm text-gray-400">
-                © 2025 MyTech Padu Solutions. All rights reserved.
+                © 2025 MyTech Padu Solutions. All rights reserved. | Livesalez v1.0
               </div>
             </div>
           </div>

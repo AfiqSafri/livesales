@@ -20,6 +20,13 @@ export default function SellerDashboard() {
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
   const [confirmDeleteType, setConfirmDeleteType] = useState(null); // 'order' or 'product'
   const [timeRange, setTimeRange] = useState('30'); // 7, 30, 90 days
+  const [isLoading, setIsLoading] = useState(true);
+  const [stats, setStats] = useState({
+    todayRevenue: 0,
+    todayOrders: 0,
+    monthlyGrowth: 0,
+    customerCount: 0
+  });
 
   // Language translations
   const translations = {
@@ -319,6 +326,28 @@ export default function SellerDashboard() {
   const totalOrders = orders.length;
   const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
 
+  // Calculate today's metrics
+  const today = new Date().toDateString();
+  const todayOrders = orders.filter(order => new Date(order.createdAt).toDateString() === today);
+  const todayRevenue = todayOrders.reduce((sum, order) => {
+    const orderTotal = (order.product?.price || 0) * order.quantity + (order.product?.shippingPrice || 0);
+    return sum + orderTotal;
+  }, 0);
+
+  // Calculate unique customers
+  const uniqueCustomers = new Set(orders.map(order => order.buyerEmail)).size;
+
+  // Calculate monthly growth (simplified)
+  const thisMonth = new Date().getMonth();
+  const thisMonthOrders = orders.filter(order => new Date(order.createdAt).getMonth() === thisMonth);
+  const lastMonthOrders = orders.filter(order => {
+    const orderMonth = new Date(order.createdAt).getMonth();
+    return orderMonth === (thisMonth - 1 + 12) % 12;
+  });
+  const monthlyGrowth = lastMonthOrders.length > 0 
+    ? ((thisMonthOrders.length - lastMonthOrders.length) / lastMonthOrders.length) * 100 
+    : 0;
+
   const orderStatusCounts = orders.reduce((acc, order) => {
     acc[order.status] = (acc[order.status] || 0) + 1;
     return acc;
@@ -363,77 +392,93 @@ export default function SellerDashboard() {
                 </p>
               </div>
 
-              {/* Stats Cards */}
+              {/* Enhanced Stats Cards */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                <div className="p-6 rounded-lg border transition-colors duration-300 bg-white border-gray-200">
+                {/* Total Revenue */}
+                <div className="p-6 rounded-lg border transition-colors duration-300 bg-white border-gray-200 shadow-sm hover:shadow-md">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm font-medium transition-colors duration-300 text-gray-600">
-                    {t.totalRevenue}
+                        Total Revenue
                       </p>
                       <p className="text-2xl font-bold transition-colors duration-300 text-gray-900">
-                    RM{totalRevenue.toFixed(2)}
+                        RM{totalRevenue.toFixed(2)}
+                      </p>
+                      <p className="text-xs text-green-600 mt-1">
+                        +{monthlyGrowth.toFixed(1)}% from last month
                       </p>
                     </div>
-                <div className="p-3 bg-green-100 rounded-lg">
-                  <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
+                    <div className="p-3 bg-green-100 rounded-lg">
+                      <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
                       </svg>
                     </div>
                   </div>
                 </div>
 
-                <div className="p-6 rounded-lg border transition-colors duration-300 bg-white border-gray-200">
+                {/* Today's Revenue */}
+                <div className="p-6 rounded-lg border transition-colors duration-300 bg-white border-gray-200 shadow-sm hover:shadow-md">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm font-medium transition-colors duration-300 text-gray-600">
-                    {t.totalOrders}
+                        Today's Revenue
                       </p>
                       <p className="text-2xl font-bold transition-colors duration-300 text-gray-900">
-                    {totalOrders}
+                        RM{todayRevenue.toFixed(2)}
+                      </p>
+                      <p className="text-xs text-blue-600 mt-1">
+                        {todayOrders.length} orders today
                       </p>
                     </div>
-                <div className="p-3 bg-blue-100 rounded-lg">
-                  <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
+                    <div className="p-3 bg-blue-100 rounded-lg">
+                      <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
                       </svg>
                     </div>
                   </div>
                 </div>
 
-                <div className="p-6 rounded-lg border transition-colors duration-300 bg-white border-gray-200">
+                {/* Total Orders */}
+                <div className="p-6 rounded-lg border transition-colors duration-300 bg-white border-gray-200 shadow-sm hover:shadow-md">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm font-medium transition-colors duration-300 text-gray-600">
-                    {t.averageOrderValue}
+                        Total Orders
                       </p>
                       <p className="text-2xl font-bold transition-colors duration-300 text-gray-900">
-                    RM{averageOrderValue.toFixed(2)}
+                        {totalOrders}
+                      </p>
+                      <p className="text-xs text-purple-600 mt-1">
+                        {uniqueCustomers} unique customers
                       </p>
                     </div>
-                <div className="p-3 bg-purple-100 rounded-lg">
-                  <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                    <div className="p-3 bg-purple-100 rounded-lg">
+                      <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
                       </svg>
                     </div>
                   </div>
                 </div>
 
-                <div className="p-6 rounded-lg border transition-colors duration-300 bg-white border-gray-200">
+                {/* Products */}
+                <div className="p-6 rounded-lg border transition-colors duration-300 bg-white border-gray-200 shadow-sm hover:shadow-md">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm font-medium transition-colors duration-300 text-gray-600">
-                    {t.products}
+                        Active Products
                       </p>
                       <p className="text-2xl font-bold transition-colors duration-300 text-gray-900">
-                    {products.length}
+                        {products.length}
+                      </p>
+                      <p className="text-xs text-yellow-600 mt-1">
+                        {lowStockProducts.length} low stock
                       </p>
                     </div>
-                <div className="p-3 bg-yellow-100 rounded-lg">
-                  <svg className="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
-                  </svg>
-                </div>
+                    <div className="p-3 bg-yellow-100 rounded-lg">
+                      <svg className="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                      </svg>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -510,6 +555,36 @@ export default function SellerDashboard() {
                 </div>
               </div>
             </div>
+
+          {/* Performance Metrics */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            {/* Average Order Value */}
+            <div className="rounded-lg border transition-colors duration-300 bg-white border-gray-200 shadow-sm">
+              <div className="p-4">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Average Order Value</h3>
+                <p className="text-3xl font-bold text-green-600">RM{averageOrderValue.toFixed(2)}</p>
+                <p className="text-sm text-gray-600 mt-1">Per order</p>
+              </div>
+            </div>
+
+            {/* Conversion Rate */}
+            <div className="rounded-lg border transition-colors duration-300 bg-white border-gray-200 shadow-sm">
+              <div className="p-4">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Customer Retention</h3>
+                <p className="text-3xl font-bold text-blue-600">{uniqueCustomers}</p>
+                <p className="text-sm text-gray-600 mt-1">Unique customers</p>
+              </div>
+            </div>
+
+            {/* Inventory Health */}
+            <div className="rounded-lg border transition-colors duration-300 bg-white border-gray-200 shadow-sm">
+              <div className="p-4">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Inventory Health</h3>
+                <p className="text-3xl font-bold text-orange-600">{lowStockProducts.length}</p>
+                <p className="text-sm text-gray-600 mt-1">Low stock items</p>
+              </div>
+            </div>
+          </div>
 
           {/* Inventory Status */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
@@ -594,6 +669,86 @@ export default function SellerDashboard() {
                     </div>
                   </div>
                 </div>
+
+          {/* Alerts & Notifications */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            {/* Important Alerts */}
+            <div className="rounded-lg border transition-colors duration-300 bg-white border-gray-200 shadow-sm">
+              <div className="p-6 border-b border-gray-200">
+                <h2 className="text-xl font-semibold text-gray-900">Important Alerts</h2>
+              </div>
+              <div className="p-6">
+                {lowStockProducts.length > 0 ? (
+                  <div className="space-y-3">
+                    {lowStockProducts.slice(0, 3).map((product) => (
+                      <div key={product.id} className="flex items-center justify-between p-3 bg-red-50 rounded-lg border border-red-200">
+                        <div className="flex items-center gap-3">
+                          <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                          <div>
+                            <p className="font-medium text-red-900">{product.name}</p>
+                            <p className="text-sm text-red-700">Only {product.quantity} left in stock</p>
+                          </div>
+                        </div>
+                        <button 
+                          onClick={() => router.push(`/seller/dashboard/edit-product/${product.id}`)}
+                          className="text-xs bg-red-600 text-white px-2 py-1 rounded hover:bg-red-700"
+                        >
+                          Restock
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                      <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                      </svg>
+                    </div>
+                    <p className="text-green-600 font-medium">All good!</p>
+                    <p className="text-gray-500 text-sm">No urgent alerts</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Pending Actions */}
+            <div className="rounded-lg border transition-colors duration-300 bg-white border-gray-200 shadow-sm">
+              <div className="p-6 border-b border-gray-200">
+                <h2 className="text-xl font-semibold text-gray-900">Pending Actions</h2>
+              </div>
+              <div className="p-6">
+                {orders.filter(order => order.status === 'pending').length > 0 ? (
+                  <div className="space-y-3">
+                    {orders.filter(order => order.status === 'pending').slice(0, 3).map((order) => (
+                      <div key={order.id} className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+                        <div>
+                          <p className="font-medium text-yellow-900">Order #{order.id}</p>
+                          <p className="text-sm text-yellow-700">{order.buyerName}</p>
+                        </div>
+                        <button 
+                          onClick={() => router.push(`/seller/orders/${order.id}`)}
+                          className="text-xs bg-yellow-600 text-white px-2 py-1 rounded hover:bg-yellow-700"
+                        >
+                          Review
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                      <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                      </svg>
+                    </div>
+                    <p className="text-blue-600 font-medium">All caught up!</p>
+                    <p className="text-gray-500 text-sm">No pending actions</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
 
           {/* Recent Activity */}
           <div className="rounded-lg border transition-colors duration-300 bg-white border-gray-200">
