@@ -1,30 +1,72 @@
-# Next js marketplace
+# Livesalez - Live Sales Platform
 
-*Automatically synced with your [v0.dev](https://v0.dev) deployments*
+A comprehensive e-commerce platform with order tracking, guest checkout, and email notifications.
 
-[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com/mdafiq3256-5919s-projects/v0-next-js-marketplace)
-[![Built with v0](https://img.shields.io/badge/Built%20with-v0.dev-black?style=for-the-badge)](https://v0.dev/chat/projects/KSHSKUOF7QL)
+## Features
 
-## Overview
+- **Guest Checkout**: Buyers can place orders without registration
+- **Order Tracking**: Real-time order status updates with courier integration
+- **Email Notifications**: Automatic email confirmations for orders
+- **Seller Dashboard**: Complete order management for sellers
+- **Mobile Responsive**: Works perfectly on all devices
 
-This repository will stay in sync with your deployed chats on [v0.dev](https://v0.dev).
-Any changes you make to your deployed app will be automatically pushed to this repository from [v0.dev](https://v0.dev).
+## Getting Started
 
-## Deployment
+First, run the development server:
 
-Your project is live at:
+```bash
+npm run dev
+# or
+yarn dev
+# or
+pnpm dev
+# or
+bun dev
+```
 
-**[https://vercel.com/mdafiq3256-5919s-projects/v0-next-js-marketplace](https://vercel.com/mdafiq3256-5919s-projects/v0-next-js-marketplace)**
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-## Build your app
+## Email Configuration
 
-Continue building your app on:
+To enable email notifications, add these environment variables to your `.env` file:
 
-**[https://v0.dev/chat/projects/KSHSKUOF7QL](https://v0.dev/chat/projects/KSHSKUOF7QL)**
+```env
+# Email Configuration (for order notifications)
+EMAIL_USER="your-email@gmail.com"
+EMAIL_PASS="your-app-password"
+NEXTAUTH_URL="http://localhost:3000"
+```
 
-## How It Works
+**Note**: For Gmail, you'll need to use an App Password instead of your regular password.
 
-1. Create and modify your project using [v0.dev](https://v0.dev)
-2. Deploy your chats from the v0 interface
-3. Changes are automatically pushed to this repository
-4. Vercel deploys the latest version from this repository
+## Guest Checkout Flow
+
+1. Buyer clicks seller's share link
+2. Views product details
+3. Fills order form (name, email, phone, address)
+4. Places order without registration
+5. Receives email confirmation
+6. Seller gets email notification
+7. Order tracking available
+
+## Order Management System
+
+- **Status Tracking**: Pending → Paid → Processing → Ready to Ship → Shipped → Delivered
+- **Email Notifications**: Automatic updates for buyers and sellers
+- **Courier Integration**: Simulated courier API for realistic tracking
+- **Status History**: Complete audit trail of all order changes
+
+## Learn More
+
+To learn more about Next.js, take a look at the following resources:
+
+- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
+- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+
+You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+
+## Deploy on Vercel
+
+The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+
+Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
