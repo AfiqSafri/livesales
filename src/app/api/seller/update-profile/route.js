@@ -6,6 +6,12 @@ import path from 'path';
 
 const prisma = new PrismaClient();
 
+// Email validation function
+function isValidEmail(email) {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+}
+
 export async function POST(request) {
   try {
     const formData = await request.formData();
@@ -19,6 +25,11 @@ export async function POST(request) {
     // Validate required fields
     if (!id || !name) {
       return NextResponse.json({ error: 'Name is required' }, { status: 400 });
+    }
+
+    // Validate email format if provided
+    if (email && !isValidEmail(email)) {
+      return NextResponse.json({ error: 'Please provide a valid email address' }, { status: 400 });
     }
 
     let profileImageUrl = null;
@@ -56,7 +67,32 @@ export async function POST(request) {
       profileImageUrl = `/uploads/profiles/${filename}`;
     }
 
+    // Check if email is already taken by another user (if email is being updated)
+    if (email) {
+      console.log('🔍 Checking email uniqueness for:', email);
+      console.log('🔍 Current user ID:', id);
+      
+      const existingUser = await prisma.user.findFirst({
+        where: {
+          email: email,
+          id: { not: Number(id) } // Exclude current user
+        }
+      });
+
+      if (existingUser) {
+        console.log('❌ Email already taken by user ID:', existingUser.id);
+        return NextResponse.json({ 
+          error: 'Email address is already taken by another user' 
+        }, { status: 400 });
+      }
+      
+      console.log('✅ Email is available');
+    }
+
     // Update user in database
+    console.log('✅ Updating user profile for ID:', id);
+    console.log('📝 Update data:', { name, email, phone, bio: bio || null });
+    
     const updatedUser = await prisma.user.update({
       where: { id: Number(id) },
       data: {
@@ -67,6 +103,8 @@ export async function POST(request) {
         profileImage: profileImageUrl,
       },
     });
+    
+    console.log('✅ Profile updated successfully');
 
     return NextResponse.json({
       message: 'Profile updated successfully',
@@ -83,6 +121,15 @@ export async function POST(request) {
 
   } catch (error) {
     console.error('Profile update error:', error);
+    
+    // Handle specific Prisma errors
+    if (error.code === 'P2002') {
+      return NextResponse.json(
+        { error: 'Email address is already taken by another user' },
+        { status: 400 }
+      );
+    }
+    
     return NextResponse.json(
       { error: 'Failed to update profile' },
       { status: 500 }

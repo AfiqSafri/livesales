@@ -41,24 +41,6 @@ export default function OrderSuccess() {
     }
   }, [searchParams]);
 
-  const handleContinueShopping = () => {
-    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-    if (currentUser && currentUser.userType === 'buyer') {
-      router.push('/buyer/dashboard');
-    } else {
-      router.push('/');
-    }
-  };
-
-  const handleViewOrders = () => {
-    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-    if (currentUser && currentUser.userType === 'buyer') {
-      router.push('/buyer/dashboard');
-    } else {
-      router.push('/login');
-    }
-  };
-
   const handleFileChange = (e) => {
     setReceiptFile(e.target.files[0]);
     setUploadError('');
@@ -309,25 +291,6 @@ export default function OrderSuccess() {
             <li>• The seller will contact you for shipping details</li>
             <li>• Your order will be shipped to your address</li>
           </ul>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="space-y-3">
-          <button
-            onClick={handleContinueShopping}
-            className="w-full bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 transition-colors font-medium"
-            disabled={!uploadSuccess}
-          >
-            Continue Shopping
-          </button>
-          
-          <button
-            onClick={handleViewOrders}
-            className="w-full bg-gray-200 text-gray-800 py-3 px-4 rounded-lg hover:bg-gray-300 transition-colors font-medium"
-            disabled={!uploadSuccess}
-          >
-            View My Orders
-          </button>
         </div>
 
         {/* Contact Info */}

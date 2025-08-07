@@ -1,154 +1,173 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "mysql"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
 model User {
-  id            Int      @id @default(autoincrement())
-  name          String
-  email         String   @unique
-  password      String
-  userType      String   // 'seller' or 'buyer'
-  bio           String?
-  phone         String?
-  address       String?
-  companyName   String?
-  businessType  String?
-  profileImage  String?
-  createdAt     DateTime @default(now())
-  products      Product[]
-  orders        Order[]  @relation("buyerOrders")
-  notifications Notification[]
+  id                    Int            @id @default(autoincrement())
+  name                  String
+  email                 String         @unique
+  password              String
+  userType              String
+  status                String         @default("active")
+  bio                   String?
+  phone                 String?
+  address               String?
+  companyName           String?
+  businessType          String?
+  profileImage          String?
+  createdAt             DateTime       @default(now())
+  isSubscribed          Boolean        @default(false)
+  isTrialActive         Boolean        @default(false)
+  subscriptionEndDate   DateTime?
+  subscriptionStartDate DateTime?
+  subscriptionStatus    String         @default("inactive")
+  subscriptionTier      String?
+  trialEndDate          DateTime?
+  trialStartDate        DateTime?
+  bankAccountHolder     String?
+  bankAccountNumber     String?
+  bankCode              String?
+  bankName              String?
+  notifications         Notification[]
+  orders                Order[]        @relation("buyerOrders")
+  payments              Payment[]
+  products              Product[]
 }
 
 model Product {
-  id          Int            @id @default(autoincrement())
-  name        String
-  description String
-  price       Float
-  image       String         // keep for backward compatibility, but new images will use ProductImage
-  seller      User           @relation(fields: [sellerId], references: [id])
-  sellerId    Int
-  createdAt   DateTime       @default(now())
-  images      ProductImage[]
-  orders      Order[]        @relation("productOrders")
-  quantity    Int            @default(0) // quantity left in stock
-  shippingPrice Float        @default(0) // shipping price for this product
+  id                 Int            @id @default(autoincrement())
+  name               String
+  description        String
+  price              Float
+  image              String
+  sellerId           Int
+  createdAt          DateTime       @default(now())
+  quantity           Int            @default(0)
+  shippingPrice      Float          @default(0)
+  discountEndDate    DateTime?
+  discountPercentage Float?
+  discountType       String?
+  hasDiscount        Boolean        @default(false)
+  orders             Order[]        @relation("productOrders")
+  seller             User           @relation(fields: [sellerId], references: [id])
+  images             ProductImage[]
 }
 
 model ProductImage {
-  id        Int    @id @default(autoincrement())
+  id        Int     @id @default(autoincrement())
   url       String
-  product   Product @relation(fields: [productId], references: [id])
   productId Int
+  product   Product @relation(fields: [productId], references: [id])
 }
 
 model Order {
-  id              Int           @id @default(autoincrement())
-  product         Product       @relation("productOrders", fields: [productId], references: [id])
-  productId       Int
-  buyer           User?         @relation("buyerOrders", fields: [buyerId], references: [id])
-  buyerId         Int?
-  buyerName       String        @default("")
-  buyerEmail      String?       // Buyer's email for notifications
-  quantity        Int
-  shippingAddress String
-  phone           String
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
-  status          String        @default("pending") // pending, paid, processing, ready_to_ship, shipped, out_for_delivery, delivered, completed, cancelled, returned
-  totalAmount     Float         @default(0)
-  
-  // Logistics & Tracking
-  trackingNumber  String?       // Courier tracking number
-  courierName     String?       // J&T, PosLaju, NinjaVan, etc.
-  estimatedDelivery DateTime?   // Estimated delivery date
-  actualDelivery   DateTime?    // Actual delivery date
-  
-  // Order Status History
-  statusHistory   OrderStatusHistory[]
-  
-  // Notifications
-  notifications   Notification[]
-  
-  // Payment
-  paymentStatus   String        @default("pending") // pending, paid, failed, refunded
-  paymentMethod   String?       // cash_on_delivery, bank_transfer, billplz, etc.
-  paymentDate     DateTime?
-  
-  // Billplz Integration
-  billplzBillId  String?       // Billplz bill ID
-  billplzPaid    Boolean       @default(false) // Whether Billplz payment is completed
-  
-  // Shipping
-  shippingMethod  String?       // standard, express, same_day
-  shippingCost    Float         @default(0)
-  
-  // Seller Actions
-  sellerNotes     String?       // Notes from seller
-  buyerNotes      String?       // Notes from buyer
-  
-  receiptUrl      String?       // Path to uploaded payment receipt
+  id                Int                  @id @default(autoincrement())
+  productId         Int
+  buyerId           Int?
+  buyerName         String               @default("")
+  buyerEmail        String?
+  quantity          Int
+  shippingAddress   String
+  phone             String
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+  status            String               @default("pending")
+  totalAmount       Float                @default(0)
+  trackingNumber    String?
+  courierName       String?
+  estimatedDelivery DateTime?
+  actualDelivery    DateTime?
+  paymentStatus     String               @default("pending")
+  paymentMethod     String?
+  paymentDate       DateTime?
+  billplzBillId     String?
+  billplzPaid       Boolean              @default(false)
+  shippingMethod    String?
+  shippingCost      Float                @default(0)
+  sellerNotes       String?
+  buyerNotes        String?
+  receiptUrl        String?
+  paymentId         Int?
+  notifications     Notification[]
+  buyer             User?                @relation("buyerOrders", fields: [buyerId], references: [id])
+  payment           Payment?             @relation(fields: [paymentId], references: [id])
+  product           Product              @relation("productOrders", fields: [productId], references: [id])
+  statusHistory     OrderStatusHistory[]
 }
 
 model OrderStatusHistory {
   id          Int      @id @default(autoincrement())
-  order       Order    @relation(fields: [orderId], references: [id])
   orderId     Int
-  status      String   // The status that was set
-  description String?  // Human readable description
-  location    String?  // Location where status was updated
+  status      String
+  description String?
+  location    String?
   createdAt   DateTime @default(now())
-  updatedBy   String?  // Who updated the status (system, seller, courier)
-  
+  updatedBy   String?
+  order       Order    @relation(fields: [orderId], references: [id])
+
   @@index([orderId, createdAt])
 }
 
 model Notification {
   id        Int      @id @default(autoincrement())
-  user      User     @relation(fields: [userId], references: [id])
   userId    Int
-  order     Order?   @relation(fields: [orderId], references: [id])
   orderId   Int?
-  type      String   // order_update, payment, delivery, system
+  type      String
   title     String
   message   String
   isRead    Boolean  @default(false)
   createdAt DateTime @default(now())
-  
+  order     Order?   @relation(fields: [orderId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+
   @@index([userId, isRead])
 }
 
 model CourierIntegration {
-  id          Int      @id @default(autoincrement())
-  name        String   @unique // J&T, PosLaju, NinjaVan
-  apiKey      String
-  apiSecret   String?
-  baseUrl     String
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  apiKey    String
+  apiSecret String?
+  baseUrl   String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model TrackingEvent {
-  id              Int      @id @default(autoincrement())
-  trackingNumber  String
-  courierName     String
-  eventType       String   // pickup, transit, delivery, exception
+  id               Int      @id @default(autoincrement())
+  trackingNumber   String
+  courierName      String
+  eventType        String
   eventDescription String
-  location        String?
-  timestamp       DateTime
-  createdAt       DateTime @default(now())
-  
+  location         String?
+  timestamp        DateTime
+  createdAt        DateTime @default(now())
+
   @@index([trackingNumber, courierName])
+}
+
+model Payment {
+  id            Int       @id @default(autoincrement())
+  userId        Int
+  amount        Float
+  currency      String    @default("MYR")
+  status        String
+  paymentMethod String    @default("billplz")
+  billplzBillId String?   @unique
+  billplzUrl    String?
+  reference     String    @unique
+  description   String
+  plan          String
+  paidAmount    Float?
+  paidAt        DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  orders        Order[]
+  user          User      @relation(fields: [userId], references: [id])
 }

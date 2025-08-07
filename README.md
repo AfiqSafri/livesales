@@ -66,6 +66,37 @@ The application sends automatic email notifications for:
 - ✅ **Seller Notifications** - Sent to sellers when new orders are received
 - ✅ **Order Status Updates** - Sent when order status changes
 - ✅ **Payment Failure Alerts** - Sent when payments fail
+- ✅ **Order Cancellation Notifications** - Sent when orders are automatically cancelled
+
+### Auto-Cancel System
+
+The application includes an automatic order cancellation system:
+
+- ⏰ **10-Minute Payment Timer** - Orders are automatically cancelled if payment is not completed within 10 minutes
+- 🔄 **Stock Restoration** - Product quantities are automatically restored when orders are cancelled
+- 📧 **Email Notifications** - Buyers receive cancellation notifications via email
+- 📊 **Status Tracking** - All cancellations are logged in order status history
+
+#### Setting up Auto-Cancel Cron Job
+
+To enable automatic order cancellation, set up a cron job to call the cancellation endpoint every minute:
+
+```bash
+# Add to your crontab (crontab -e)
+* * * * * curl -X GET 'https://your-domain.com/api/cron/auto-cancel?secret=your-cron-secret'
+```
+
+Or use a service like:
+- **Vercel Cron Jobs** (if deploying on Vercel)
+- **GitHub Actions** (for GitHub-hosted projects)
+- **AWS Lambda** (for AWS deployments)
+
+#### Environment Variables
+
+Add to your `.env` file:
+```env
+CRON_SECRET="your-secure-cron-secret"
+```
 
 **Note**: For Gmail, you'll need to use an App Password instead of your regular password.
 

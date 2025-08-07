@@ -11,8 +11,34 @@ export default function SellerTopbar() {
   const [user, setUser] = useState(null);
 
   useEffect(() => {
-    const u = JSON.parse(localStorage.getItem('currentUser'));
-    setUser(u);
+    const loadUser = () => {
+      const u = JSON.parse(localStorage.getItem('currentUser'));
+      setUser(u);
+    };
+
+    // Load user on mount
+    loadUser();
+
+    // Listen for storage changes (when profile is updated)
+    const handleStorageChange = (e) => {
+      if (e.key === 'currentUser') {
+        loadUser();
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    
+    // Also listen for custom event when profile is updated
+    const handleProfileUpdate = () => {
+      loadUser();
+    };
+    
+    window.addEventListener('profileUpdated', handleProfileUpdate);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('profileUpdated', handleProfileUpdate);
+    };
   }, []);
 
   function handleLogout() {
@@ -65,10 +91,19 @@ export default function SellerTopbar() {
           >
             <div className="w-8 h-8 rounded-full overflow-hidden bg-blue-600 flex items-center justify-center">
               {user?.profileImage ? (
-                <img src={user.profileImage} alt="Profile" className="w-full h-full object-cover" />
-              ) : (
-                <span className="text-white font-semibold text-sm">{user?.name?.charAt(0)?.toUpperCase() || 'U'}</span>
-              )}
+                <img 
+                  src={`${user.profileImage}?t=${Date.now()}`} 
+                  alt="Profile" 
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                    e.target.nextSibling.style.display = 'flex';
+                  }}
+                />
+              ) : null}
+              <span className="text-white font-semibold text-sm" style={{ display: user?.profileImage ? 'none' : 'flex' }}>
+                {user?.name?.charAt(0)?.toUpperCase() || 'U'}
+              </span>
             </div>
             <span className="font-medium transition-colors duration-300 hidden sm:block text-gray-700">{user?.name}</span>
             <svg className={`w-4 h-4 transition-transform text-gray-500 ${showUserMenu ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -81,10 +116,19 @@ export default function SellerTopbar() {
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-full overflow-hidden bg-blue-600 flex items-center justify-center">
                     {user?.profileImage ? (
-                      <img src={user.profileImage} alt="Profile" className="w-full h-full object-cover" />
-                    ) : (
-                      <span className="text-white font-semibold text-sm">{user?.name?.charAt(0)?.toUpperCase() || 'U'}</span>
-                    )}
+                      <img 
+                        src={`${user.profileImage}?t=${Date.now()}`} 
+                        alt="Profile" 
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.target.style.display = 'none';
+                          e.target.nextSibling.style.display = 'flex';
+                        }}
+                      />
+                    ) : null}
+                    <span className="text-white font-semibold text-sm" style={{ display: user?.profileImage ? 'none' : 'flex' }}>
+                      {user?.name?.charAt(0)?.toUpperCase() || 'U'}
+                    </span>
                   </div>
                   <div>
                     <div className="font-medium text-sm text-gray-900">{user?.name}</div>

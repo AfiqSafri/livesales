@@ -1,9 +1,54 @@
 "use client";
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 export default function PaymentModal({ isOpen, onClose, orderDetails, onPaymentSuccess }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [timeLeft, setTimeLeft] = useState(180); // 3 minutes in seconds
+  const [orderCreatedAt, setOrderCreatedAt] = useState(null);
+  const isMountedRef = useRef(true);
+
+  // Countdown timer effect
+  useEffect(() => {
+    if (!isOpen || !orderDetails) return;
+
+    setOrderCreatedAt(new Date());
+    setTimeLeft(180);
+    isMountedRef.current = true;
+
+    const timer = setInterval(() => {
+      if (!isMountedRef.current) return;
+      setTimeLeft((prevTime) => {
+        if (prevTime <= 1) {
+          setTimeout(() => {
+            if (isMountedRef.current) {
+              onClose();
+              alert('Payment time expired. Your order has been cancelled. Please place a new order if you still wish to purchase.');
+            }
+          }, 0);
+          return 0;
+        }
+        return prevTime - 1;
+      });
+    }, 1000);
+
+    return () => {
+      clearInterval(timer);
+      isMountedRef.current = false;
+    };
+  }, [isOpen, orderDetails, onClose]);
+
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
+  const formatTime = (seconds) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+  };
 
   const handleBillplzPayment = async () => {
     if (!orderDetails) return;
@@ -32,7 +77,6 @@ export default function PaymentModal({ isOpen, onClose, orderDetails, onPaymentS
       }
 
       if (data.success && data.paymentUrl) {
-        // Redirect to Billplz payment page
         window.location.href = data.paymentUrl;
       } else {
         throw new Error('No payment URL received');
@@ -51,14 +95,29 @@ export default function PaymentModal({ isOpen, onClose, orderDetails, onPaymentS
       <div className="bg-white rounded-lg max-w-md w-full p-6">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-bold text-gray-900">Complete Payment</h2>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600"
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
-            </svg>
-          </button>
+          <div className="flex items-center gap-3">
+            {/* Countdown Timer */}
+            <div className={`px-3 py-1 rounded-full text-sm font-medium ${
+              timeLeft > 120 ? 'bg-green-100 text-green-800' :
+              timeLeft > 60 ? 'bg-yellow-100 text-yellow-800' :
+              'bg-red-100 text-red-800'
+            }`}>
+              <div className="flex items-center gap-1">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <span>{formatTime(timeLeft)}</span>
+              </div>
+            </div>
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+            </button>
+          </div>
         </div>
 
         {orderDetails && (
@@ -90,6 +149,19 @@ export default function PaymentModal({ isOpen, onClose, orderDetails, onPaymentS
               </div>
               <p className="text-blue-700 text-sm">
                 This is a test payment environment. No real money will be charged. You'll be redirected to our test payment page.
+              </p>
+            </div>
+
+            {/* Time Limit Warning */}
+            <div className="bg-orange-50 rounded-lg p-4 mb-4">
+              <div className="flex items-center gap-3 mb-2">
+                <svg className="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <h4 className="font-semibold text-orange-900">Payment Time Limit</h4>
+              </div>
+              <p className="text-orange-700 text-sm">
+                You have <strong>{formatTime(timeLeft)}</strong> to complete your payment. After this time, your order will be automatically cancelled and the items will be returned to stock.
               </p>
             </div>
           </div>
@@ -133,4 +205,4 @@ export default function PaymentModal({ isOpen, onClose, orderDetails, onPaymentS
       </div>
     </div>
   );
-} 
+}

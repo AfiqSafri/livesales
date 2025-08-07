@@ -8,9 +8,9 @@ export default function SellerLayout({ children }) {
     <SellerLanguageProvider>
       <div className="min-h-screen flex bg-white">
         <SellerSidebar />
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col lg:ml-0">
           <SellerTopbar />
-          <main className="flex-1">{children}</main>
+          <main className="flex-1 p-4 lg:p-6 pt-20 lg:pt-6">{children}</main>
         </div>
       </div>
     </SellerLanguageProvider>

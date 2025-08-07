@@ -25,24 +25,60 @@ export async function POST(req) {
       }
     }
     
-    const { name, description, price, sellerId, quantity, shippingPrice } = fields;
+    const { 
+      name, 
+      description, 
+      price, 
+      sellerId, 
+      quantity, 
+      shippingPrice,
+      hasDiscount,
+      discountPercentage,
+      discountType,
+      discountEndDate
+    } = fields;
     const imageFiles = files.filter(f => f.name === 'images');
     
     if (!name || !description || !price || !sellerId || !quantity || !shippingPrice || imageFiles.length === 0) {
       return new Response(JSON.stringify({ error: 'Missing required fields' }), { status: 400 });
     }
+
+    // Validate discount fields
+    const hasDiscountBool = hasDiscount === 'true';
+    if (hasDiscountBool) {
+      if (!discountPercentage || parseFloat(discountPercentage) <= 0) {
+        return new Response(JSON.stringify({ error: 'Please enter a valid discount amount' }), { status: 400 });
+      }
+      
+      const discountPercent = parseFloat(discountPercentage);
+      const originalPrice = parseFloat(price);
+      
+      if (discountType === 'percentage' && discountPercent > 100) {
+        return new Response(JSON.stringify({ error: 'Discount percentage cannot exceed 100%' }), { status: 400 });
+      }
+      
+      if (discountType === 'fixed' && discountPercent >= originalPrice) {
+        return new Response(JSON.stringify({ error: 'Fixed discount cannot be greater than or equal to the original price' }), { status: 400 });
+      }
+    }
     
     // Create product
+    const productData = {
+      name: name.toString(),
+      description: description.toString(),
+      price: parseFloat(price.toString()),
+      quantity: parseInt(quantity.toString()),
+      shippingPrice: parseFloat(shippingPrice.toString()),
+      image: '', // legacy, not used
+      sellerId: parseInt(sellerId.toString()),
+      hasDiscount: hasDiscountBool,
+      discountPercentage: hasDiscountBool ? parseFloat(discountPercentage.toString()) : null,
+      discountType: hasDiscountBool ? discountType.toString() : null,
+      discountEndDate: hasDiscountBool && discountEndDate ? new Date(discountEndDate.toString()) : null,
+    };
+
     const product = await prisma.product.create({
-      data: {
-        name: name.toString(),
-        description: description.toString(),
-        price: parseFloat(price.toString()),
-        quantity: parseInt(quantity.toString()),
-        shippingPrice: parseFloat(shippingPrice.toString()),
-        image: '', // legacy, not used
-        sellerId: parseInt(sellerId.toString()),
-      },
+      data: productData,
     });
     
     // Save images and create ProductImage records

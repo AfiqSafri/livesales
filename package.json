@@ -7,28 +7,33 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "seed": "node prisma/seed.js"
+    "seed": "node prisma/seed.js",
+    "test-auto-cancel": "curl -X GET 'http://localhost:3000/api/cron/auto-cancel?secret=59d385b8d97afc714e32c5aeab2de1fffcf01eed01c68f85523f6ba44647a041'",
+    "test-email": "curl -X GET 'http://localhost:3000/api/test-email'"
   },
   "dependencies": {
-    "@prisma/client": "^6.12.0",
+    "@prisma/client": "^6.13.0",
     "autoprefixer": "^10.4.21",
+    "axios": "^1.11.0",
+    "bcryptjs": "^3.0.2",
     "billplz": "^1.0.3",
     "busboy": "^1.6.0",
-    "dotenv": "^17.2.0",
+    "dotenv": "^17.2.1",
     "formidable": "^3.5.4",
-    "mysql2": "^3.14.2",
-    "next": "^15.4.2",
+    "hoek": "^6.1.3",
+    "next": "^15.4.5",
     "nodemailer": "^7.0.5",
+    "pg": "^8.11.3",
     "postcss": "^8.5.6",
-    "prisma": "^6.12.0",
-    "react": "^19.1.0",
-    "react-dom": "^19.1.0"
+    "prisma": "^6.13.0",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
-    "eslint": "^9.31.0",
-    "eslint-config-next": "15.4.2",
+    "eslint": "^9.32.0",
+    "eslint-config-next": "^15.4.5",
     "tailwindcss": "^4.1.11"
   },
   "description": "This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).",

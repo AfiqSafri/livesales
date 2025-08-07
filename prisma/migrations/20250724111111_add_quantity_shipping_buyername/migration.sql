@@ -1,6 +1,0 @@
--- AlterTable
-ALTER TABLE `order` ADD COLUMN `buyerName` VARCHAR(191) NOT NULL DEFAULT '';
-
--- AlterTable
-ALTER TABLE `product` ADD COLUMN `quantity` INTEGER NOT NULL DEFAULT 0,
-    ADD COLUMN `shippingPrice` DOUBLE NOT NULL DEFAULT 0;

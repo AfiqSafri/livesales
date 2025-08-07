@@ -117,6 +117,9 @@ export default function SellerProfile() {
       localStorage.setItem('currentUser', JSON.stringify(updatedUser));
       setUser(updatedUser);
       setEditing(false);
+      
+      // Dispatch custom event to notify other components
+      window.dispatchEvent(new Event('profileUpdated'));
     } catch (error) {
       setMsg('Failed to update profile. Please try again.');
     } finally {
