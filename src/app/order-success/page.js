@@ -1,9 +1,8 @@
 "use client";
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useRef } from 'react';
 
-export default function OrderSuccess() {
+function OrderSuccessContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [orderDetails, setOrderDetails] = useState(null);
@@ -143,7 +142,7 @@ export default function OrderSuccess() {
               
               {latestOrder.paymentStatus === 'pending' && latestOrder.receiptUrl && (
                 <p className="text-yellow-700 text-sm">
-                  📄 Receipt uploaded successfully! The seller is reviewing your payment. You'll receive an email notification once approved.
+                  📄 Receipt uploaded successfully! The seller is reviewing your payment. You&apos;ll receive an email notification once approved.
                 </p>
               )}
               {latestOrder.paymentStatus === 'pending' && !latestOrder.receiptUrl && (
@@ -282,12 +281,12 @@ export default function OrderSuccess() {
           </div>
         )}
 
-        {/* What's Next */}
+        {/* What&apos;s Next */}
         <div className="bg-blue-50 rounded-lg p-4 mb-6">
-          <h3 className="font-semibold text-blue-900 mb-2">What's Next?</h3>
+          <h3 className="font-semibold text-blue-900 mb-2">What&apos;s Next?</h3>
           <ul className="text-sm text-blue-800 space-y-1 text-left">
             <li>• The seller will review your order</li>
-            <li>• You'll receive updates on your order status</li>
+            <li>• You&apos;ll receive updates on your order status</li>
             <li>• The seller will contact you for shipping details</li>
             <li>• Your order will be shipped to your address</li>
           </ul>
@@ -304,5 +303,13 @@ export default function OrderSuccess() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function OrderSuccess() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <OrderSuccessContent />
+    </Suspense>
   );
 } 

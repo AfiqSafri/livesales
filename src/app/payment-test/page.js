@@ -1,8 +1,8 @@
 "use client";
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
-export default function PaymentTest() {
+function PaymentTestContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
@@ -246,5 +246,13 @@ export default function PaymentTest() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function PaymentTest() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <PaymentTestContent />
+    </Suspense>
   );
 } 

@@ -1,9 +1,9 @@
 "use client";
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
-export default function PaymentSuccess() {
+function PaymentSuccessContent() {
   const searchParams = useSearchParams();
   const [paymentDetails, setPaymentDetails] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -98,7 +98,7 @@ export default function PaymentSuccess() {
 
             {/* Next Steps */}
             <div className="mb-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">What's Next?</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-3">What&apos;s Next?</h3>
               <div className="space-y-3 text-sm text-gray-600">
                 <div className="flex items-start">
                   <div className="flex-shrink-0 w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center mr-3 mt-0.5">
@@ -136,5 +136,13 @@ export default function PaymentSuccess() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function PaymentSuccess() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <PaymentSuccessContent />
+    </Suspense>
   );
 } 

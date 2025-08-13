@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
-export default function SubscriptionPage() {
+function SubscriptionContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [subscription, setSubscription] = useState(null);
@@ -358,5 +358,13 @@ export default function SubscriptionPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function SubscriptionPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <SubscriptionContent />
+    </Suspense>
   );
 } 

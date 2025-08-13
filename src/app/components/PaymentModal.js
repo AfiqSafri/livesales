@@ -148,7 +148,7 @@ export default function PaymentModal({ isOpen, onClose, orderDetails, onPaymentS
                 <h4 className="font-semibold text-blue-900">Test Payment Environment</h4>
               </div>
               <p className="text-blue-700 text-sm">
-                This is a test payment environment. No real money will be charged. You'll be redirected to our test payment page.
+                This is a test payment environment. No real money will be charged. You&apos;ll be redirected to our test payment page.
               </p>
             </div>
 

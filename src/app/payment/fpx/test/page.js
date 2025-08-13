@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 
-export default function FPXPaymentTest() {
+function FPXPaymentTestContent() {
   const searchParams = useSearchParams();
   const reference = searchParams.get('reference');
   const bankCode = searchParams.get('bank');
@@ -252,5 +252,13 @@ export default function FPXPaymentTest() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function FPXPaymentTest() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <FPXPaymentTestContent />
+    </Suspense>
   );
 } 
