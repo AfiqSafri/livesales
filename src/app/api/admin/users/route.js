@@ -19,7 +19,13 @@ export async function GET(req) {
         companyName: true,
         businessType: true,
         isSubscribed: true,
-        subscriptionStatus: true
+        subscriptionStatus: true,
+        subscriptionTier: true,
+        subscriptionStartDate: true,
+        subscriptionEndDate: true,
+        isTrialActive: true,
+        trialStartDate: true,
+        trialEndDate: true
       },
       orderBy: {
         createdAt: 'desc'

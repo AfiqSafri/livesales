@@ -163,13 +163,18 @@ export default function ProductDetail() {
                   <p className="text-gray-600">{product.description}</p>
                 </div>
 
-                {discountInfo && (
+                {discountInfo && discountInfo.isValid && (
                   <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
                     <div className="flex items-center">
                       <svg className="w-5 h-5 text-red-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
                       </svg>
-                      <span className="text-red-800 font-medium">{discountInfo}</span>
+                      <span className="text-red-800 font-medium">{discountInfo.discountLabel}</span>
+                    </div>
+                    <div className="mt-2 text-sm text-red-700">
+                      <p>Save RM {discountInfo.savings.toFixed(2)}!</p>
+                      <p>Original Price: RM {discountInfo.originalPrice.toFixed(2)}</p>
+                      <p>Discounted Price: RM {discountInfo.discountedPrice.toFixed(2)}</p>
                     </div>
                   </div>
                 )}
@@ -203,8 +208,8 @@ export default function ProductDetail() {
                     <div className="grid grid-cols-2 gap-4">
                       {product.images.map((image, index) => (
                         <img
-                          key={index}
-                          src={image}
+                          key={image.id}
+                          src={image.url}
                           alt={`${product.name} ${index + 1}`}
                           className="w-full h-48 object-cover rounded-lg"
                         />

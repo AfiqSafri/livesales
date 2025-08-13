@@ -55,6 +55,9 @@ export default function SalesReports() {
   }
 
   function formatCurrency(amount) {
+    if (amount === null || amount === undefined || isNaN(amount)) {
+      return 'RM 0.00';
+    }
     return new Intl.NumberFormat('en-MY', {
       style: 'currency',
       currency: 'MYR',
@@ -83,6 +86,8 @@ export default function SalesReports() {
   }
 
   function calculateGrowthRate(current, previous) {
+    if (current === null || current === undefined || isNaN(current)) current = 0;
+    if (previous === null || previous === undefined || isNaN(previous)) previous = 0;
     if (previous === 0) return current > 0 ? 100 : 0;
     return ((current - previous) / previous * 100).toFixed(1);
   }
@@ -144,9 +149,9 @@ export default function SalesReports() {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 <option value="all">All Products</option>
-                {salesData.products?.map(product => (
+                {salesData.products && salesData.products.length > 0 ? salesData.products.map(product => (
                   <option key={product.id} value={product.id}>{product.name}</option>
-                ))}
+                )) : null}
               </select>
             </div>
 
@@ -181,9 +186,9 @@ export default function SalesReports() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Total Revenue</p>
-                <p className="text-2xl font-bold text-gray-900">{formatCurrency(salesData.totalRevenue)}</p>
+                <p className="text-2xl font-bold text-gray-900">{formatCurrency(salesData.totalRevenue || 0)}</p>
                 <p className="text-sm text-green-600">
-                  +{calculateGrowthRate(salesData.currentRevenue, salesData.previousRevenue)}% vs previous period
+                  +{calculateGrowthRate(salesData.currentRevenue || 0, salesData.previousRevenue || 0)}% vs previous period
                 </p>
               </div>
               <div className="p-3 bg-green-100 rounded-lg">
@@ -198,9 +203,9 @@ export default function SalesReports() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Total Orders</p>
-                <p className="text-2xl font-bold text-gray-900">{salesData.totalOrders}</p>
+                <p className="text-2xl font-bold text-gray-900">{salesData.totalOrders || 0}</p>
                 <p className="text-sm text-blue-600">
-                  +{calculateGrowthRate(salesData.currentOrders, salesData.previousOrders)}% vs previous period
+                  +{calculateGrowthRate(salesData.currentOrders || 0, salesData.previousOrders || 0)}% vs previous period
                 </p>
               </div>
               <div className="p-3 bg-blue-100 rounded-lg">
@@ -215,10 +220,10 @@ export default function SalesReports() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Average Order Value</p>
-                <p className="text-2xl font-bold text-gray-900">{formatCurrency(salesData.averageOrderValue)}</p>
+                <p className="text-2xl font-bold text-gray-900">{formatCurrency(salesData.averageOrderValue || 0)}</p>
                 <p className="text-sm text-purple-600">
-                  {salesData.averageOrderValue > salesData.previousAverageOrderValue ? '+' : ''}
-                  {calculateGrowthRate(salesData.averageOrderValue, salesData.previousAverageOrderValue)}% vs previous period
+                  {(salesData.averageOrderValue || 0) > (salesData.previousAverageOrderValue || 0) ? '+' : ''}
+                  {calculateGrowthRate(salesData.averageOrderValue || 0, salesData.previousAverageOrderValue || 0)}% vs previous period
                 </p>
               </div>
               <div className="p-3 bg-purple-100 rounded-lg">
@@ -233,10 +238,10 @@ export default function SalesReports() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Conversion Rate</p>
-                <p className="text-2xl font-bold text-gray-900">{salesData.conversionRate}%</p>
+                <p className="text-2xl font-bold text-gray-900">{(salesData.conversionRate || 0).toFixed(1)}%</p>
                 <p className="text-sm text-orange-600">
-                  {salesData.conversionRate > salesData.previousConversionRate ? '+' : ''}
-                  {calculateGrowthRate(salesData.conversionRate, salesData.previousConversionRate)}% vs previous period
+                  {(salesData.conversionRate || 0) > (salesData.previousConversionRate || 0) ? '+' : ''}
+                  {calculateGrowthRate(salesData.conversionRate || 0, salesData.previousConversionRate || 0)}% vs previous period
                 </p>
               </div>
               <div className="p-3 bg-orange-100 rounded-lg">
@@ -266,7 +271,7 @@ export default function SalesReports() {
           <div className="bg-white rounded-lg border border-gray-200 p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Top Performing Products</h3>
             <div className="space-y-4">
-              {salesData.topProducts?.slice(0, 5).map((product, index) => (
+              {salesData.topProducts && salesData.topProducts.length > 0 ? salesData.topProducts.slice(0, 5).map((product, index) => (
                 <div key={product.id} className="flex items-center justify-between">
                   <div className="flex items-center">
                     <span className="text-sm font-medium text-gray-500 w-6">{index + 1}</span>
@@ -280,7 +285,11 @@ export default function SalesReports() {
                     <p className="text-xs text-gray-500">{product.percentage}% of total</p>
                   </div>
                 </div>
-              ))}
+              )) : (
+                <div className="text-center text-gray-500 py-8">
+                  <p>No product data available</p>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -291,7 +300,7 @@ export default function SalesReports() {
           <div className="bg-white rounded-lg border border-gray-200 p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Order Status</h3>
             <div className="space-y-3">
-              {salesData.orderStatus?.map(status => (
+              {salesData.orderStatus && salesData.orderStatus.length > 0 ? salesData.orderStatus.map(status => (
                 <div key={status.status} className="flex items-center justify-between">
                   <div className="flex items-center">
                     <div className={`w-3 h-3 rounded-full mr-3 ${
@@ -306,7 +315,11 @@ export default function SalesReports() {
                     <p className="text-xs text-gray-500">{status.percentage}%</p>
                   </div>
                 </div>
-              ))}
+              )) : (
+                <div className="text-center text-gray-500 py-4">
+                  <p>No order status data available</p>
+                </div>
+              )}
             </div>
           </div>
 
@@ -314,7 +327,7 @@ export default function SalesReports() {
           <div className="bg-white rounded-lg border border-gray-200 p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Revenue by Month</h3>
             <div className="space-y-3">
-              {salesData.monthlyRevenue?.slice(0, 6).map((month, index) => (
+              {salesData.monthlyRevenue && salesData.monthlyRevenue.length > 0 ? salesData.monthlyRevenue.slice(0, 6).map((month, index) => (
                 <div key={index} className="flex items-center justify-between">
                   <span className="text-sm font-medium text-gray-700">{month.month}</span>
                   <div className="text-right">
@@ -322,31 +335,35 @@ export default function SalesReports() {
                     <p className="text-xs text-gray-500">{month.orders} orders</p>
                   </div>
                 </div>
-              ))}
+              )) : (
+                <div className="text-center text-gray-500 py-4">
+                  <p>No monthly revenue data available</p>
+                </div>
+              )}
             </div>
           </div>
 
           {/* Customer Insights */}
           <div className="bg-white rounded-lg border border-gray-200 p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Customer Insights</h3>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-gray-700">New Customers</span>
-                <span className="text-sm font-medium text-gray-900">{salesData.newCustomers}</span>
+                          <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-gray-700">New Customers</span>
+                  <span className="text-sm font-medium text-gray-900">{salesData.newCustomers || 0}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-gray-700">Repeat Customers</span>
+                  <span className="text-sm font-medium text-gray-900">{salesData.repeatCustomers || 0}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-gray-700">Customer Lifetime Value</span>
+                  <span className="text-sm font-medium text-gray-900">{formatCurrency(salesData.customerLifetimeValue || 0)}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-gray-700">Retention Rate</span>
+                  <span className="text-sm font-medium text-gray-900">{(salesData.retentionRate || 0).toFixed(1)}%</span>
+                </div>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-gray-700">Repeat Customers</span>
-                <span className="text-sm font-medium text-gray-900">{salesData.repeatCustomers}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-gray-700">Customer Lifetime Value</span>
-                <span className="text-sm font-medium text-gray-900">{formatCurrency(salesData.customerLifetimeValue)}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-gray-700">Retention Rate</span>
-                <span className="text-sm font-medium text-gray-900">{salesData.retentionRate}%</span>
-              </div>
-            </div>
           </div>
         </div>
 
@@ -366,7 +383,7 @@ export default function SalesReports() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {salesData.recentTransactions?.map(transaction => (
+                {salesData.recentTransactions && salesData.recentTransactions.length > 0 ? salesData.recentTransactions.map(transaction => (
                   <tr key={transaction.id}>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">#{transaction.id}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{transaction.productName}</td>
@@ -383,7 +400,11 @@ export default function SalesReports() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatDate(transaction.date)}</td>
                   </tr>
-                ))}
+                )) : (
+                  <div className="text-center text-gray-500 py-8">
+                    <p>No recent transactions available</p>
+                  </div>
+                )}
               </tbody>
             </table>
           </div>

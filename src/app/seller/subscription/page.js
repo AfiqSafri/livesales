@@ -169,7 +169,8 @@ export default function SubscriptionPage() {
                <div>
                  <p className="text-sm text-gray-500">Plan</p>
                  <p className="font-semibold text-gray-900 capitalize">
-                   {subscription.subscriptionTier || 'Free'}
+                   {subscription.subscriptionTier === 'lifetime_free' ? 'Lifetime Free' : 
+                    subscription.subscriptionTier || 'Free'}
                  </p>
                </div>
                <div>
@@ -190,30 +191,45 @@ export default function SubscriptionPage() {
                </div>
              </div>
              
-             {/* Additional subscription details */}
+                              {/* Additional subscription details */}
              <div className="mt-6 pt-6 border-t border-gray-200">
-               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                 <div>
-                   <p className="text-sm text-gray-500">Trial Status</p>
-                   <p className="font-semibold text-gray-900">
-                     {subscription.isTrialActive ? 'Active' : 'Inactive'}
+               {subscription.subscriptionTier === 'lifetime_free' ? (
+                 <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                   <div className="flex items-center">
+                     <svg className="w-5 h-5 text-purple-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
+                     </svg>
+                     <span className="text-purple-800 font-medium">🎉 Congratulations! You have Lifetime Free access!</span>
+                   </div>
+                   <p className="text-purple-700 text-sm mt-2">
+                     You have unlimited access to all premium features without any monthly charges. This is a special privilege granted by our admin team.
                    </p>
                  </div>
-                 <div>
-                   <p className="text-sm text-gray-500">Days Remaining</p>
-                   <p className="font-semibold text-gray-900">
-                     {subscription.subscriptionEndDate ? 
-                       Math.max(0, Math.ceil((new Date(subscription.subscriptionEndDate) - new Date()) / (1000 * 60 * 60 * 24))) : 
-                       'N/A'} days
-                   </p>
+               ) : (
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                   <div>
+                     <p className="text-sm text-gray-500">Trial Status</p>
+                     <p className="font-semibold text-gray-900">
+                       {subscription.isTrialActive ? 'Active' : 'Inactive'}
+                     </p>
+                   </div>
+                   <div>
+                     <p className="text-sm text-gray-500">Days Remaining</p>
+                     <p className="font-semibold text-gray-900">
+                       {subscription.subscriptionEndDate ? 
+                         Math.max(0, Math.ceil((new Date(subscription.subscriptionEndDate) - new Date()) / (1000 * 60 * 60 * 24))) : 
+                         'N/A'} days
+                       </p>
+                   </div>
                  </div>
-               </div>
+               )}
              </div>
            </div>
          )}
 
-        {/* Subscription Plans */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+        {/* Subscription Plans - Hidden for Lifetime Free Users */}
+        {subscription && subscription.subscriptionTier !== 'lifetime_free' && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
           {plans.map((plan) => (
             <div
               key={plan.id}
@@ -263,9 +279,10 @@ export default function SubscriptionPage() {
             </div>
           ))}
         </div>
+        )}
 
-        {/* Subscribe Button */}
-        {selectedPlan && (
+        {/* Subscribe Button - Hidden for Lifetime Free Users */}
+        {selectedPlan && subscription && subscription.subscriptionTier !== 'lifetime_free' && (
           <div className="text-center">
             <div className="bg-white rounded-lg shadow p-6 mb-6">
               <h3 className="text-xl font-semibold text-gray-900 mb-2">
@@ -285,8 +302,9 @@ export default function SubscriptionPage() {
           </div>
         )}
 
-                 {/* Test Information */}
-         <div className="bg-green-50 border border-green-200 rounded-lg p-6 mt-8">
+                 {/* Test Information - Hidden for Lifetime Free Users */}
+         {subscription && subscription.subscriptionTier !== 'lifetime_free' && (
+           <div className="bg-green-50 border border-green-200 rounded-lg p-6 mt-8">
            <h3 className="text-lg font-semibold text-green-800 mb-2">🧪 Mock Payment System</h3>
            <p className="text-green-700 mb-4">
              This is using a mock payment system for testing. Subscriptions activate immediately without external payment processing.
@@ -323,9 +341,10 @@ export default function SubscriptionPage() {
              </button>
            </div>
          </div>
+         )}
 
-        {/* Payment URL Display */}
-        {paymentUrl && (
+        {/* Payment URL Display - Hidden for Lifetime Free Users */}
+        {paymentUrl && subscription && subscription.subscriptionTier !== 'lifetime_free' && (
           <div className="mt-6 bg-green-50 border border-green-200 rounded-lg p-4">
             <h3 className="text-lg font-semibold text-green-800 mb-2">Payment Link Created</h3>
             <p className="text-green-700 mb-2">A new window should have opened with the payment page.</p>

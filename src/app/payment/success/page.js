@@ -121,21 +121,7 @@ export default function PaymentSuccess() {
               </div>
             </div>
 
-            {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row gap-3">
-              <Link
-                href="/"
-                className="flex-1 bg-blue-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-blue-700 transition-colors text-center"
-              >
-                Continue Shopping
-              </Link>
-              <Link
-                href="/orders"
-                className="flex-1 border border-blue-600 text-blue-600 py-3 px-6 rounded-lg font-medium hover:bg-blue-50 transition-colors text-center"
-              >
-                View Orders
-              </Link>
-            </div>
+
 
             {/* Contact Support */}
             <div className="mt-6 pt-6 border-t border-gray-200">

@@ -145,16 +145,42 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleCancelLifetime = async (userId) => {
+    if (!confirm('Are you sure you want to cancel this seller\'s lifetime free subscription? They will revert to free status.')) return;
+
+    try {
+      const response = await fetch('/api/admin/cancel-lifetime', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId })
+      });
+
+      if (response.ok) {
+        alert('Lifetime subscription cancelled successfully!');
+        fetchUsers(); // Refresh the user list
+      } else {
+        const data = await response.json();
+        alert(data.error || 'Failed to cancel lifetime subscription');
+      }
+    } catch (error) {
+      alert('Error cancelling lifetime subscription');
+    }
+  };
+
   const getSubscriptionBadge = (user) => {
     if (user.userType !== 'seller') return null;
     
+    // Check lifetime free first (highest priority)
     if (user.subscriptionTier === 'lifetime_free') {
       return (
         <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-800">
           Lifetime Free
         </span>
       );
-    } else if (user.isSubscribed && user.subscriptionStatus === 'active') {
+    }
+    
+    // Check other subscription statuses
+    if (user.isSubscribed && user.subscriptionStatus === 'active' && user.subscriptionTier !== 'lifetime_free') {
       return (
         <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
           {user.subscriptionTier || 'Premium'}
@@ -462,12 +488,20 @@ export default function AdminDashboard() {
                         >
                           {user.status === 'active' ? 'Deactivate' : 'Activate'}
                         </button>
-                        {user.userType === 'seller' && (
+                        {user.userType === 'seller' && user.subscriptionTier !== 'lifetime_free' && (
                           <button
                             onClick={() => handleMakeLifetimeFree(user.id)}
                             className="px-3 py-1 rounded text-xs bg-purple-100 text-purple-700 hover:bg-purple-200"
                           >
                             Make Lifetime Free
+                          </button>
+                        )}
+                        {user.userType === 'seller' && user.subscriptionTier === 'lifetime_free' && (
+                          <button
+                            onClick={() => handleCancelLifetime(user.id)}
+                            className="px-3 py-1 rounded text-xs bg-orange-100 text-orange-700 hover:bg-orange-200"
+                          >
+                            Cancel Lifetime
                           </button>
                         )}
                         {user.userType !== 'admin' && (
