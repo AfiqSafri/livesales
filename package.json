@@ -8,6 +8,9 @@
     "start": "next start",
     "lint": "next lint",
     "seed": "node prisma/seed.js",
+    "postinstall": "prisma generate",
+    "db:push": "prisma db push",
+    "db:migrate": "prisma migrate deploy",
     "test-auto-cancel": "curl -X GET 'http://localhost:3000/api/cron/auto-cancel?secret=59d385b8d97afc714e32c5aeab2de1fffcf01eed01c68f85523f6ba44647a041'",
     "test-email": "curl -X GET 'http://localhost:3000/api/test-email'"
   },
