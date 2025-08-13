@@ -24,3 +24,71 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Force proper text colors in production */
+* {
+  color: inherit;
+}
+
+/* Ensure text elements have proper contrast */
+h1, h2, h3, h4, h5, h6 {
+  color: #171717 !important;
+}
+
+p, span, div, label, input, button {
+  color: #171717 !important;
+}
+
+/* Dark mode overrides */
+@media (prefers-color-scheme: dark) {
+  h1, h2, h3, h4, h5, h6 {
+    color: #ededed !important;
+  }
+  
+  p, span, div, label, input, button {
+    color: #ededed !important;
+  }
+}
+
+/* Fix Tailwind text colors in production */
+.text-gray-900 {
+  color: #111827 !important;
+}
+
+.text-gray-700 {
+  color: #374151 !important;
+}
+
+.text-gray-600 {
+  color: #4b5563 !important;
+}
+
+.text-gray-400 {
+  color: #9ca3af !important;
+}
+
+.text-blue-600 {
+  color: #2563eb !important;
+}
+
+.text-red-700 {
+  color: #b91c1c !important;
+}
+
+/* Ensure form elements have proper colors */
+input, textarea, select {
+  color: #171717 !important;
+}
+
+button {
+  color: #ffffff !important;
+}
+
+/* Force dark text on light backgrounds */
+.bg-white * {
+  color: #171717 !important;
+}
+
+.bg-gray-50 * {
+  color: #171717 !important;
+}
