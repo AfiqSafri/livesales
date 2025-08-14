@@ -10,7 +10,7 @@ export default function SellerProfile() {
   const { language } = useSellerLanguage();
   const fileInputRef = useRef(null);
   const [user, setUser] = useState(null);
-  const [form, setForm] = useState({ name: '', bio: '', email: '', phone: '' });
+  const [form, setForm] = useState({ name: '', bio: '', email: '', phone: '', address: '' });
   const [editing, setEditing] = useState(false);
   const [products, setProducts] = useState([]);
   const [msg, setMsg] = useState('');
@@ -29,7 +29,8 @@ export default function SellerProfile() {
       name: u.name, 
       bio: u.bio || '', 
       email: u.email || '',
-      phone: u.phone || ''
+      phone: u.phone || '',
+      address: u.address || ''
     });
     setProfileImage(u.profileImage || null);
     fetch('/api/seller/products', {
@@ -84,11 +85,12 @@ export default function SellerProfile() {
 
     try {
       const formData = new FormData();
-      formData.append('id', user.id);
+      formData.append('userId', user.id); // Changed from 'id' to 'userId'
       formData.append('name', form.name);
       formData.append('bio', form.bio);
       formData.append('email', form.email);
       formData.append('phone', form.phone);
+      formData.append('address', form.address || ''); // Added missing address field
       
       if (profileImage) {
         formData.append('profileImage', profileImage);
@@ -102,7 +104,7 @@ export default function SellerProfile() {
       const data = await res.json();
       
       if (!res.ok) {
-        setMsg(data.error || 'Failed to update profile');
+        setMsg(data.error || data.details || 'Failed to update profile');
         return;
       }
 
@@ -112,7 +114,7 @@ export default function SellerProfile() {
       const updatedUser = { 
         ...user, 
         ...form,
-        profileImage: data.profileImage || user.profileImage
+        profileImage: data.profileImageUrl || user.profileImage
       };
       localStorage.setItem('currentUser', JSON.stringify(updatedUser));
       setUser(updatedUser);
@@ -121,6 +123,7 @@ export default function SellerProfile() {
       // Dispatch custom event to notify other components
       window.dispatchEvent(new Event('profileUpdated'));
     } catch (error) {
+      console.error('Profile update error:', error);
       setMsg('Failed to update profile. Please try again.');
     } finally {
       setLoading(false);
@@ -277,6 +280,20 @@ export default function SellerProfile() {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Address
+                    </label>
+                    <textarea 
+                      name="address" 
+                      value={form.address} 
+                      onChange={handleChange} 
+                      rows="3"
+                      placeholder="Enter your business address..."
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors resize-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
                       Bio
                     </label>
                     <textarea 
@@ -306,7 +323,8 @@ export default function SellerProfile() {
                           name: user.name, 
                           bio: user.bio || '', 
                           email: user.email || '',
-                          phone: user.phone || ''
+                          phone: user.phone || '',
+                          address: user.address || ''
                         });
                         setProfileImage(null);
                         setPreviewImage(null);

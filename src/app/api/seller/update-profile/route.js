@@ -31,6 +31,7 @@ export async function POST(req) {
       email, 
       phone, 
       address,
+      bio,
       profileImageToDelete
     } = fields;
     
@@ -115,6 +116,7 @@ export async function POST(req) {
       email: email.toString(),
       phone: phone ? phone.toString() : null,
       address: address ? address.toString() : null,
+      bio: bio ? bio.toString() : null,
     };
 
     const updatedUser = await prisma.user.update({
