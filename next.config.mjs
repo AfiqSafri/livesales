@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Enable static optimization for Vercel
-  // output: 'standalone', // Commented out for local testing
+  output: 'standalone',
   
   // Handle image optimization
   images: {
