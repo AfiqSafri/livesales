@@ -112,17 +112,36 @@ export default function CreateProduct() {
     formData.append('discountEndDate', form.discountEndDate);
     images.forEach((img, i) => formData.append('images', img));
     
-    const res = await fetch('/api/seller/create-product', {
-      method: 'POST',
-      body: formData,
-    });
-    const data = await res.json();
-    if (!res.ok) {
-      setError(data.error || 'Failed to create product');
-      return;
+    try {
+      const res = await fetch('/api/seller/create-product', {
+        method: 'POST',
+        body: formData,
+      });
+      
+      const data = await res.json();
+      
+      if (!res.ok) {
+        setError(data.error || data.details || 'Failed to create product');
+        return;
+      }
+      
+      // Show success message
+      setSuccess('Product created successfully!');
+      
+      // Show additional message if there's one
+      if (data.message) {
+        setSuccess(prev => prev + ' ' + data.message);
+      }
+      
+      // Redirect after a short delay
+      setTimeout(() => {
+        router.push('/seller/dashboard');
+      }, 2000);
+      
+    } catch (error) {
+      console.error('Submit error:', error);
+      setError('Network error. Please try again.');
     }
-    setSuccess('Product created! Redirecting...');
-    setTimeout(() => router.push('/seller/dashboard'), 1200);
   };
 
   const discountedPrice = calculateDiscountedPrice();

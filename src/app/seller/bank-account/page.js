@@ -15,13 +15,27 @@ export default function BankAccountSetup() {
   });
 
   useEffect(() => {
+    // Check authentication first
+    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+    if (!currentUser || currentUser.userType !== 'seller') {
+      router.push('/login');
+      return;
+    }
+    
     fetchUserData();
-  }, []);
+  }, [router]);
 
   const fetchUserData = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/seller/profile');
+      // Get user from localStorage first
+      const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+      if (!currentUser || currentUser.userType !== 'seller') {
+        router.push('/login');
+        return;
+      }
+      
+      const response = await fetch(`/api/seller/profile?sellerId=${currentUser.id}`);
       if (response.ok) {
         const data = await response.json();
         setUser(data.user);
@@ -31,9 +45,14 @@ export default function BankAccountSetup() {
           bankAccountHolder: data.user.bankAccountHolder || '',
           bankCode: data.user.bankCode || ''
         });
+      } else {
+        const error = await response.json();
+        console.error('Error fetching profile:', error);
+        alert(error.error || 'Failed to fetch profile data');
       }
     } catch (error) {
       console.error('Error fetching user data:', error);
+      alert('Error fetching profile data');
     } finally {
       setLoading(false);
     }
@@ -57,7 +76,10 @@ export default function BankAccountSetup() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          sellerId: user.id
+        }),
       });
 
       if (response.ok) {

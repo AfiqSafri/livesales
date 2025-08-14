@@ -4,11 +4,21 @@ const prisma = new PrismaClient();
 
 export async function GET(req) {
   try {
-    // Use the correct seller ID (34 for Muhammad Afiq Bin Safri)
-    const sellerId = 34; // This should come from session/auth in production
+    const { searchParams } = new URL(req.url);
+    const sellerId = searchParams.get('sellerId');
 
-    const user = await prisma.user.findUnique({
-      where: { id: sellerId },
+    if (!sellerId) {
+      return new Response(JSON.stringify({ 
+        error: 'Missing seller ID',
+        details: 'Seller ID is required to fetch profile'
+      }), { status: 400 });
+    }
+
+    const user = await prisma.user.findFirst({
+      where: { 
+        id: parseInt(sellerId),
+        userType: 'seller'
+      },
       select: {
         id: true,
         name: true,
@@ -27,13 +37,21 @@ export async function GET(req) {
     });
 
     if (!user) {
-      return new Response(JSON.stringify({ error: 'User not found' }), { status: 404 });
+      return new Response(JSON.stringify({ 
+        error: 'Seller not found',
+        details: 'The seller account does not exist or is not authorized'
+      }), { status: 404 });
     }
 
     return new Response(JSON.stringify({ user }), { status: 200 });
 
   } catch (error) {
     console.error('Error fetching user profile:', error);
-    return new Response(JSON.stringify({ error: 'Internal server error' }), { status: 500 });
+    return new Response(JSON.stringify({ 
+      error: 'Internal server error',
+      details: 'An unexpected error occurred while fetching the profile'
+    }), { status: 500 });
+  } finally {
+    await prisma.$disconnect();
   }
 } 
