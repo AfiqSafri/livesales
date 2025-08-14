@@ -280,9 +280,9 @@ export default function SellerDashboard() {
                     return (
                       <div key={product.id} className="bg-gray-50 rounded-lg p-3 sm:p-4 border border-gray-200">
                         {/* Product Image */}
-                        {product.productImages && product.productImages.length > 0 ? (
+                        {product.images && product.images.length > 0 ? (
                           <img 
-                            src={product.productImages[0].url} 
+                            src={product.images[0].url} 
                             alt={product.name}
                             className="w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 object-cover rounded-lg flex-shrink-0"
                           />
@@ -389,10 +389,10 @@ export default function SellerDashboard() {
                             <td className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 whitespace-nowrap">
                               <div className="flex items-center">
                                 <div className="flex-shrink-0 h-10 w-10 sm:h-12 sm:w-12">
-                                  {product.productImages && product.productImages.length > 0 ? (
+                                  {product.images && product.images.length > 0 ? (
                                     <img
                                       className="h-10 w-10 sm:h-12 sm:w-12 rounded-lg object-cover"
-                                      src={product.productImages[0].url}
+                                      src={product.images[0].url}
                                       alt={product.name}
                                     />
                                   ) : (

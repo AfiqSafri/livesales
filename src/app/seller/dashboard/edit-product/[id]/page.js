@@ -54,7 +54,7 @@ export default function EditProduct() {
           discountType: data.product.discountType || 'percentage',
           discountEndDate: data.product.discountEndDate ? new Date(data.product.discountEndDate).toISOString().slice(0, 16) : '',
         });
-        setExistingImages(data.productImages || []);
+        setExistingImages(data.images || []);
       } else {
         setError('Product not found');
       }

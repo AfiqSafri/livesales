@@ -70,9 +70,9 @@ export default function HomePage() {
       <div key={product.id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
         {/* Product Image */}
         <div className="aspect-square bg-gray-100 relative overflow-hidden">
-          {product.productImages && product.productImages.length > 0 ? (
+          {product.images && product.images.length > 0 ? (
             <img
-              src={product.productImages[0].url}
+              src={product.images[0].url}
               alt={product.name}
               className="w-full h-full object-cover"
             />

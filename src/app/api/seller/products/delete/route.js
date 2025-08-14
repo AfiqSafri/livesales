@@ -19,7 +19,7 @@ export async function POST(req) {
         sellerId: Number(sellerId)
       },
       include: {
-        productImages: true,
+        images: true,
         orders: true
       }
     });
@@ -32,7 +32,7 @@ export async function POST(req) {
     }
     
     // Delete all related records first
-    if (product.productImages && product.productImages.length > 0) {
+    if (product.images && product.images.length > 0) {
       await prisma.productImage.deleteMany({ 
         where: { productId: Number(productId) } 
       });

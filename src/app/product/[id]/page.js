@@ -202,11 +202,11 @@ export default function ProductDetail() {
                 </div>
 
                 {/* Product Images */}
-                {product.productImages && product.productImages.length > 0 && (
+                {product.images && product.images.length > 0 && (
                   <div className="mb-6">
                     <h3 className="text-lg font-semibold text-gray-900 mb-2">Product Images</h3>
                     <div className="grid grid-cols-2 gap-4">
-                      {product.productImages.map((image, index) => (
+                      {product.images.map((image, index) => (
                         <img
                           key={image.id}
                           src={image.url}
