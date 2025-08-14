@@ -44,7 +44,7 @@ export default function SellerDashboard() {
   };
 
   const handleDeleteProduct = async (productId) => {
-    if (!confirm('Are you sure you want to delete this product?')) return;
+    if (!confirm('Are you sure you want to delete this product? This action cannot be undone.')) return;
     
     if (!user || !user.id) {
       alert('User session not found. Please log in again.');
@@ -65,15 +65,19 @@ export default function SellerDashboard() {
         body: JSON.stringify(requestBody),
       });
       
+      const data = await res.json();
+      
       if (res.ok) {
+        // Remove the product from the local state
         setProducts(products.filter(p => p.id !== productId));
+        alert('Product deleted successfully!');
       } else {
-        const data = await res.json();
-        alert(data.error || 'Failed to delete product');
+        console.error('Delete failed:', data);
+        alert(data.error || data.details || 'Failed to delete product');
       }
     } catch (error) {
       console.error('Delete product error:', error);
-      alert('Network error. Please try again.');
+      alert('Network error. Please check your connection and try again.');
     }
   };
 
@@ -276,21 +280,19 @@ export default function SellerDashboard() {
                     return (
                       <div key={product.id} className="bg-gray-50 rounded-lg p-3 sm:p-4 border border-gray-200">
                         {/* Product Image */}
-                        <div className="mb-3">
-                          {product.images && product.images.length > 0 ? (
-                            <img
-                              className="w-full h-32 sm:h-40 object-cover rounded-lg"
-                              src={product.images[0].url}
-                              alt={product.name}
-                            />
-                          ) : (
-                            <div className="w-full h-32 sm:h-40 bg-gray-200 rounded-lg flex items-center justify-center">
-                              <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                              </svg>
-                            </div>
-                          )}
-                        </div>
+                        {product.productImages && product.productImages.length > 0 ? (
+                          <img 
+                            src={product.productImages[0].url} 
+                            alt={product.name}
+                            className="w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 object-cover rounded-lg flex-shrink-0"
+                          />
+                        ) : (
+                          <div className="w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                            </svg>
+                          </div>
+                        )}
                         
                         {/* Product Info */}
                         <div className="space-y-2">
@@ -387,15 +389,15 @@ export default function SellerDashboard() {
                             <td className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 whitespace-nowrap">
                               <div className="flex items-center">
                                 <div className="flex-shrink-0 h-10 w-10 sm:h-12 sm:w-12">
-                                  {product.images && product.images.length > 0 ? (
+                                  {product.productImages && product.productImages.length > 0 ? (
                                     <img
                                       className="h-10 w-10 sm:h-12 sm:w-12 rounded-lg object-cover"
-                                      src={product.images[0].url}
+                                      src={product.productImages[0].url}
                                       alt={product.name}
                                     />
                                   ) : (
                                     <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-lg bg-gray-200 flex items-center justify-center">
-                                      <svg className="w-5 h-5 sm:w-6 sm:h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <svg className="w-5 h-5 sm:w-6 sm:w-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                                       </svg>
                                     </div>

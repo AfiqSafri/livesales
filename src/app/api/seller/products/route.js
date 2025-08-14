@@ -7,13 +7,16 @@ export async function POST(req) {
     const id = sellerId || userId;
     
     if (!id) {
-      return new Response(JSON.stringify({ error: 'Missing sellerId or userId' }), { status: 400 });
+      return new Response(JSON.stringify({ 
+        error: 'Missing sellerId or userId',
+        details: 'Seller ID is required to fetch products'
+      }), { status: 400 });
     }
     
     const products = await prisma.product.findMany({ 
       where: { sellerId: Number(id) },
       include: { 
-        images: {
+        productImages: {
           select: {
             id: true,
             url: true
@@ -26,8 +29,13 @@ export async function POST(req) {
     });
     
     return new Response(JSON.stringify({ products }), { status: 200 });
-  } catch (e) {
-    console.error('Error fetching seller products:', e);
-    return new Response(JSON.stringify({ error: 'Internal server error' }), { status: 500 });
+  } catch (error) {
+    console.error('Error fetching seller products:', error);
+    return new Response(JSON.stringify({ 
+      error: 'Internal server error',
+      details: 'An unexpected error occurred while fetching products'
+    }), { status: 500 });
+  } finally {
+    await prisma.$disconnect();
   }
 } 
