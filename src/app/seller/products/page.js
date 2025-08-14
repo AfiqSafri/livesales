@@ -49,8 +49,8 @@ export default function SellerProducts() {
                 <div className="p-6">
                   <div className="flex items-start justify-between mb-4">
                     <div className="w-24 h-24 mr-4 flex-shrink-0 rounded overflow-hidden bg-gray-100 flex items-center justify-center">
-                      {product.images && product.images.length > 0 ? (
-                        <img src={product.images[0].url} alt={product.name} className="object-cover w-full h-full" />
+                      {product.productImages && product.productImages.length > 0 ? (
+                        <img src={product.productImages[0].url} alt={product.name} className="object-cover w-full h-full" />
                       ) : (
                         <span className="text-gray-400">No Image</span>
                       )}

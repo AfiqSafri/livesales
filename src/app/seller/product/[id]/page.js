@@ -45,11 +45,11 @@ export default function SellerProductView() {
           setUnauthorizedAccess(true);
           setProduct(data.product);
           setSeller(data.seller);
-          setImages(data.images || []);
+          setImages(data.productImages || []);
         } else {
           setProduct(data.product);
           setSeller(data.seller);
-          setImages(data.images || []);
+          setImages(data.productImages || []);
         }
       } else {
         console.log('No product found for ID:', productId);

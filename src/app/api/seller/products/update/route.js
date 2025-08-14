@@ -46,7 +46,7 @@ export async function POST(req) {
     // Ensure the product belongs to the seller
     const product = await prisma.product.findUnique({ 
       where: { id: Number(productId) },
-      include: { images: true }
+      include: { productImages: true }
     });
     
     if (!product || product.sellerId !== Number(sellerId)) {
@@ -128,7 +128,7 @@ export async function POST(req) {
     // Get updated product with images
     const finalProduct = await prisma.product.findUnique({
       where: { id: Number(productId) },
-      include: { images: true }
+      include: { productImages: true }
     });
 
     return new Response(JSON.stringify({ 

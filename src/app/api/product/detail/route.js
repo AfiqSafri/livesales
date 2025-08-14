@@ -28,7 +28,7 @@ export async function POST(req) {
             bankCode: true
           }
         },
-        images: {
+        productImages: {
           select: {
             id: true,
             url: true

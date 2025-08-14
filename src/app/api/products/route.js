@@ -20,7 +20,7 @@ export async function GET() {
             bio: true
           }
         },
-        images: {
+        productImages: {
           select: {
             id: true,
             url: true
