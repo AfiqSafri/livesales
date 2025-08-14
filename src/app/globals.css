@@ -92,3 +92,108 @@ button {
 .bg-gray-50 * {
   color: #171717 !important;
 }
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+  /* Ensure proper spacing on mobile */
+  .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  
+  /* Make text readable on mobile */
+  h1 {
+    font-size: 1.5rem !important;
+    line-height: 2rem !important;
+  }
+  
+  h2 {
+    font-size: 1.25rem !important;
+    line-height: 1.75rem !important;
+  }
+  
+  /* Ensure buttons are touch-friendly */
+  button {
+    min-height: 44px !important;
+    min-width: 44px !important;
+  }
+  
+  /* Fix sidebar mobile behavior */
+  .sidebar-mobile {
+    transform: translateX(-100%);
+    transition: transform 0.3s ease-in-out;
+  }
+  
+  .sidebar-mobile.open {
+    transform: translateX(0);
+  }
+  
+  /* Ensure proper mobile grid layouts */
+  .grid-mobile {
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+  }
+  
+  /* Fix mobile padding */
+  .mobile-padding {
+    padding: 1rem !important;
+  }
+  
+  /* Ensure mobile text is readable */
+  .mobile-text {
+    font-size: 0.875rem !important;
+    line-height: 1.25rem !important;
+  }
+}
+
+/* Tablet Responsiveness */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .tablet-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  
+  .tablet-padding {
+    padding: 1.5rem !important;
+  }
+}
+
+/* Ensure proper sidebar behavior */
+.sidebar {
+  transition: all 0.3s ease-in-out;
+}
+
+.sidebar.collapsed {
+  width: 4rem;
+}
+
+.sidebar.expanded {
+  width: 16rem;
+}
+
+/* Fix mobile menu overlay */
+.mobile-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 40;
+}
+
+/* Ensure proper mobile navigation */
+.mobile-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 16rem;
+  background-color: #1f2937;
+  z-index: 50;
+  transform: translateX(-100%);
+  transition: transform 0.3s ease-in-out;
+}
+
+.mobile-nav.open {
+  transform: translateX(0);
+}

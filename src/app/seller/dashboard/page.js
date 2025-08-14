@@ -89,67 +89,77 @@ export default function SellerDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto p-6">
+      <div className="max-w-7xl mx-auto p-4 sm:p-6">
         {/* Header */}
-        <div className="mb-8">
+        <div className="mb-6 sm:mb-8">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">Seller Dashboard</h1>
-              <p className="text-gray-600">Manage your products and track your sales</p>
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Seller Dashboard</h1>
+              <p className="text-gray-600 text-sm sm:text-base">Manage your products and track your sales</p>
             </div>
             <button
               onClick={() => router.push('/seller/dashboard/create-product')}
-              className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+              className="w-full sm:w-auto bg-blue-600 text-white px-4 py-2 sm:px-6 sm:py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors text-sm sm:text-base"
             >
-              Add New Product
+              <div className="flex items-center justify-center gap-2">
+                <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                </svg>
+                Add New Product
+              </div>
             </button>
           </div>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          {/* Bank Account Setup Card */}
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <div className="flex items-center">
-              <div className="p-2 bg-purple-100 rounded-lg">
-                <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
-                </svg>
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
+          {/* Bank Account Card */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                  <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Bank Account</p>
+                  <p className="text-lg font-semibold text-gray-900">Setup Required</p>
+                </div>
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Bank Account</p>
-                <p className="text-lg font-bold text-gray-900">Setup Required</p>
-                <button
-                  onClick={() => router.push('/seller/bank-account')}
-                  className="mt-2 text-sm text-purple-600 hover:text-purple-700 font-medium"
-                >
-                  Configure Now →
-                </button>
-              </div>
+              <button
+                onClick={() => router.push('/seller/bank-account')}
+                className="text-purple-600 hover:text-purple-700 text-sm font-medium"
+              >
+                Configure Now →
+              </button>
             </div>
           </div>
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <div className="flex items-center">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+
+          {/* Total Products Card */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
                 </svg>
               </div>
-              <div className="ml-4">
+              <div>
                 <p className="text-sm font-medium text-gray-600">Total Products</p>
                 <p className="text-2xl font-bold text-gray-900">{products.length}</p>
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <div className="flex items-center">
-              <div className="p-2 bg-green-100 rounded-lg">
-                <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          {/* In Stock Card */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
                 </svg>
               </div>
-              <div className="ml-4">
+              <div>
                 <p className="text-sm font-medium text-gray-600">In Stock</p>
                 <p className="text-2xl font-bold text-gray-900">
                   {products.filter(p => p.quantity > 0).length}
@@ -158,38 +168,37 @@ export default function SellerDashboard() {
             </div>
           </div>
 
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <div className="flex items-center">
-              <div className="p-2 bg-yellow-100 rounded-lg">
-                <svg className="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"></path>
+          {/* Active Discounts Card */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">
+                <svg className="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v13m0-13V6a2 2 0 112 2h-2a2 2 0 01-2 2z"></path>
                 </svg>
               </div>
-              <div className="ml-4">
+              <div>
                 <p className="text-sm font-medium text-gray-600">Active Discounts</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {products.filter(p => {
-                    const discountInfo = formatDiscountInfo(p);
-                    return discountInfo && discountInfo.isValid;
-                  }).length}
+                  {products.filter(p => p.discountPercentage > 0).length}
                 </p>
               </div>
             </div>
           </div>
+        </div>
 
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <div className="flex items-center">
-              <div className="p-2 bg-red-100 rounded-lg">
-                <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Out of Stock</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {products.filter(p => p.quantity === 0).length}
-                </p>
-              </div>
+        {/* Out of Stock Card */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6 mb-6 sm:mb-8">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
+              <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+              </svg>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-gray-600">Out of Stock</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {products.filter(p => p.quantity === 0).length}
+              </p>
             </div>
           </div>
         </div>

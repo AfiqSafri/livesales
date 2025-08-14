@@ -47,13 +47,13 @@ export default function SellerTopbar() {
   }
 
   return (
-    <div className="border-b bg-white border-gray-200 px-4 py-3 flex justify-between items-center">
+    <div className="border-b bg-gradient-to-r from-blue-600 to-blue-700 border-blue-500 px-4 py-3 flex justify-between items-center shadow-lg">
       {/* Logo */}
       <div className="flex items-center gap-2">
-        <div className="w-8 h-8 bg-blue-600 rounded-xl flex items-center justify-center">
+        <div className="w-8 h-8 bg-white bg-opacity-20 rounded-xl flex items-center justify-center shadow-lg backdrop-blur-sm border border-white border-opacity-30">
           <span className="text-white font-bold text-lg">L</span>
         </div>
-        <h1 className="text-xl font-bold text-gray-900">Livesalez</h1>
+        <h1 className="text-xl font-bold text-white">Livesalez</h1>
       </div>
       {/* Right: Language, User */}
       <div className="flex items-center gap-2">
@@ -61,7 +61,7 @@ export default function SellerTopbar() {
         <div className="relative language-menu">
           <button
             onClick={() => setShowLanguageMenu(!showLanguageMenu)}
-            className="px-3 py-2 rounded-lg transition-colors border hover:bg-gray-100 text-gray-600 border-gray-300"
+            className="px-3 py-2 rounded-lg transition-all duration-200 border hover:bg-white hover:bg-opacity-20 text-white border-white border-opacity-30 hover:scale-105 backdrop-blur-sm"
             title="Language"
           >
             <span className="text-sm font-medium">
@@ -87,9 +87,9 @@ export default function SellerTopbar() {
         <div className="relative user-menu">
           <button
             onClick={() => setShowUserMenu(!showUserMenu)}
-            className="flex items-center gap-2 border rounded-lg px-3 py-2 hover:bg-gray-100 transition-colors bg-gray-50 border-gray-200"
+            className="flex items-center gap-2 border rounded-lg px-3 py-2 hover:bg-white hover:bg-opacity-20 transition-all duration-200 bg-white bg-opacity-10 border-white border-opacity-30 hover:scale-105 backdrop-blur-sm"
           >
-            <div className="w-8 h-8 rounded-full overflow-hidden bg-blue-600 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-full overflow-hidden bg-white bg-opacity-20 flex items-center justify-center border border-white border-opacity-30">
               {user?.profileImage ? (
                 <img 
                   src={`${user.profileImage}?t=${Date.now()}`} 
@@ -105,8 +105,8 @@ export default function SellerTopbar() {
                 {user?.name?.charAt(0)?.toUpperCase() || 'U'}
               </span>
             </div>
-            <span className="font-medium transition-colors duration-300 hidden sm:block text-gray-700">{user?.name}</span>
-            <svg className={`w-4 h-4 transition-transform text-gray-500 ${showUserMenu ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <span className="font-medium transition-colors duration-300 hidden sm:block text-white">{user?.name}</span>
+            <svg className={`w-4 h-4 transition-transform text-white ${showUserMenu ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
             </svg>
           </button>
