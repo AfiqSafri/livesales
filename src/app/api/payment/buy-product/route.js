@@ -43,7 +43,9 @@ export async function POST(req) {
     }
 
     // Create a unique reference for this payment
-    const reference = `TEST_PROD_${productId}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const timestamp = Date.now();
+    const randomId = Math.random().toString(36).substr(2, 6);
+    const reference = `LIVE-${productId}-${randomId.toUpperCase()}`;
 
     // Create payment record in database
     const payment = await prisma.payment.create({
@@ -90,7 +92,7 @@ export async function POST(req) {
       quantity,
       unitPrice,
       totalAmount,
-      reference,
+      reference: reference, // Use main reference for better UX
       sellerName: product.seller.name
     });
 
@@ -114,7 +116,7 @@ export async function POST(req) {
       productName,
       quantity,
       totalAmount,
-      reference,
+      reference: reference, // Use main reference for better UX
       buyerName: buyerName || 'Product Buyer',
       buyerEmail: buyerEmail || 'buyer@example.com'
     });
@@ -137,7 +139,9 @@ export async function POST(req) {
       testPaymentUrl: `/payment/test/${reference}`,
       paymentId: payment.id,
       orderId: order.id,
-      reference: reference
+      reference: reference,
+      amount: totalAmount,
+      currency: 'MYR'
     }), { status: 200 });
 
   } catch (error) {

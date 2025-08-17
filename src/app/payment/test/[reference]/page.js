@@ -89,28 +89,28 @@ export default function TestPayment() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50 py-2 sm:py-4 lg:py-8">
+      <div className="max-w-lg mx-auto px-2 sm:px-4 lg:px-8">
         <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-          <div className="p-6">
+          <div className="p-2 sm:p-3 lg:p-6">
             {/* Header */}
-            <div className="text-center mb-6">
-              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 mb-4">
-                <svg className="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="text-center mb-3 sm:mb-4 lg:mb-6">
+              <div className="mx-auto flex items-center justify-center h-8 w-8 sm:h-10 sm:w-10 lg:h-12 lg:w-12 rounded-full bg-blue-100 mb-2 sm:mb-3 lg:mb-4">
+                <svg className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
                 </svg>
               </div>
-              <h1 className="text-2xl font-bold text-gray-900 mb-2">Test Payment</h1>
-              <p className="text-gray-600">Complete your purchase with our test payment system</p>
+              <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 mb-1 sm:mb-2">Test Payment</h1>
+              <p className="text-xs sm:text-sm text-gray-600">Complete your purchase with our test payment system</p>
             </div>
 
             {/* Payment Details */}
-            <div className="bg-gray-50 rounded-lg p-4 mb-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">Payment Details</h3>
-              <div className="space-y-2 text-sm">
+            <div className="bg-gray-50 rounded-lg p-2 sm:p-3 lg:p-4 mb-3 sm:mb-4 lg:mb-6">
+              <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900 mb-2 sm:mb-3">Payment Details</h3>
+              <div className="space-y-1 sm:space-y-2 text-xs sm:text-sm">
                 <div className="flex justify-between">
                   <span className="text-gray-600">Reference:</span>
-                  <span className="font-medium">{paymentDetails.reference}</span>
+                  <span className="font-medium text-xs break-all">{paymentDetails.reference}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Amount:</span>
@@ -118,7 +118,7 @@ export default function TestPayment() {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Description:</span>
-                  <span className="font-medium">{paymentDetails.description}</span>
+                  <span className="font-medium text-xs break-all">{paymentDetails.description}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Status:</span>
@@ -128,14 +128,14 @@ export default function TestPayment() {
             </div>
 
             {/* Test Payment Info */}
-            <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="mb-3 sm:mb-4 lg:mb-6 p-2 sm:p-3 lg:p-4 bg-blue-50 border border-blue-200 rounded-lg">
               <div className="flex items-start">
-                <svg className="w-5 h-5 text-blue-600 mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                 </svg>
                 <div>
-                  <h4 className="font-medium text-blue-900">Test Payment System</h4>
-                  <p className="text-sm text-blue-700 mt-1">
+                  <h4 className="font-medium text-blue-900 text-xs sm:text-sm">Test Payment System</h4>
+                  <p className="text-xs text-blue-700 mt-1">
                     This is a simulated payment system for testing purposes. No real money will be charged.
                     Click the button below to simulate a successful payment.
                   </p>
@@ -144,16 +144,16 @@ export default function TestPayment() {
             </div>
 
             {/* Payment Button */}
-            <div className="space-y-3">
+            <div className="space-y-2 sm:space-y-3">
               <button
                 onClick={handleTestPayment}
                 disabled={processing}
-                className="w-full bg-green-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+                className="w-full bg-green-600 text-white py-2 sm:py-2.5 lg:py-3 px-4 sm:px-5 lg:px-6 rounded-lg font-medium hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors text-sm sm:text-base"
               >
                 {processing ? (
                   <div className="flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                    Processing Payment...
+                    <div className="animate-spin rounded-full h-4 w-4 sm:h-5 sm:w-5 border-b-2 border-white mr-2"></div>
+                    <span className="text-xs sm:text-sm">Processing Payment...</span>
                   </div>
                 ) : (
                   'Complete Test Payment'
@@ -162,19 +162,19 @@ export default function TestPayment() {
               
               <button
                 onClick={() => router.push('/')}
-                className="w-full border border-gray-300 text-gray-700 py-3 px-6 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+                className="w-full border border-gray-300 text-gray-700 py-2 sm:py-2.5 lg:py-3 px-4 sm:px-5 lg:px-6 rounded-lg font-medium hover:bg-gray-50 transition-colors text-sm sm:text-base"
               >
                 Cancel Payment
               </button>
             </div>
 
             {/* Security Notice */}
-            <div className="mt-6 pt-6 border-t border-gray-200">
-              <div className="flex items-center text-sm text-gray-600">
-                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="mt-3 sm:mt-4 lg:mt-6 pt-3 sm:pt-4 lg:pt-6 border-t border-gray-200">
+              <div className="flex items-center text-xs sm:text-sm text-gray-600">
+                <svg className="w-3 h-3 sm:w-4 sm:h-4 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
                 </svg>
-                This is a secure test payment system. No real transactions will occur.
+                <span className="text-xs sm:text-sm">This is a secure test payment system. No real transactions will occur.</span>
               </div>
             </div>
           </div>

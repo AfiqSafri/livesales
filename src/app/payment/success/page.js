@@ -48,29 +48,29 @@ function PaymentSuccessContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50 py-2 sm:py-4 lg:py-8">
+      <div className="max-w-lg mx-auto px-2 sm:px-4 lg:px-8">
         <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-          <div className="p-6">
+          <div className="p-2 sm:p-3 lg:p-6">
             {/* Success Header */}
-            <div className="text-center mb-6">
-              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4">
-                <svg className="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="text-center mb-3 sm:mb-4 lg:mb-6">
+              <div className="mx-auto flex items-center justify-center h-8 w-8 sm:h-10 sm:w-10 lg:h-12 lg:w-12 rounded-full bg-green-100 mb-2 sm:mb-3 lg:mb-4">
+                <svg className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
                 </svg>
               </div>
-              <h1 className="text-2xl font-bold text-gray-900 mb-2">Payment Successful!</h1>
-              <p className="text-gray-600">Your payment has been processed successfully.</p>
+              <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 mb-1 sm:mb-2">Payment Successful!</h1>
+              <p className="text-xs sm:text-sm text-gray-600">Your payment has been processed successfully.</p>
             </div>
 
             {/* Payment Details */}
             {paymentDetails && (
-              <div className="bg-gray-50 rounded-lg p-4 mb-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">Payment Details</h3>
-                <div className="space-y-2 text-sm">
+              <div className="bg-gray-50 rounded-lg p-2 sm:p-3 lg:p-4 mb-3 sm:mb-4 lg:mb-6">
+                <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900 mb-2 sm:mb-3">Payment Details</h3>
+                <div className="space-y-1 sm:space-y-2 text-xs sm:text-sm">
                   <div className="flex justify-between">
                     <span className="text-gray-600">Reference:</span>
-                    <span className="font-medium">{paymentDetails.reference}</span>
+                    <span className="font-medium text-xs break-all">{paymentDetails.reference}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Amount:</span>
@@ -82,12 +82,12 @@ function PaymentSuccessContent() {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Description:</span>
-                    <span className="font-medium">{paymentDetails.description}</span>
+                    <span className="font-medium text-xs break-all">{paymentDetails.description}</span>
                   </div>
                   {paymentDetails.paidAt && (
                     <div className="flex justify-between">
                       <span className="text-gray-600">Paid At:</span>
-                      <span className="font-medium">
+                      <span className="font-medium text-xs">
                         {new Date(paymentDetails.paidAt).toLocaleString()}
                       </span>
                     </div>
@@ -97,23 +97,23 @@ function PaymentSuccessContent() {
             )}
 
             {/* Next Steps */}
-            <div className="mb-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">What&apos;s Next?</h3>
-              <div className="space-y-3 text-sm text-gray-600">
+            <div className="mb-3 sm:mb-4 lg:mb-6">
+              <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900 mb-2 sm:mb-3">What&apos;s Next?</h3>
+              <div className="space-y-2 sm:space-y-3 text-xs sm:text-sm text-gray-600">
                 <div className="flex items-start">
-                  <div className="flex-shrink-0 w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center mr-3 mt-0.5">
+                  <div className="flex-shrink-0 w-5 h-5 sm:w-6 sm:h-6 bg-blue-100 rounded-full flex items-center justify-center mr-2 sm:mr-3 mt-0.5">
                     <span className="text-blue-600 text-xs font-bold">1</span>
                   </div>
                   <p>You will receive a confirmation email with your order details.</p>
                 </div>
                 <div className="flex items-start">
-                  <div className="flex-shrink-0 w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center mr-3 mt-0.5">
+                  <div className="flex-shrink-0 w-5 h-5 sm:w-6 sm:h-6 bg-blue-100 rounded-full flex items-center justify-center mr-2 sm:mr-3 mt-0.5">
                     <span className="text-blue-600 text-xs font-bold">2</span>
                   </div>
                   <p>The seller will contact you to arrange delivery or pickup.</p>
                 </div>
                 <div className="flex items-start">
-                  <div className="flex-shrink-0 w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center mr-3 mt-0.5">
+                  <div className="flex-shrink-0 w-5 h-5 sm:w-6 sm:h-6 bg-blue-100 rounded-full flex items-center justify-center mr-2 sm:mr-3 mt-0.5">
                     <span className="text-blue-600 text-xs font-bold">3</span>
                   </div>
                   <p>You can track your order status through the seller's dashboard.</p>
@@ -121,11 +121,9 @@ function PaymentSuccessContent() {
               </div>
             </div>
 
-
-
             {/* Contact Support */}
-            <div className="mt-6 pt-6 border-t border-gray-200">
-              <p className="text-sm text-gray-600 text-center">
+            <div className="mt-3 sm:mt-4 lg:mt-6 pt-3 sm:pt-4 lg:pt-6 border-t border-gray-200">
+              <p className="text-xs sm:text-sm text-gray-600 text-center">
                 Need help? Contact our support team at{' '}
                 <a href="mailto:support@livesales.com" className="text-blue-600 hover:text-blue-700">
                   support@livesales.com

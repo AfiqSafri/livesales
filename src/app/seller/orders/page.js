@@ -155,12 +155,16 @@ export default function SellerOrders() {
                     <div className="flex-1">
                       <div className="flex items-center gap-4 mb-3">
                         <h3 className="text-lg font-semibold text-gray-900">{order.product.name}</h3>
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
-                          {order.status.replace('_', ' ').toUpperCase()}
-                        </span>
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPaymentStatusColor(order.paymentStatus)}`}>
-                          {order.paymentStatus.toUpperCase()}
-                        </span>
+                        {/* Show only one status - payment status when paid, order status otherwise */}
+                        {order.paymentStatus === 'paid' ? (
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPaymentStatusColor(order.paymentStatus)}`}>
+                            {order.paymentStatus.toUpperCase()}
+                          </span>
+                        ) : (
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
+                            {order.status.replace('_', ' ').toUpperCase()}
+                          </span>
+                        )}
                       </div>
                       
                       {/* Customer Details */}
