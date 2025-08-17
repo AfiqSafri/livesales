@@ -397,8 +397,8 @@ export default function RegisterPage() {
         </div>
 
         {/* Footer */}
-        <div className="text-center mt-6 sm:mt-8 pt-4 sm:pt-6 border-t border-gray-200">
-          <p className="text-xs text-gray-500">
+        <div className="text-center mt-4 sm:mt-6 lg:mt-8 pt-2 sm:pt-4 lg:pt-6 border-t border-gray-200">
+          <p className="text-xs sm:text-sm text-gray-500">
             © 2025 MyTech Padu Solutions. All rights reserved.
           </p>
         </div>

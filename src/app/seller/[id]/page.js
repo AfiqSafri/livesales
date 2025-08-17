@@ -238,9 +238,9 @@ export default function PublicSellerProfile() {
         </div>
 
         {/* Footer */}
-        <div className="text-center mt-12">
-          <p className="text-gray-600 mb-4">© 2025 Livesalez. All rights reserved.</p>
-          <p className="text-sm text-gray-500">Powered by MyTech Padu Solutions</p>
+        <div className="text-center mt-4 sm:mt-8 lg:mt-12">
+          <p className="text-gray-600 mb-2 sm:mb-4 text-sm sm:text-base">© 2025 Livesalez. All rights reserved.</p>
+          <p className="text-xs sm:text-sm text-gray-500">Powered by MyTech Padu Solutions</p>
         </div>
       </div>
     </div>
