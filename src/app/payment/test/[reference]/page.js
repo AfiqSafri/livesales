@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import ProfessionalButton from '../../../../components/ProfessionalButton';
 
 export default function TestPayment() {
   const params = useParams();
@@ -145,27 +146,25 @@ export default function TestPayment() {
 
             {/* Payment Button */}
             <div className="space-y-2 sm:space-y-3">
-              <button
+              <ProfessionalButton
+                variant="success"
+                size="large"
+                fullWidth
+                loading={processing}
                 onClick={handleTestPayment}
                 disabled={processing}
-                className="w-full bg-green-600 text-white py-2 sm:py-2.5 lg:py-3 px-4 sm:px-5 lg:px-6 rounded-lg font-medium hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors text-sm sm:text-base"
               >
-                {processing ? (
-                  <div className="flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-4 w-4 sm:h-5 sm:w-5 border-b-2 border-white mr-2"></div>
-                    <span className="text-xs sm:text-sm">Processing Payment...</span>
-                  </div>
-                ) : (
-                  'Complete Test Payment'
-                )}
-              </button>
+                {processing ? 'Processing Payment...' : 'Complete Test Payment'}
+              </ProfessionalButton>
               
-              <button
+              <ProfessionalButton
+                variant="outline"
+                size="large"
+                fullWidth
                 onClick={() => router.push('/')}
-                className="w-full border border-gray-300 text-gray-700 py-2 sm:py-2.5 lg:py-3 px-4 sm:px-5 lg:px-6 rounded-lg font-medium hover:bg-gray-50 transition-colors text-sm sm:text-base"
               >
                 Cancel Payment
-              </button>
+              </ProfessionalButton>
             </div>
 
             {/* Security Notice */}

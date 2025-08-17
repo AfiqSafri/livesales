@@ -2,6 +2,7 @@
 import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import ProfessionalButton from '../../../components/ProfessionalButton';
 
 function PaymentSuccessContent() {
   const searchParams = useSearchParams();
@@ -119,6 +120,20 @@ function PaymentSuccessContent() {
                   <p>You can track your order status through the seller's dashboard.</p>
                 </div>
               </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-2 sm:gap-3 mb-3 sm:mb-4 lg:mb-6">
+              <Link href="/" className="flex-1">
+                <ProfessionalButton variant="primary" size="medium" fullWidth>
+                  Return Home
+                </ProfessionalButton>
+              </Link>
+              <Link href="/buyer/orders" className="flex-1">
+                <ProfessionalButton variant="outline" size="medium" fullWidth>
+                  View Orders
+                </ProfessionalButton>
+              </Link>
             </div>
 
             {/* Contact Support */}

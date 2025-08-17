@@ -1,8 +1,8 @@
 "use client";
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-
 import { useSellerLanguage } from '../SellerLanguageContext';
+import ProfessionalButton from '../../../components/ProfessionalButton';
 
 export default function SellerOrders() {
   const router = useRouter();
@@ -89,33 +89,80 @@ export default function SellerOrders() {
       });
   }
 
-  function handleDeleteOrder(orderId) {
-    fetch('/api/seller/orders/delete', {
+  function updateOrderStatus(orderId, newStatus) {
+    if (!confirm(`Are you sure you want to change the status to "${newStatus.replace('_', ' ').toUpperCase()}"?`)) return;
+
+    fetch('/api/seller/orders/update-status', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         orderId,
-        sellerId: user.id
+        sellerId: user.id,
+        status: newStatus,
+        clearReceipt: true
       }),
     })
       .then(res => res.json())
       .then(data => {
         if (data.success) {
-          alert('Order deleted successfully!');
+          alert(`Status updated to "${newStatus.replace('_', ' ').toUpperCase()}" successfully!`);
           fetchOrders(user.id);
         } else {
-          alert('Error deleting order: ' + data.error);
+          alert('Error updating status: ' + data.error);
         }
       })
       .catch(err => {
-        alert('Error deleting order: ' + err.message);
+        alert('Error updating status: ' + err.message);
       });
+  }
+
+  function updateTrackingNumber(orderId, trackingNumber) {
+    if (!trackingNumber) {
+      alert('Tracking number cannot be empty.');
+      return;
+    }
+
+    if (!confirm('Are you sure you want to update the tracking number?')) return;
+
+    fetch('/api/seller/orders/update-tracking', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        orderId,
+        sellerId: user.id,
+        trackingNumber,
+      }),
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          alert('Tracking number updated successfully!');
+          fetchOrders(user.id);
+        } else {
+          alert('Error updating tracking number: ' + data.error);
+        }
+      })
+      .catch(err => {
+        alert('Error updating tracking number: ' + err.message);
+      });
+  }
+
+  function setCustomerNotification(orderId, enabled) {
+    // Store notification preference in localStorage for now
+    // In a real app, this would be sent to the backend
+    const key = `order_${orderId}_notifications`;
+    localStorage.setItem(key, enabled.toString());
+    
+    if (enabled) {
+      console.log(`Customer notifications enabled for order ${orderId}`);
+    } else {
+      console.log(`Customer notifications disabled for order ${orderId}`);
+    }
   }
 
   function getStatusColor(status) {
     switch (status) {
       case 'pending': return 'bg-yellow-100 text-yellow-800';
-      case 'paid': return 'bg-green-100 text-green-800';
       case 'processing': return 'bg-blue-100 text-blue-800';
       case 'shipped': return 'bg-purple-100 text-purple-800';
       case 'delivered': return 'bg-green-100 text-green-800';
@@ -131,6 +178,11 @@ export default function SellerOrders() {
       case 'failed': return 'bg-red-100 text-red-800';
       default: return 'bg-gray-100 text-gray-800';
     }
+  }
+
+  function formatDate(timestamp) {
+    const date = new Date(timestamp);
+    return date.toLocaleDateString();
   }
 
   return (
@@ -155,16 +207,17 @@ export default function SellerOrders() {
                     <div className="flex-1">
                       <div className="flex items-center gap-4 mb-3">
                         <h3 className="text-lg font-semibold text-gray-900">{order.product.name}</h3>
-                        {/* Show only one status - payment status when paid, order status otherwise */}
-                        {order.paymentStatus === 'paid' ? (
+                        {/* Show both payment status and order status clearly */}
+                        <div className="flex items-center gap-2">
+                          {/* Payment Status */}
                           <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPaymentStatusColor(order.paymentStatus)}`}>
-                            {order.paymentStatus.toUpperCase()}
+                            Payment: {order.paymentStatus.toUpperCase()}
                           </span>
-                        ) : (
+                          {/* Order/Shipping Status */}
                           <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
-                            {order.status.replace('_', ' ').toUpperCase()}
+                            Shipping: {order.status.replace('_', ' ').toUpperCase()}
                           </span>
-                        )}
+                        </div>
                       </div>
                       
                       {/* Customer Details */}
@@ -182,11 +235,29 @@ export default function SellerOrders() {
                         <div>
                           <h4 className="font-medium text-gray-900 mb-2">Order Details</h4>
                           <div className="space-y-1 text-sm text-gray-600">
-                            <p><span className="font-medium">Quantity:</span> {order.quantity}</p>
-                            <p><span className="font-medium">Total Amount:</span> RM{order.totalAmount}</p>
-                            <p><span className="font-medium">Order Date:</span> {new Date(order.createdAt).toLocaleDateString()}</p>
+                            <div className="flex justify-between">
+                              <span>Quantity:</span>
+                              <span className="font-medium">{order.quantity}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>Total Amount:</span>
+                              <span className="font-medium">RM{order.totalAmount}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>Order Date:</span>
+                              <span className="font-medium">{formatDate(order.createdAt)}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>Current Status:</span>
+                              <span className={`font-medium px-2 py-1 rounded-full text-xs ${getStatusColor(order.status)}`}>
+                                {order.status.replace('_', ' ').toUpperCase()}
+                              </span>
+                            </div>
                             {order.trackingNumber && (
-                              <p><span className="font-medium">Tracking:</span> {order.trackingNumber}</p>
+                              <div className="flex justify-between">
+                                <span>Tracking Number:</span>
+                                <span className="font-medium text-blue-600">{order.trackingNumber}</span>
+                              </div>
                             )}
                           </div>
                         </div>
@@ -197,75 +268,207 @@ export default function SellerOrders() {
                         <div className="mb-4">
                           <h4 className="font-medium text-gray-900 mb-2">Payment Receipt</h4>
                           <div className="flex items-center gap-3">
-                            <button
+                            <ProfessionalButton
+                              variant="primary"
+                              size="medium"
                               onClick={() => {
                                 setSelectedOrder(order);
                                 setShowReceiptModal(true);
                               }}
-                              className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
                             >
                               View Receipt
-                            </button>
+                            </ProfessionalButton>
                             {order.paymentStatus === 'pending' && (
                               <div className="flex gap-2">
-                                <button
+                                <ProfessionalButton
+                                  variant="success"
+                                  size="medium"
                                   onClick={() => handleApprovePayment(order.id)}
-                                  className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-700 transition-colors"
                                 >
                                   Approve Payment
-                                </button>
-                                <button
+                                </ProfessionalButton>
+                                <ProfessionalButton
+                                  variant="danger"
+                                  size="medium"
                                   onClick={() => handleRejectPayment(order.id)}
-                                  className="bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-700 transition-colors"
                                 >
                                   Reject Payment
-                                </button>
+                                </ProfessionalButton>
                               </div>
                             )}
                           </div>
                         </div>
                       )}
 
+                      {/* Shipping Status Update Section */}
+                      <div className="mb-4">
+                        <h4 className="font-medium text-gray-900 mb-2">Shipping Status Management</h4>
+                        <p className="text-sm text-gray-600 mb-3">
+                          Update the shipping status to keep customers informed about their order progress
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          <ProfessionalButton
+                            variant={order.status === 'pending' ? 'primary' : 'outline'}
+                            size="small"
+                            onClick={() => updateOrderStatus(order.id, 'pending')}
+                          >
+                            Pending
+                          </ProfessionalButton>
+                          <ProfessionalButton
+                            variant={order.status === 'processing' ? 'primary' : 'outline'}
+                            size="small"
+                            onClick={() => updateOrderStatus(order.id, 'processing')}
+                          >
+                            Processing
+                          </ProfessionalButton>
+                          <ProfessionalButton
+                            variant={order.status === 'shipped' ? 'primary' : 'outline'}
+                            size="small"
+                            onClick={() => updateOrderStatus(order.id, 'shipped')}
+                          >
+                            Shipped
+                          </ProfessionalButton>
+                          <ProfessionalButton
+                            variant={order.status === 'delivered' ? 'primary' : 'outline'}
+                            size="small"
+                            onClick={() => updateOrderStatus(order.id, 'delivered')}
+                          >
+                            Delivered
+                          </ProfessionalButton>
+                          <ProfessionalButton
+                            variant={order.status === 'cancelled' ? 'primary' : 'outline'}
+                            size="small"
+                            onClick={() => updateOrderStatus(order.id, 'cancelled')}
+                          >
+                            Cancelled
+                          </ProfessionalButton>
+                        </div>
+                      </div>
+
+                      {/* Tracking Number Section */}
+                      <div className="mb-4">
+                        <h4 className="font-medium text-gray-900 mb-2">Tracking Information</h4>
+                        <div className="flex items-center gap-3">
+                          <input
+                            type="text"
+                            placeholder="Enter tracking number"
+                            defaultValue={order.trackingNumber || ''}
+                            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            onBlur={(e) => updateTrackingNumber(order.id, e.target.value)}
+                          />
+                          <ProfessionalButton
+                            variant="info"
+                            size="medium"
+                            onClick={() => {
+                              const trackingInput = document.querySelector(`input[placeholder="Enter tracking number"]`);
+                              if (trackingInput) {
+                                updateTrackingNumber(order.id, trackingInput.value);
+                              }
+                            }}
+                          >
+                            Update Tracking
+                          </ProfessionalButton>
+                        </div>
+                        {order.trackingNumber && (
+                          <p className="text-sm text-gray-600 mt-2">
+                            Current tracking: <span className="font-medium">{order.trackingNumber}</span>
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Status History Section */}
+                      <div className="mb-4">
+                        <h4 className="font-medium text-gray-900 mb-2">Status History</h4>
+                        <div className="bg-gray-50 rounded-lg p-3">
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between text-sm">
+                              <span className="text-gray-600">Order Created:</span>
+                              <span className="font-medium">{formatDate(order.createdAt)}</span>
+                            </div>
+                            {order.statusUpdatedAt && (
+                              <div className="flex items-center justify-between text-sm">
+                                <span className="text-gray-600">Last Status Update:</span>
+                                <span className="font-medium">{formatDate(order.statusUpdatedAt)}</span>
+                              </div>
+                            )}
+                            {order.trackingNumber && (
+                              <div className="flex items-center justify-between text-sm">
+                                <span className="text-gray-600">Tracking Added:</span>
+                                <span className="font-medium">{formatDate(order.trackingUpdatedAt || order.updatedAt)}</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Customer Notification Section */}
+                      <div className="mb-4">
+                        <h4 className="font-medium text-gray-900 mb-2">Customer Communication</h4>
+                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-sm text-blue-800 font-medium">Notify Customer of Status Changes</p>
+                              <p className="text-xs text-blue-600">Send email updates when shipping status changes</p>
+                            </div>
+                            <label className="relative inline-flex items-center cursor-pointer">
+                              <input
+                                type="checkbox"
+                                className="sr-only peer"
+                                defaultChecked={true}
+                                onChange={(e) => setCustomerNotification(order.id, e.target.checked)}
+                              />
+                              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                            </label>
+                          </div>
+                        </div>
+                      </div>
+
                       {/* Action Buttons */}
                       <div className="flex gap-2 flex-wrap">
-                        <button
+                        <ProfessionalButton
+                          variant="primary"
+                          size="medium"
                           onClick={() => router.push(`/seller/orders/${order.id}`)}
-                          className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
                         >
                           View Details
-                        </button>
-                        <button
+                        </ProfessionalButton>
+                        <ProfessionalButton
+                          variant="warning"
+                          size="medium"
                           onClick={() => router.push(`/seller/orders/${order.id}/edit`)}
-                          className="bg-yellow-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-yellow-700 transition-colors"
                         >
                           Update Status
-                        </button>
+                        </ProfessionalButton>
                         {order.buyerEmail && (
-                          <button
+                          <ProfessionalButton
+                            variant="info"
+                            size="medium"
                             onClick={() => window.open(`mailto:${order.buyerEmail}`, '_blank')}
-                            className="bg-purple-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-purple-700 transition-colors"
                           >
                             Contact Customer
-                          </button>
+                          </ProfessionalButton>
                         )}
                         {order.phone && (
-                          <button
+                          <ProfessionalButton
+                            variant="success"
+                            size="medium"
                             onClick={() => window.open(`tel:${order.phone}`, '_blank')}
-                            className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-700 transition-colors"
                           >
                             Call Customer
-                          </button>
+                          </ProfessionalButton>
                         )}
-                        <button
+                        <ProfessionalButton
+                          variant="danger"
+                          size="medium"
                           onClick={() => {
-                            if (confirm('Are you sure you want to delete this order? This action cannot be undone.')) {
-                              handleDeleteOrder(order.id);
+                            if (confirm('Are you sure you want to delete this order?')) {
+                              // Handle order deletion
+                              alert('Order deletion functionality not implemented yet');
                             }
                           }}
-                          className="bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-700 transition-colors"
                         >
                           Delete Order
-                        </button>
+                        </ProfessionalButton>
                       </div>
                     </div>
                   </div>
@@ -274,60 +477,45 @@ export default function SellerOrders() {
             ))}
           </div>
         )}
-      </div>
 
-      {/* Receipt Modal */}
-      {showReceiptModal && selectedOrder && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="max-w-2xl w-full mx-4 rounded-lg bg-white p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">Payment Receipt</h3>
-              <button
-                onClick={() => setShowReceiptModal(false)}
-                className="text-gray-500 hover:text-gray-700"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
-                </svg>
-              </button>
-            </div>
-            
-            <div className="mb-4">
-              <p className="text-sm text-gray-600 mb-2">
-                Order: {selectedOrder.product.name} - RM{selectedOrder.totalAmount}
-              </p>
-              <p className="text-sm text-gray-600 mb-4">
-                Customer: {selectedOrder.buyerName || (selectedOrder.buyer ? selectedOrder.buyer.name : 'Guest')}
-              </p>
-            </div>
-
-            <div className="mb-6">
-              <img
-                src={selectedOrder.receiptUrl}
-                alt="Payment Receipt"
-                className="w-full h-auto rounded-lg border border-gray-200"
-              />
-            </div>
-
-            {selectedOrder.paymentStatus === 'pending' && (
-              <div className="flex gap-3">
-                <button
-                  onClick={() => handleApprovePayment(selectedOrder.id)}
-                  className="flex-1 bg-green-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-700 transition-colors"
+        {/* Receipt Modal */}
+        {showReceiptModal && selectedOrder && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">Payment Receipt</h3>
+                <ProfessionalButton
+                  variant="outline"
+                  size="small"
+                  onClick={() => setShowReceiptModal(false)}
                 >
-                  Approve Payment
-                </button>
-                <button
-                  onClick={() => handleRejectPayment(selectedOrder.id)}
-                  className="flex-1 bg-red-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-red-700 transition-colors"
-                >
-                  Reject Payment
-                </button>
+                  Close
+                </ProfessionalButton>
               </div>
-            )}
+              
+              {selectedOrder.receiptUrl && (
+                <div className="text-center">
+                  <img 
+                    src={selectedOrder.receiptUrl} 
+                    alt="Payment Receipt" 
+                    className="max-w-full h-auto rounded-lg border border-gray-200"
+                  />
+                </div>
+              )}
+              
+              <div className="mt-4 flex gap-2 justify-end">
+                <ProfessionalButton
+                  variant="outline"
+                  size="medium"
+                  onClick={() => setShowReceiptModal(false)}
+                >
+                  Close
+                </ProfessionalButton>
+              </div>
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 } 

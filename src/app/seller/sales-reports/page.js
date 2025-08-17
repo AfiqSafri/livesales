@@ -1,8 +1,8 @@
 "use client";
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-
 import { useSellerLanguage } from '../SellerLanguageContext';
+import ProfessionalButton from '../../../components/ProfessionalButton';
 
 export default function SalesReports() {
   const router = useRouter();
@@ -170,12 +170,14 @@ export default function SalesReports() {
             </div>
 
             <div className="flex items-end">
-              <button
+              <ProfessionalButton
+                variant="primary"
+                size="small"
+                fullWidth
                 onClick={() => fetchSalesData(user.id)}
-                className="w-full bg-blue-600 text-white px-1 py-0.5 sm:px-2 sm:py-1 text-xs rounded-lg font-medium hover:bg-blue-700 transition-colors"
               >
                 Refresh Data
-              </button>
+              </ProfessionalButton>
             </div>
           </div>
         </div>
@@ -414,12 +416,12 @@ export default function SalesReports() {
 
         {/* Export Options */}
         <div className="mt-1 sm:mt-1.5 lg:mt-4 flex flex-col sm:flex-row justify-end gap-1 sm:gap-1.5 lg:gap-3">
-          <button className="w-full sm:w-auto bg-green-600 text-white px-1.5 sm:px-2 lg:px-4 py-0.5 sm:py-1 lg:py-2 text-xs rounded-lg font-medium hover:bg-green-700 transition-colors">
+          <ProfessionalButton variant="success" size="medium">
             Export to Excel
-          </button>
-          <button className="w-full sm:w-auto bg-blue-600 text-white px-1.5 sm:px-2 lg:px-4 py-0.5 sm:py-1 lg:py-2 text-xs rounded-lg font-medium hover:bg-blue-700 transition-colors">
+          </ProfessionalButton>
+          <ProfessionalButton variant="primary" size="medium">
             Generate PDF Report
-          </button>
+          </ProfessionalButton>
         </div>
       </div>
     </div>

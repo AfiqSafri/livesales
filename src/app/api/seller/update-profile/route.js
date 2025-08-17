@@ -54,10 +54,12 @@ export async function POST(req) {
       }), { status: 404 });
     }
 
-    // Handle profile image deletion (no need to delete from disk since we're using Cloudinary)
+    // Handle profile image deletion (if needed, we can clear the profileImage field)
     if (profileImageToDelete) {
-      await prisma.profileImage.deleteMany({
-        where: { userId: parseInt(userId.toString()) }
+      // Clear the profileImage field in the User model
+      await prisma.user.update({
+        where: { id: parseInt(userId.toString()) },
+        data: { profileImage: null }
       });
     }
     
@@ -85,38 +87,21 @@ export async function POST(req) {
         
         profileImageUrl = uploadResult.secure_url;
         
-        // Create or update ProfileImage record
-        await prisma.profileImage.upsert({
-          where: { userId: parseInt(userId.toString()) },
-          update: { url: profileImageUrl },
-          create: { 
-            url: profileImageUrl, 
-            userId: parseInt(userId.toString()) 
-          },
-        });
       } catch (uploadError) {
         console.error('Cloudinary upload error:', uploadError);
         // If Cloudinary upload fails, use a placeholder image
         profileImageUrl = `https://via.placeholder.com/400x400/cccccc/666666?text=Profile+Upload+Failed`;
-        
-        await prisma.profileImage.upsert({
-          where: { userId: parseInt(userId.toString()) },
-          update: { url: profileImageUrl },
-          create: { 
-            url: profileImageUrl, 
-            userId: parseInt(userId.toString()) 
-          },
-        });
       }
     }
     
-    // Update user profile
+    // Update user profile including profile image
     const userData = {
       name: name.toString(),
       email: email.toString(),
       phone: phone ? phone.toString() : null,
       address: address ? address.toString() : null,
       bio: bio ? bio.toString() : null,
+      ...(profileImageUrl && { profileImage: profileImageUrl }), // Only update if we have a new image
     };
 
     const updatedUser = await prisma.user.update({
