@@ -42,6 +42,9 @@ export default function EditProduct() {
         body: JSON.stringify({ productId }),
       });
       const data = await res.json();
+      
+      console.log('Edit Product API response:', data); // Debug log
+      
       if (data.product) {
         setForm({
           name: data.product.name,
@@ -54,11 +57,16 @@ export default function EditProduct() {
           discountType: data.product.discountType || 'percentage',
           discountEndDate: data.product.discountEndDate ? new Date(data.product.discountEndDate).toISOString().slice(0, 16) : '',
         });
-        setExistingImages(data.images || []);
+        
+        // Fix: Access images from the correct path
+        const productImages = data.product.images || [];
+        console.log('Setting existing images:', productImages); // Debug log
+        setExistingImages(productImages);
       } else {
         setError('Product not found');
       }
     } catch (err) {
+      console.error('Error fetching product:', err);
       setError('Failed to load product');
     } finally {
       setLoading(false);
@@ -306,13 +314,25 @@ export default function EditProduct() {
         </span>
         
         {/* Existing Images */}
-        {existingImages.length > 0 && (
+        {existingImages.length > 0 ? (
           <div className="mt-4">
             <label className="block text-sm font-medium text-gray-700 mb-2">Current Images</label>
             <div className="grid grid-cols-3 gap-2">
               {existingImages.map((img) => (
                 <div key={img.id} className="relative">
-                  <img src={img.url} alt="product" className="w-full h-24 object-cover rounded" />
+                  <img 
+                    src={img.url} 
+                    alt="product" 
+                    className="w-full h-24 object-cover rounded"
+                    onError={(e) => {
+                      console.error('Image failed to load:', img.url);
+                      e.target.style.display = 'none';
+                      e.target.nextSibling.style.display = 'flex';
+                    }}
+                  />
+                  <div className="absolute inset-0 bg-gray-100 rounded flex items-center justify-center text-xs text-gray-500" style={{ display: 'none' }}>
+                    Failed to load
+                  </div>
                   <button
                     type="button"
                     onClick={() => handleDeleteExistingImage(img.id)}
@@ -322,6 +342,13 @@ export default function EditProduct() {
                   </button>
                 </div>
               ))}
+            </div>
+          </div>
+        ) : (
+          <div className="mt-4 text-sm text-gray-500">
+            No existing images found. 
+            <div className="text-xs text-gray-400 mt-1">
+              Debug: existingImages count: {existingImages.length}
             </div>
           </div>
         )}
