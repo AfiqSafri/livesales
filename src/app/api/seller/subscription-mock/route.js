@@ -206,23 +206,11 @@ export async function POST(req) {
 // Subscription plan details
 function getPlanDetails(plan) {
   const plans = {
-    'basic': {
-      name: 'Basic Plan',
-      description: 'Essential features for small sellers',
-      price: 29.90,
-      features: ['Up to 50 products', 'Basic analytics', 'Email support']
-    },
-    'premium': {
-      name: 'Premium Plan',
-      description: 'Advanced features for growing businesses',
-      price: 59.90,
-      features: ['Up to 200 products', 'Advanced analytics', 'Priority support', 'Custom branding']
-    },
-    'enterprise': {
-      name: 'Enterprise Plan',
-      description: 'Full features for large businesses',
-      price: 99.90,
-      features: ['Unlimited products', 'Full analytics', '24/7 support', 'Custom branding', 'API access']
+    'pro': {
+      name: 'Pro Plan',
+      description: 'Complete features for professional sellers',
+      price: 20.00,
+      features: ['Unlimited products', 'Advanced analytics', 'Priority support', 'Custom branding', 'Express shipping', 'API access']
     }
   };
   

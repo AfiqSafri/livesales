@@ -34,8 +34,8 @@ export default function SellerDashboard() {
     
     // Fetch products count
     fetch('/api/seller/products', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ sellerId }),
     })
       .then(res => res.json())
@@ -67,7 +67,7 @@ export default function SellerDashboard() {
       })
       .catch(err => {
         console.error('Error fetching dashboard data:', err);
-        setLoading(false);
+      setLoading(false);
       });
   }
 
@@ -93,7 +93,7 @@ export default function SellerDashboard() {
           <p className="text-xs sm:text-sm text-gray-600">
             {language === 'ms' ? 'Gambaran keseluruhan perniagaan anda' : 'Overview of your business'}
           </p>
-        </div>
+            </div>
 
         {/* Quick Actions */}
         <div className="mb-2 sm:mb-3 lg:mb-6">
@@ -234,8 +234,8 @@ export default function SellerDashboard() {
                       <p className="text-xs text-gray-500">
                         {order.product?.name || 'Product'} - RM{order.totalAmount}
                       </p>
-                    </div>
-                  </div>
+          </div>
+        </div>
                   <div className="flex items-center space-x-1 sm:space-x-2">
                     <span className={`px-1 py-0.5 sm:px-2 sm:py-1 text-xs font-medium rounded-full ${
                       order.status === 'delivered' ? 'bg-green-100 text-green-800' :
@@ -254,7 +254,7 @@ export default function SellerDashboard() {
               ))}
             </div>
           )}
-        </div>
+            </div>
 
         {/* Quick Links */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1 sm:gap-2 lg:gap-4">
@@ -264,8 +264,8 @@ export default function SellerDashboard() {
                 <div className="p-1 sm:p-2 bg-blue-100 rounded-lg">
                   <svg className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
-                  </svg>
-                </div>
+                            </svg>
+                          </div>
                 <div>
                   <h4 className="text-xs sm:text-sm font-medium text-gray-900">
                     {language === 'ms' ? 'Kelola Produk' : 'Manage Products'}
@@ -273,9 +273,9 @@ export default function SellerDashboard() {
                   <p className="text-xs text-gray-500">
                     {language === 'ms' ? 'Tambah, edit, atau padam produk' : 'Add, edit, or delete products'}
                   </p>
-                </div>
-              </div>
-            </div>
+                                </div>
+                                </div>
+                              </div>
           </Link>
 
           <Link href="/seller/analytics">
@@ -285,7 +285,7 @@ export default function SellerDashboard() {
                   <svg className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
                   </svg>
-                </div>
+                          </div>
                 <div>
                   <h4 className="text-xs sm:text-sm font-medium text-gray-900">
                     {language === 'ms' ? 'Analitik' : 'Analytics'}
@@ -293,9 +293,9 @@ export default function SellerDashboard() {
                   <p className="text-xs text-gray-500">
                     {language === 'ms' ? 'Lihat prestasi perniagaan' : 'View business performance'}
                   </p>
-                </div>
-              </div>
-            </div>
+                          </div>
+                        </div>
+                      </div>
           </Link>
 
           <Link href="/seller/bank-account">

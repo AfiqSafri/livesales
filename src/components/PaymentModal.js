@@ -6,15 +6,11 @@ export default function PaymentModal({ isOpen, onClose, plan, user, discount, on
   const [error, setError] = useState('');
 
   const planPrices = {
-    basic: 29,
-    premium: 59,
-    enterprise: 99
+    pro: 20
   };
 
   const planFeatures = {
-    basic: ['Up to 50 products', 'Basic analytics', 'Email support'],
-    premium: ['Unlimited products', 'Advanced analytics', 'Priority support', 'Discount tools'],
-    enterprise: ['Everything in Premium', 'API access', 'Dedicated support', 'Custom integrations']
+    pro: ['Unlimited products', 'Advanced analytics', 'Priority support', 'Custom branding', 'Express shipping', 'API access']
   };
 
   // Prevent rendering if plan is not a string or not valid

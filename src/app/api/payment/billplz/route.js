@@ -10,9 +10,7 @@ const BILLPLZ_API_URL = 'https://www.billplz.com/api/v3';
 
 // Subscription plan prices
 const SUBSCRIPTION_PRICES = {
-  basic: 29,
-  premium: 59,
-  enterprise: 99
+  pro: 20
 };
 
 export async function POST(req) {
