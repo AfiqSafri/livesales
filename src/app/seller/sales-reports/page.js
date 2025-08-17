@@ -115,22 +115,22 @@ export default function SalesReports() {
 
   return (
     <div className="min-h-screen text-gray-900">
-      <div className="p-0.5 sm:p-1 lg:p-6">
+      <div className="p-0 sm:p-0.5 lg:p-4">
         {/* Header */}
-        <div className="mb-0.5 sm:mb-1 lg:mb-4">
-          <h1 className="text-sm sm:text-lg lg:text-2xl font-bold mb-0.5 sm:mb-1 lg:mb-2 text-gray-900">Sales Reports</h1>
+        <div className="mb-0 sm:mb-0.5 lg:mb-3">
+          <h1 className="text-base sm:text-lg lg:text-xl font-bold mb-0 sm:mb-0.5 lg:mb-2 text-gray-900">Sales Reports</h1>
           <p className="text-xs text-gray-600">Detailed revenue analytics and business insights</p>
         </div>
 
         {/* Filters */}
-        <div className="bg-white rounded-lg border border-gray-200 p-1 sm:p-2 lg:p-4 mb-1 sm:mb-2 lg:mb-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-1 sm:gap-2 lg:gap-4">
+        <div className="bg-white rounded-lg border border-gray-200 p-1 sm:p-1.5 lg:p-3 mb-1 sm:mb-1.5 lg:mb-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-1 sm:gap-1.5 lg:gap-3">
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-0.5">Date Range</label>
               <select
                 value={dateRange}
                 onChange={(e) => setDateRange(e.target.value)}
-                className="w-full px-1 py-0.5 sm:px-2 sm:py-1 text-xs border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-1 py-0.5 sm:px-1.5 sm:py-1 text-xs border border-gray-300 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-transparent"
               >
                 <option value="today">Today</option>
                 <option value="week">This Week</option>
@@ -146,7 +146,7 @@ export default function SalesReports() {
               <select
                 value={selectedProduct}
                 onChange={(e) => setSelectedProduct(e.target.value)}
-                className="w-full px-1 py-0.5 sm:px-2 sm:py-1 text-xs border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-1 py-0.5 sm:px-1.5 sm:py-1 text-xs border border-gray-300 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-transparent"
               >
                 <option value="all">All Products</option>
                 {salesData.products && salesData.products.length > 0 ? salesData.products.map(product => (
@@ -160,7 +160,7 @@ export default function SalesReports() {
               <select
                 value={selectedStatus}
                 onChange={(e) => setSelectedStatus(e.target.value)}
-                className="w-full px-1 py-0.5 sm:px-2 sm:py-1 text-xs border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-1 py-0.5 sm:px-1.5 sm:py-1 text-xs border border-gray-300 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-transparent"
               >
                 <option value="all">All Status</option>
                 <option value="completed">Completed</option>
@@ -183,71 +183,71 @@ export default function SalesReports() {
         </div>
 
         {/* Key Metrics */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-1 sm:gap-2 lg:gap-4 mb-1 sm:mb-2 lg:mb-4">
-          <div className="bg-white rounded-lg border border-gray-200 p-1 sm:p-2 lg:p-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-1 sm:gap-1.5 lg:gap-3 mb-1 sm:mb-1.5 lg:mb-3">
+          <div className="bg-white rounded-lg border border-gray-200 p-1 sm:p-1.5 lg:p-3">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs font-medium text-gray-600">Total Revenue</p>
-                <p className="text-sm sm:text-base lg:text-xl font-bold text-gray-900">{formatCurrency(salesData.totalRevenue || 0)}</p>
+                <p className="text-sm sm:text-base lg:text-lg font-bold text-gray-900">{formatCurrency(salesData.totalRevenue || 0)}</p>
                 <p className="text-xs text-green-600">
                   +{calculateGrowthRate(salesData.currentRevenue || 0, salesData.previousRevenue || 0)}% vs previous period
                 </p>
               </div>
               <div className="p-0.5 sm:p-1 bg-green-100 rounded-lg">
-                <svg className="w-3 h-3 sm:w-4 sm:h-4 lg:w-6 lg:h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
                 </svg>
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-lg border border-gray-200 p-1 sm:p-2 lg:p-4">
+          <div className="bg-white rounded-lg border border-gray-200 p-1 sm:p-1.5 lg:p-3">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs font-medium text-gray-600">Total Orders</p>
-                <p className="text-sm sm:text-base lg:text-xl font-bold text-gray-900">{salesData.totalOrders || 0}</p>
+                <p className="text-sm sm:text-base lg:text-lg font-bold text-gray-900">{salesData.totalOrders || 0}</p>
                 <p className="text-xs text-blue-600">
                   +{calculateGrowthRate(salesData.currentOrders || 0, salesData.previousOrders || 0)}% vs previous period
                 </p>
               </div>
               <div className="p-0.5 sm:p-1 bg-blue-100 rounded-lg">
-                <svg className="w-3 h-3 sm:w-4 sm:h-4 lg:w-6 lg:h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                 </svg>
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-lg border border-gray-200 p-1 sm:p-2 lg:p-4">
+          <div className="bg-white rounded-lg border border-gray-200 p-1 sm:p-1.5 lg:p-3">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs font-medium text-gray-600">Avg Order Value</p>
-                <p className="text-sm sm:text-base lg:text-xl font-bold text-gray-900">{formatCurrency(salesData.averageOrderValue || 0)}</p>
+                <p className="text-sm sm:text-base lg:text-lg font-bold text-gray-900">{formatCurrency(salesData.averageOrderValue || 0)}</p>
                 <p className="text-xs text-purple-600">
                   {(salesData.averageOrderValue || 0) > (salesData.previousAverageOrderValue || 0) ? '+' : ''}
                   {calculateGrowthRate(salesData.averageOrderValue || 0, salesData.previousAverageOrderValue || 0)}% vs previous period
                 </p>
               </div>
               <div className="p-0.5 sm:p-1 bg-purple-100 rounded-lg">
-                <svg className="w-3 h-3 sm:w-4 sm:h-4 lg:w-6 lg:h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
                 </svg>
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-lg border border-gray-200 p-1 sm:p-2 lg:p-4">
+          <div className="bg-white rounded-lg border border-gray-200 p-1 sm:p-1.5 lg:p-3">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs font-medium text-gray-600">Conversion Rate</p>
-                <p className="text-sm sm:text-base lg:text-xl font-bold text-gray-900">{(salesData.conversionRate || 0).toFixed(1)}%</p>
+                <p className="text-sm sm:text-base lg:text-lg font-bold text-gray-900">{(salesData.conversionRate || 0).toFixed(1)}%</p>
                 <p className="text-xs text-orange-600">
                   {(salesData.conversionRate || 0) > (salesData.previousConversionRate || 0) ? '+' : ''}
                   {calculateGrowthRate(salesData.conversionRate || 0, salesData.previousConversionRate || 0)}% vs previous period
                 </p>
               </div>
               <div className="p-0.5 sm:p-1 bg-orange-100 rounded-lg">
-                <svg className="w-3 h-3 sm:w-4 sm:h-4 lg:w-6 lg:h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
                 </svg>
               </div>
@@ -256,12 +256,12 @@ export default function SalesReports() {
         </div>
 
         {/* Revenue Chart */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-1 sm:gap-2 lg:gap-4 mb-1 sm:mb-2 lg:mb-4">
-          <div className="bg-white rounded-lg border border-gray-200 p-1 sm:p-2 lg:p-4">
-            <h3 className="text-xs sm:text-sm lg:text-lg font-semibold text-gray-900 mb-1 sm:mb-2 lg:mb-3">Revenue Trend</h3>
-            <div className="h-16 sm:h-20 lg:h-40 flex items-center justify-center text-gray-500">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-1 sm:gap-1.5 lg:gap-3 mb-1 sm:mb-1.5 lg:mb-3">
+          <div className="bg-white rounded-lg border border-gray-200 p-1 sm:p-1.5 lg:p-3">
+            <h3 className="text-xs sm:text-sm lg:text-base font-semibold text-gray-900 mb-1 sm:mb-1.5 lg:mb-2">Revenue Trend</h3>
+            <div className="h-12 sm:h-16 lg:h-32 flex items-center justify-center text-gray-500">
               <div className="text-center">
-                <svg className="w-5 h-5 sm:w-6 sm:h-6 lg:w-16 lg:h-16 mx-auto mb-0.5 sm:mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4 sm:w-5 sm:h-5 lg:w-12 lg:h-12 mx-auto mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
                 </svg>
                 <p className="text-xs sm:text-sm">Revenue chart will be displayed here</p>
@@ -270,11 +270,11 @@ export default function SalesReports() {
             </div>
           </div>
 
-          <div className="bg-white rounded-lg border border-gray-200 p-1 sm:p-2 lg:p-4">
-            <h3 className="text-xs sm:text-sm lg:text-lg font-semibold text-gray-900 mb-1 sm:mb-2 lg:mb-3">Top Performing Products</h3>
+          <div className="bg-white rounded-lg border border-gray-200 p-1 sm:p-1.5 lg:p-3">
+            <h3 className="text-xs sm:text-sm lg:text-base font-semibold text-gray-900 mb-1 sm:mb-1.5 lg:mb-2">Top Performing Products</h3>
             <div className="space-y-0.5 sm:space-y-1">
               {salesData.topProducts && salesData.topProducts.length > 0 ? salesData.topProducts.slice(0, 5).map((product, index) => (
-                <div key={product.id} className="flex items-center justify-between p-0.5 sm:p-1 lg:p-2 bg-gray-50 rounded-lg">
+                <div key={product.id} className="flex items-center justify-between p-0.5 sm:p-1 lg:p-1.5 bg-gray-50 rounded-lg">
                   <div className="flex items-center">
                     <span className="text-xs font-medium text-gray-500 w-3 sm:w-4 lg:w-5">{index + 1}</span>
                     <div>
@@ -288,7 +288,7 @@ export default function SalesReports() {
                   </div>
                 </div>
               )) : (
-                <div className="text-center text-gray-500 py-1 sm:py-2 lg:py-6">
+                <div className="text-center text-gray-500 py-1 sm:py-1.5 lg:py-4">
                   <p className="text-xs sm:text-sm">No product data available</p>
                 </div>
               )}
@@ -297,13 +297,13 @@ export default function SalesReports() {
         </div>
 
         {/* Detailed Analytics */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-1 sm:gap-2 lg:gap-4 mb-1 sm:mb-2 lg:mb-4">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-1 sm:gap-1.5 lg:gap-3 mb-1 sm:mb-1.5 lg:mb-3">
           {/* Order Status Breakdown */}
-          <div className="bg-white rounded-lg border border-gray-200 p-1 sm:p-2 lg:p-4">
-            <h3 className="text-xs sm:text-sm lg:text-lg font-semibold text-gray-900 mb-1 sm:mb-2 lg:mb-3">Order Status</h3>
+          <div className="bg-white rounded-lg border border-gray-200 p-1 sm:p-1.5 lg:p-3">
+            <h3 className="text-xs sm:text-sm lg:text-base font-semibold text-gray-900 mb-1 sm:mb-1.5 lg:mb-2">Order Status</h3>
             <div className="space-y-0.5 sm:space-y-1">
               {salesData.orderStatus && salesData.orderStatus.length > 0 ? salesData.orderStatus.map(status => (
-                <div key={status.status} className="flex items-center justify-between p-0.5 sm:p-1 lg:p-2 bg-gray-50 rounded-lg">
+                <div key={status.status} className="flex items-center justify-between p-0.5 sm:p-1 lg:p-1.5 bg-gray-50 rounded-lg">
                   <div className="flex items-center">
                     <div className={`w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full mr-1 sm:mr-1.5 ${
                       status.status === 'delivered' ? 'bg-green-500' :
@@ -318,7 +318,7 @@ export default function SalesReports() {
                   </div>
                 </div>
               )) : (
-                <div className="text-center text-gray-500 py-1 sm:py-2 lg:py-4">
+                <div className="text-center text-gray-500 py-1 sm:py-1.5 lg:py-3">
                   <p className="text-xs sm:text-sm">No order status data available</p>
                 </div>
               )}
@@ -326,11 +326,11 @@ export default function SalesReports() {
           </div>
 
           {/* Revenue by Month */}
-          <div className="bg-white rounded-lg border border-gray-200 p-1 sm:p-2 lg:p-4">
-            <h3 className="text-xs sm:text-sm lg:text-lg font-semibold text-gray-900 mb-1 sm:mb-2 lg:mb-3">Revenue by Month</h3>
+          <div className="bg-white rounded-lg border border-gray-200 p-1 sm:p-1.5 lg:p-3">
+            <h3 className="text-xs sm:text-sm lg:text-base font-semibold text-gray-900 mb-1 sm:mb-1.5 lg:mb-2">Revenue by Month</h3>
             <div className="space-y-0.5 sm:space-y-1">
               {salesData.monthlyRevenue && salesData.monthlyRevenue.length > 0 ? salesData.monthlyRevenue.slice(0, 6).map((month, index) => (
-                <div key={index} className="flex items-center justify-between p-0.5 sm:p-1 lg:p-2 bg-gray-50 rounded-lg">
+                <div key={index} className="flex items-center justify-between p-0.5 sm:p-1 lg:p-1.5 bg-gray-50 rounded-lg">
                   <span className="text-xs sm:text-sm font-medium text-gray-700">{month.month}</span>
                   <div className="text-right">
                     <p className="text-xs sm:text-sm font-medium text-gray-900">{formatCurrency(month.revenue)}</p>
@@ -338,7 +338,7 @@ export default function SalesReports() {
                   </div>
                 </div>
               )) : (
-                <div className="text-center text-gray-500 py-1 sm:py-2 lg:py-4">
+                <div className="text-center text-gray-500 py-1 sm:py-1.5 lg:py-3">
                   <p className="text-xs sm:text-sm">No monthly revenue data available</p>
                 </div>
               )}
@@ -346,22 +346,22 @@ export default function SalesReports() {
           </div>
 
           {/* Customer Insights */}
-          <div className="bg-white rounded-lg border border-gray-200 p-1 sm:p-2 lg:p-4">
-            <h3 className="text-xs sm:text-sm lg:text-lg font-semibold text-gray-900 mb-1 sm:mb-2 lg:mb-3">Customer Insights</h3>
+          <div className="bg-white rounded-lg border border-gray-200 p-1 sm:p-1.5 lg:p-3">
+            <h3 className="text-xs sm:text-sm lg:text-base font-semibold text-gray-900 mb-1 sm:mb-1.5 lg:mb-2">Customer Insights</h3>
             <div className="space-y-0.5 sm:space-y-1">
-              <div className="flex items-center justify-between p-0.5 sm:p-1 lg:p-2 bg-gray-50 rounded-lg">
+              <div className="flex items-center justify-between p-0.5 sm:p-1 lg:p-1.5 bg-gray-50 rounded-lg">
                 <span className="text-xs sm:text-sm font-medium text-gray-700">New Customers</span>
                 <span className="text-xs sm:text-sm font-medium text-gray-900">{salesData.newCustomers || 0}</span>
               </div>
-              <div className="flex items-center justify-between p-0.5 sm:p-1 lg:p-2 bg-gray-50 rounded-lg">
+              <div className="flex items-center justify-between p-0.5 sm:p-1 lg:p-1.5 bg-gray-50 rounded-lg">
                 <span className="text-xs sm:text-sm font-medium text-gray-700">Repeat Customers</span>
                 <span className="text-xs sm:text-sm font-medium text-gray-900">{salesData.repeatCustomers || 0}</span>
               </div>
-              <div className="flex items-center justify-between p-0.5 sm:p-1 lg:p-2 bg-gray-50 rounded-lg">
+              <div className="flex items-center justify-between p-0.5 sm:p-1 lg:p-1.5 bg-gray-50 rounded-lg">
                 <span className="text-xs sm:text-sm font-medium text-gray-700">Customer LTV</span>
                 <span className="text-xs sm:text-sm font-medium text-gray-900">{formatCurrency(salesData.customerLifetimeValue || 0)}</span>
               </div>
-              <div className="flex items-center justify-between p-0.5 sm:p-1 lg:p-2 bg-gray-50 rounded-lg">
+              <div className="flex items-center justify-between p-0.5 sm:p-1 lg:p-1.5 bg-gray-50 rounded-lg">
                 <span className="text-xs sm:text-sm font-medium text-gray-700">Retention Rate</span>
                 <span className="text-xs sm:text-sm font-medium text-gray-900">{(salesData.retentionRate || 0).toFixed(1)}%</span>
               </div>
@@ -370,28 +370,28 @@ export default function SalesReports() {
         </div>
 
         {/* Recent Transactions */}
-        <div className="bg-white rounded-lg border border-gray-200 p-1 sm:p-2 lg:p-4 mb-1 sm:mb-2 lg:mb-4">
-          <h3 className="text-xs sm:text-sm lg:text-lg font-semibold text-gray-900 mb-1 sm:mb-2 lg:mb-3">Recent Transactions</h3>
+        <div className="bg-white rounded-lg border border-gray-200 p-1 sm:p-1.5 lg:p-3 mb-1 sm:mb-1.5 lg:mb-3">
+          <h3 className="text-xs sm:text-sm lg:text-base font-semibold text-gray-900 mb-1 sm:mb-1.5 lg:mb-2">Recent Transactions</h3>
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-0.5 sm:px-1 lg:px-4 py-0.5 sm:py-1 lg:py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order ID</th>
-                  <th className="px-0.5 sm:px-1 lg:px-4 py-0.5 sm:py-1 lg:py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
-                  <th className="px-0.5 sm:px-1 lg:px-4 py-0.5 sm:py-1 lg:py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
-                  <th className="px-0.5 sm:px-1 lg:px-4 py-0.5 sm:py-1 lg:py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
-                  <th className="px-0.5 sm:px-1 lg:px-4 py-0.5 sm:py-1 lg:py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                  <th className="px-0.5 sm:px-1 lg:px-4 py-0.5 sm:py-1 lg:py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                  <th className="px-0.5 sm:px-1 lg:px-3 py-0.5 sm:py-1 lg:py-1.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order ID</th>
+                  <th className="px-0.5 sm:px-1 lg:px-3 py-0.5 sm:py-1 lg:py-1.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
+                  <th className="px-0.5 sm:px-1 lg:px-3 py-0.5 sm:py-1 lg:py-1.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
+                  <th className="px-0.5 sm:px-1 lg:px-3 py-0.5 sm:py-1 lg:py-1.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                  <th className="px-0.5 sm:px-1 lg:px-3 py-0.5 sm:py-1 lg:py-1.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                  <th className="px-0.5 sm:px-1 lg:px-3 py-0.5 sm:py-1 lg:py-1.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {salesData.recentTransactions && salesData.recentTransactions.length > 0 ? salesData.recentTransactions.map(transaction => (
                   <tr key={transaction.id} className="hover:bg-gray-50">
-                    <td className="px-0.5 sm:px-1 lg:px-4 py-1 sm:py-1.5 lg:py-3 whitespace-nowrap text-xs font-medium text-gray-900">#{transaction.id}</td>
-                    <td className="px-0.5 sm:px-1 lg:px-4 py-1 sm:py-1.5 lg:py-3 whitespace-nowrap text-xs text-gray-900">{transaction.productName}</td>
-                    <td className="px-0.5 sm:px-1 lg:px-4 py-1 sm:py-1.5 lg:py-3 whitespace-nowrap text-xs text-gray-900">{transaction.customerName}</td>
-                    <td className="px-0.5 sm:px-1 lg:px-4 py-1 sm:py-1.5 lg:py-3 whitespace-nowrap text-xs font-medium text-gray-900">{formatCurrency(transaction.amount)}</td>
-                    <td className="px-0.5 sm:px-1 lg:px-4 py-1 sm:py-1.5 lg:py-3 whitespace-nowrap">
+                    <td className="px-0.5 sm:px-1 lg:px-3 py-0.5 sm:py-1 lg:py-1.5 whitespace-nowrap text-xs font-medium text-gray-900">#{transaction.id}</td>
+                    <td className="px-0.5 sm:px-1 lg:px-3 py-0.5 sm:py-1 lg:py-1.5 whitespace-nowrap text-xs text-gray-900">{transaction.productName}</td>
+                    <td className="px-0.5 sm:px-1 lg:px-3 py-0.5 sm:py-1 lg:py-1.5 whitespace-nowrap text-xs text-gray-900">{transaction.customerName}</td>
+                    <td className="px-0.5 sm:px-1 lg:px-3 py-0.5 sm:py-1 lg:py-1.5 whitespace-nowrap text-xs font-medium text-gray-900">{formatCurrency(transaction.amount)}</td>
+                    <td className="px-0.5 sm:px-1 lg:px-3 py-0.5 sm:py-1 lg:py-1.5 whitespace-nowrap">
                       <span className={`px-0.5 py-0.5 sm:px-1 sm:py-0.5 text-xs font-medium rounded-full ${
                         transaction.status === 'delivered' ? 'bg-green-100 text-green-800' :
                         transaction.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
@@ -400,11 +400,11 @@ export default function SalesReports() {
                         {transaction.status}
                       </span>
                     </td>
-                    <td className="px-0.5 sm:px-1 lg:px-4 py-1 sm:py-1.5 lg:py-3 whitespace-nowrap text-xs text-gray-500">{formatDate(transaction.date)}</td>
+                    <td className="px-0.5 sm:px-1 lg:px-3 py-0.5 sm:py-1 lg:py-1.5 whitespace-nowrap text-xs text-gray-500">{formatDate(transaction.date)}</td>
                   </tr>
                 )) : (
                   <tr>
-                    <td colSpan="6" className="px-0.5 sm:px-1 lg:px-4 py-1 sm:py-2 lg:py-6 text-center text-gray-500">
+                    <td colSpan="6" className="px-0.5 sm:px-1 lg:px-3 py-1 sm:py-1.5 lg:py-4 text-center text-gray-500">
                       <p className="text-xs sm:text-sm">No recent transactions available</p>
                     </td>
                   </tr>
@@ -415,11 +415,11 @@ export default function SalesReports() {
         </div>
 
         {/* Export Options */}
-        <div className="mt-1 sm:mt-1.5 lg:mt-4 flex flex-col sm:flex-row justify-end gap-1 sm:gap-1.5 lg:gap-3">
-          <ProfessionalButton variant="success" size="medium">
+        <div className="mt-1 sm:mt-1 lg:mb-3 flex flex-col sm:flex-row justify-end gap-1 sm:gap-1 lg:gap-2">
+          <ProfessionalButton variant="success" size="small">
             Export to Excel
           </ProfessionalButton>
-          <ProfessionalButton variant="primary" size="medium">
+          <ProfessionalButton variant="primary" size="small">
             Generate PDF Report
           </ProfessionalButton>
         </div>
