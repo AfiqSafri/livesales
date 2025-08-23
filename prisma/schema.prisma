@@ -33,6 +33,8 @@ model User {
   bankAccountNumber     String?
   bankCode              String?
   bankName              String?
+  resetToken            String?
+  resetTokenExpiry      DateTime?
   notifications         Notification[]
   orders                Order[]        @relation("buyerOrders")
   payments              Payment[]
