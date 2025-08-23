@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useSellerLanguage } from '../SellerLanguageContext';
 import ModernHeader from '@/components/ModernHeader';
 import ModernFooter from '@/components/ModernFooter';
+import NotusButton from '@/components/NotusButton';
 import { generateMultiProductUrl } from '@/utils/productUtils';
 
 export default function SellerProducts() {
