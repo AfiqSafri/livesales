@@ -296,8 +296,8 @@ function OrderSuccessContent() {
         <div className="mt-6 pt-6 border-t border-gray-200">
           <p className="text-xs text-gray-500">
             Need help? Contact us at{' '}
-            <a href="mailto:support@livesales.com" className="text-blue-600 hover:underline">
-              support@livesales.com
+            <a href="mailto:support@livesalez.com" className="text-blue-600 hover:underline">
+              support@livesalez.com
             </a>
           </p>
         </div>

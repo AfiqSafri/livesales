@@ -1,5 +1,4 @@
-import { PrismaClient } from '@prisma/client';
-const prisma = new PrismaClient();
+import { prisma } from '@/lib/prisma';
 
 // Dummy Billplz configuration for testing
 const DUMMY_BILLPLZ_CONFIG = {

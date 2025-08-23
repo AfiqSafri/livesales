@@ -8,6 +8,8 @@ A comprehensive e-commerce platform with order tracking, guest checkout, and ema
 - **Order Tracking**: Real-time order status updates with courier integration
 - **Email Notifications**: Automatic email confirmations for orders
 - **Seller Dashboard**: Complete order management for sellers
+- **Multi-Product Purchase**: Buyers can purchase multiple products in one order
+- **Short Product URLs**: Clean URLs like `/products/15,14` for multiple products
 - **Mobile Responsive**: Works perfectly on all devices
 
 ## Getting Started
@@ -25,6 +27,37 @@ bun dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+
+## Multi-Product URLs
+
+The platform supports sharing multiple products with clean, short URLs:
+
+### URL Formats
+
+1. **Single Product**: `/product/15` - Shows one product
+2. **Multiple Products**: `/products/15,14` - Shows multiple products for bulk purchase
+3. **Query Parameters**: `/products?ids=15,14` - Alternative format for multiple products
+
+### Usage Examples
+
+- **Share 2 products**: `http://localhost:3000/products/15,14`
+- **Share 3 products**: `http://localhost:3000/products/15,14,16`
+- **Share with query**: `http://localhost:3000/products?ids=15,14,16`
+
+### For Sellers
+
+Sellers can easily copy multi-product links from their profile page:
+1. Go to Seller Profile → Your Products
+2. Click "📋 Copy Multi-Product Link" button
+3. Share the generated link with buyers
+
+### For Buyers
+
+Buyers can:
+- View multiple products on one page
+- Adjust quantities for each product individually
+- Purchase all products in one transaction
+- See total cost including shipping for all items
 
 ## Email Configuration
 

@@ -1,6 +1,4 @@
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { prisma } from '@/lib/prisma';
 
 // Billplz Sandbox Configuration
 const BILLPLZ_API_KEY = process.env.BILLPLZ_API_KEY || '73eb57f0-7d4e-42b9-a76d-e84b6c0c8968';

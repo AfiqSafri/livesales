@@ -306,7 +306,7 @@ Livesalez Team
         <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #dee2e6;">
           <p style="margin: 0; color: #6c757d; font-size: 14px;">
             Best regards,<br>
-            <strong>LiveSales Team</strong>
+                            <strong>Livesalez Team</strong>
           </p>
         </div>
       </div>
@@ -331,7 +331,7 @@ You now have access to all the features included in your ${planName}. Start expl
 If you have any questions about your subscription, please don't hesitate to contact our support team.
 
 Best regards,
-LiveSales Team
+            Livesalez Team
     `
   }),
 
@@ -365,7 +365,7 @@ LiveSales Team
         <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #dee2e6;">
           <p style="margin: 0; color: #6c757d; font-size: 14px;">
             Best regards,<br>
-            <strong>LiveSales System</strong>
+            <strong>Livesalez System</strong>
           </p>
         </div>
       </div>
@@ -388,7 +388,7 @@ Seller Information:
 This seller now has access to all features included in the ${planName}.
 
 Best regards,
-LiveSales System
+Livesalez System
     `
   }),
 
@@ -422,7 +422,7 @@ LiveSales System
         <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #dee2e6;">
           <p style="margin: 0; color: #6c757d; font-size: 14px;">
             Best regards,<br>
-            <strong>LiveSales System</strong>
+            <strong>Livesalez System</strong>
           </p>
         </div>
       </div>
@@ -445,7 +445,7 @@ Transaction Details:
 The payment has been processed successfully and both buyer and seller have been notified.
 
 Best regards,
-LiveSales System
+Livesalez System
     `
   })
 }; 

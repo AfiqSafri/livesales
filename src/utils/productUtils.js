@@ -138,3 +138,23 @@ export function getDiscountDaysRemaining(product) {
   
   return Math.max(0, diffDays);
 } 
+
+export function generateMultiProductUrl(productIds) {
+  if (!Array.isArray(productIds) || productIds.length === 0) {
+    return null;
+  }
+  
+  // Create a shorter URL format: /multi-products/15,14 for the new multi-product page
+  const idsString = productIds.join(',');
+  return `/multi-products/${idsString}`;
+}
+
+export function generateMultiProductUrlWithQuery(productIds) {
+  if (!Array.isArray(productIds) || productIds.length === 0) {
+    return null;
+  }
+  
+  // Create a query parameter format: /products?ids=15,14
+  const idsString = productIds.join(',');
+  return `/products?ids=${idsString}`;
+} 

@@ -1,5 +1,19 @@
 import { PrismaClient } from '@prisma/client';
-const prisma = new PrismaClient();
+
+// Create a single Prisma instance with better connection handling
+let prisma;
+
+if (process.env.NODE_ENV === 'production') {
+  prisma = new PrismaClient();
+} else {
+  // In development, use a global variable to prevent multiple instances
+  if (!global.prisma) {
+    global.prisma = new PrismaClient({
+      log: ['query', 'info', 'warn', 'error'],
+    });
+  }
+  prisma = global.prisma;
+}
 
 export async function POST(req) {
   try {
@@ -31,20 +45,40 @@ export async function POST(req) {
       }), { status: 404 });
     }
     
-    // Delete all related records first
-    if (product.images && product.images.length > 0) {
-      await prisma.productImage.deleteMany({ 
-        where: { productId: Number(productId) } 
-      });
+    // Delete all related records first in the correct order
+    // 1. Delete notifications related to orders
+    if (product.orders && product.orders.length > 0) {
+      for (const order of product.orders) {
+        await prisma.notification.deleteMany({
+          where: { orderId: order.id }
+        });
+      }
     }
     
+    // 2. Delete order status history
+    if (product.orders && product.orders.length > 0) {
+      for (const order of product.orders) {
+        await prisma.orderStatusHistory.deleteMany({
+          where: { orderId: order.id }
+        });
+      }
+    }
+    
+    // 3. Delete orders
     if (product.orders && product.orders.length > 0) {
       await prisma.order.deleteMany({ 
         where: { productId: Number(productId) } 
       });
     }
     
-    // Then delete the product
+    // 4. Delete product images
+    if (product.images && product.images.length > 0) {
+      await prisma.productImage.deleteMany({ 
+        where: { productId: Number(productId) } 
+      });
+    }
+    
+    // 5. Finally delete the product
     await prisma.product.delete({ 
       where: { id: Number(productId) } 
     });
@@ -77,6 +111,7 @@ export async function POST(req) {
       details: 'An unexpected error occurred while deleting the product'
     }), { status: 500 });
   } finally {
-    await prisma.$disconnect();
+    // Don't disconnect to maintain connection pooling
+    // The connection will be managed by Prisma automatically
   }
 } 

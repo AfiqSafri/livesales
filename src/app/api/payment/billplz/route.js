@@ -1,6 +1,4 @@
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { prisma } from '@/lib/prisma';
 
 // Billplz API Configuration
 const BILLPLZ_API_KEY = process.env.BILLPLZ_API_KEY;

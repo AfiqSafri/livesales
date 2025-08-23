@@ -189,7 +189,7 @@ function PaymentTestContent() {
             <div className="space-y-2 text-sm text-blue-800">
               <p><strong>Bank:</strong> Test Bank Malaysia</p>
               <p><strong>Account Number:</strong> 1234-5678-9012-3456</p>
-              <p><strong>Account Name:</strong> LiveSales Test Account</p>
+                              <p><strong>Account Name:</strong> Livesalez Test Account</p>
               <p><strong>Reference:</strong> {billId}</p>
             </div>
           </div>

@@ -106,8 +106,9 @@ export default function SellerProductView() {
           </div>
           <button 
             onClick={handleBackToDashboard}
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+            className="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-3 rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 font-semibold flex items-center gap-2 mx-auto"
           >
+            <i className="fas fa-arrow-left"></i>
             Back to Dashboard
           </button>
         </div>
@@ -142,28 +143,31 @@ export default function SellerProductView() {
         <div className="bg-white p-3 sm:p-4 lg:p-6 rounded-lg shadow mb-4">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-3 gap-2">
             <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900">{product.name}</h1>
-            <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+            <div className="flex flex-wrap gap-3 w-full sm:w-auto">
               <button 
                 onClick={handleShareLink}
-                className="bg-blue-600 text-white px-2 py-1.5 rounded text-xs hover:bg-blue-700 flex-1 sm:flex-none"
+                className="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-2.5 rounded-lg text-sm font-semibold hover:from-blue-600 hover:to-blue-700 transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 flex items-center gap-2 flex-1 sm:flex-none justify-center"
               >
+                <i className="fas fa-link text-sm"></i>
                 Copy Share Link
               </button>
               <button 
                 onClick={handleEdit}
-                className={`px-2 py-1.5 rounded text-xs ${
+                className={`px-4 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 flex items-center gap-2 flex-1 sm:flex-none justify-center ${
                   unauthorizedAccess 
-                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
-                    : 'bg-yellow-500 text-black hover:bg-yellow-600'
-                } flex-1 sm:flex-none`}
+                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed shadow-none hover:shadow-none transform-none' 
+                    : 'bg-gradient-to-r from-yellow-400 to-yellow-500 text-black hover:from-yellow-500 hover:to-yellow-600'
+                }`}
                 disabled={unauthorizedAccess}
               >
+                <i className="fas fa-edit text-sm"></i>
                 Edit Product
               </button>
               <button 
                 onClick={handleBackToDashboard}
-                className="bg-gray-500 text-white px-2 py-1.5 rounded text-xs hover:bg-gray-600 flex-1 sm:flex-none"
+                className="bg-gradient-to-r from-gray-500 to-gray-600 text-white px-4 py-2.5 rounded-lg text-sm font-semibold hover:from-gray-600 hover:to-gray-700 transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 flex items-center gap-2 flex-1 sm:flex-none justify-center"
               >
+                <i className="fas fa-arrow-left text-sm"></i>
                 Back to Dashboard
               </button>
             </div>
@@ -286,38 +290,49 @@ export default function SellerProductView() {
 
         {/* Quick Actions */}
         <div className="bg-white p-3 sm:p-4 lg:p-6 rounded-lg shadow mt-4">
-          <h2 className="text-base sm:text-lg font-semibold mb-3">Quick Actions</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          <h2 className="text-base sm:text-lg font-semibold mb-4">Quick Actions</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <button 
               onClick={handleEdit}
-              className="bg-yellow-500 text-black p-3 rounded-lg hover:bg-yellow-600 transition-colors"
+              disabled={unauthorizedAccess}
+              className={`p-4 rounded-xl transition-all duration-300 transform hover:-translate-y-1 hover:shadow-xl ${
+                unauthorizedAccess 
+                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed shadow-none hover:shadow-none transform-none' 
+                  : 'bg-gradient-to-br from-yellow-400 to-yellow-500 text-black hover:from-yellow-500 hover:to-yellow-600 shadow-lg'
+              }`}
             >
               <div className="text-center">
-                <div className="text-lg sm:text-xl mb-1">✏️</div>
-                <div className="font-medium text-sm">Edit Product</div>
-                <div className="text-xs text-gray-600">Update details & images</div>
+                <div className="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <i className="fas fa-edit text-xl text-black"></i>
+                </div>
+                <div className="font-semibold text-sm mb-1">Edit Product</div>
+                <div className="text-xs opacity-80">Update details & images</div>
               </div>
             </button>
             
             <button 
               onClick={handleShareLink}
-              className="bg-blue-500 text-white p-3 rounded-lg hover:bg-blue-600 transition-colors"
+              className="bg-gradient-to-br from-blue-500 to-blue-600 text-white p-4 rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-xl shadow-lg"
             >
               <div className="text-center">
-                <div className="text-lg sm:text-xl mb-1">🔗</div>
-                <div className="font-medium text-sm">Share Product</div>
-                <div className="text-xs text-blue-100">Copy link to share</div>
+                <div className="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <i className="fas fa-share-alt text-xl text-white"></i>
+                </div>
+                <div className="font-semibold text-sm mb-1">Share Product</div>
+                <div className="text-xs opacity-80">Copy link to share</div>
               </div>
             </button>
             
             <button 
               onClick={handleBackToDashboard}
-              className="bg-gray-500 text-white p-3 rounded-lg hover:bg-gray-600 transition-colors sm:col-span-2 lg:col-span-1"
+              className="bg-gradient-to-br from-gray-500 to-gray-600 text-white p-4 rounded-xl hover:from-gray-600 hover:to-gray-700 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-xl shadow-lg sm:col-span-2 lg:col-span-1"
             >
               <div className="text-center">
-                <div className="text-lg sm:text-xl mb-1">📊</div>
-                <div className="font-medium text-sm">View Dashboard</div>
-                <div className="text-xs text-gray-300">Manage all products</div>
+                <div className="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <i className="fas fa-chart-line text-xl text-white"></i>
+                </div>
+                <div className="font-semibold text-sm mb-1">View Dashboard</div>
+                <div className="text-xs opacity-80">Manage all products</div>
               </div>
             </button>
           </div>

@@ -140,8 +140,8 @@ function PaymentSuccessContent() {
             <div className="mt-3 sm:mt-4 lg:mt-6 pt-3 sm:pt-4 lg:pt-6 border-t border-gray-200">
               <p className="text-xs sm:text-sm text-gray-600 text-center">
                 Need help? Contact our support team at{' '}
-                <a href="mailto:support@livesales.com" className="text-blue-600 hover:text-blue-700">
-                  support@livesales.com
+                <a href="mailto:support@livesalez.com" className="text-blue-600 hover:text-blue-700">
+                  support@livesalez.com
                 </a>
               </p>
             </div>

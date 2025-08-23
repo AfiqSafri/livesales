@@ -202,21 +202,53 @@ export default function ProductDetail() {
                 </div>
 
                 {/* Product Images */}
-                {product.images && product.images.length > 0 && (
-                  <div className="mb-6">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Product Images</h3>
+                <div className="mb-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Product Images</h3>
+                  
+                  {/* Debug Info */}
+                  <div className="mb-2 p-2 bg-gray-100 rounded text-xs text-gray-600">
+                    <strong>Debug:</strong> Images count: {product.images ? product.images.length : 0}
+                    {product.images && product.images.length > 0 && (
+                      <div>First image URL: {product.images[0].url}</div>
+                    )}
+                  </div>
+                  
+                  {product.images && product.images.length > 0 ? (
                     <div className="grid grid-cols-2 gap-4">
                       {product.images.map((image, index) => (
-                        <img
-                          key={image.id}
-                          src={image.url}
-                          alt={`${product.name} ${index + 1}`}
-                          className="w-full h-48 object-cover rounded-lg"
-                        />
+                        <div key={image.id} className="relative">
+                          <img
+                            src={image.url}
+                            alt={`${product.name} ${index + 1}`}
+                            className="w-full h-48 object-cover rounded-lg"
+                            onError={(e) => {
+                              console.error('Image failed to load:', image.url);
+                              e.target.style.display = 'none';
+                              e.target.nextSibling.style.display = 'block';
+                            }}
+                          />
+                          {/* Fallback when image fails */}
+                          <div 
+                            className="w-full h-48 bg-gray-200 rounded-lg flex items-center justify-center text-gray-500 text-sm"
+                            style={{ display: 'none' }}
+                          >
+                            Image not available
+                          </div>
+                        </div>
                       ))}
                     </div>
-                  </div>
-                )}
+                  ) : (
+                    <div className="w-full h-48 bg-gray-200 rounded-lg flex items-center justify-center text-gray-500">
+                      <div className="text-center">
+                        <svg className="w-16 h-16 mx-auto text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 00-2-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                        </svg>
+                        <p>No product images available</p>
+                        <p className="text-xs">Product ID: {product.id}</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Right Column - Purchase Form */}

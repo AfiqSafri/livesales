@@ -1,23 +1,50 @@
 "use client";
+
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useSellerLanguage } from '../SellerLanguageContext';
-import ProfessionalButton from '../../../components/ProfessionalButton';
+import ModernHeader from '@/components/ModernHeader';
+import ModernFooter from '@/components/ModernFooter';
 
 export default function SellerDashboard() {
   const router = useRouter();
-  const { language } = useSellerLanguage();
+  const { language } = useSellerLanguage() || { language: 'en' };
   
   const [user, setUser] = useState(null);
+  const [recentOrders, setRecentOrders] = useState([]);
   const [stats, setStats] = useState({
     totalProducts: 0,
     totalOrders: 0,
     totalRevenue: 0,
     pendingOrders: 0
   });
-  const [recentOrders, setRecentOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // Custom CSS for mobile optimization
+  useEffect(() => {
+    const style = document.createElement('style');
+    style.textContent = `
+      @media (max-width: 640px) {
+        .mobile-optimized-table {
+          border-radius: 0.75rem;
+          overflow: hidden;
+        }
+        .mobile-optimized-table td {
+          padding: 0.75rem 0.5rem;
+          border-bottom: 1px solid #f3f4f6;
+        }
+        .mobile-optimized-table tr:last-child td {
+          border-bottom: none;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+    
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
 
   useEffect(() => {
     const u = JSON.parse(localStorage.getItem('currentUser'));
@@ -29,54 +56,98 @@ export default function SellerDashboard() {
     fetchDashboardData(u.id);
   }, [router]);
 
-  function fetchDashboardData(sellerId) {
-    setLoading(true);
-    
-    // Fetch products count
-    fetch('/api/seller/products', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ sellerId }),
-    })
-      .then(res => res.json())
-      .then(data => {
-        setStats(prev => ({ ...prev, totalProducts: data.products?.length || 0 }));
+  async function fetchDashboardData(sellerId) {
+    try {
+      setLoading(true);
+      
+      // Initialize with empty arrays to prevent errors
+      let orders = [];
+      let products = [];
+      
+      // Fetch recent orders
+      try {
+        const ordersResponse = await fetch('/api/seller/orders', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sellerId })
+        });
+        
+        if (ordersResponse.ok) {
+          const ordersData = await ordersResponse.json();
+          // Check if ordersData is an array, if not, look for the orders property
+          orders = Array.isArray(ordersData) ? ordersData : (ordersData.orders || []);
+        }
+      } catch (orderError) {
+        console.error('Error fetching orders:', orderError);
+        orders = [];
+      }
+
+      // Fetch products count
+      try {
+        const productsResponse = await fetch('/api/seller/products', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sellerId })
+        });
+        
+        if (productsResponse.ok) {
+          const productsData = await productsResponse.json();
+          // Check if productsData is an array, if not, look for the products property
+          products = Array.isArray(productsData) ? productsData : (productsData.products || []);
+        }
+      } catch (productError) {
+        console.error('Error fetching products:', productError);
+        products = [];
+      }
+
+      // Update state with fetched data
+      setRecentOrders(orders.slice(0, 5));
+      setStats({
+        totalProducts: products.length,
+        totalOrders: orders.length,
+        totalRevenue: orders.reduce((sum, order) => sum + (parseFloat(order.totalAmount) || 0), 0),
+        pendingOrders: orders.filter(order => order.status === 'pending').length
       });
 
-    // Fetch orders and revenue
-    fetch('/api/seller/orders', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ sellerId }),
-    })
-      .then(res => res.json())
-      .then(data => {
-        const orders = data.orders || [];
-        const totalRevenue = orders.reduce((sum, order) => sum + (order.totalAmount || 0), 0);
-        const pendingOrders = orders.filter(order => order.status === 'pending').length;
-        
-        setStats(prev => ({
-          ...prev,
-          totalOrders: orders.length,
-          totalRevenue: totalRevenue,
-          pendingOrders: pendingOrders
-        }));
-        
-        setRecentOrders(orders.slice(0, 5));
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error('Error fetching dashboard data:', err);
-      setLoading(false);
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+      // Set default values on error
+      setStats({
+        totalProducts: 0,
+        totalOrders: 0,
+        totalRevenue: 0,
+        pendingOrders: 0
       });
+      setRecentOrders([]);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function formatCurrency(amount) {
+    if (!amount || isNaN(amount)) return 'RM 0.00';
+    return new Intl.NumberFormat('en-MY', {
+      style: 'currency',
+      currency: 'MYR',
+      minimumFractionDigits: 2
+    }).format(amount);
+  }
+
+  function formatDate(dateString) {
+    if (!dateString) return 'N/A';
+    return new Date(dateString).toLocaleDateString('en-MY', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
   }
 
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading dashboard...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading dashboard...</p>
         </div>
       </div>
     );
@@ -84,241 +155,260 @@ export default function SellerDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="p-1 sm:p-2 lg:p-6">
-        {/* Header */}
-        <div className="mb-2 sm:mb-3 lg:mb-6">
-          <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 mb-1 sm:mb-2">
-            {language === 'ms' ? 'Selamat Datang' : 'Welcome'}, {user?.name || 'Seller'}!
-          </h1>
-          <p className="text-xs sm:text-sm text-gray-600">
-            {language === 'ms' ? 'Gambaran keseluruhan perniagaan anda' : 'Overview of your business'}
-          </p>
-            </div>
-
-        {/* Quick Actions */}
-        <div className="mb-2 sm:mb-3 lg:mb-6">
-          <div className="flex flex-col sm:flex-row gap-1 sm:gap-2 lg:gap-4">
-            <Link href="/seller/dashboard/create-product">
-              <ProfessionalButton variant="success" size="medium" icon="➕">
-                {language === 'ms' ? 'Tambah Produk' : 'Add Product'}
-              </ProfessionalButton>
-            </Link>
-            <Link href="/seller/orders">
-              <ProfessionalButton variant="primary" size="medium" icon="📋">
-                {language === 'ms' ? 'Lihat Pesanan' : 'View Orders'}
-              </ProfessionalButton>
-            </Link>
-            <Link href="/seller/sales-reports">
-              <ProfessionalButton variant="info" size="medium" icon="📊">
-                {language === 'ms' ? 'Laporan Jualan' : 'Sales Reports'}
-              </ProfessionalButton>
-            </Link>
-            <Link href="/seller/profile">
-              <ProfessionalButton variant="outline" size="medium" icon="👤">
-                {language === 'ms' ? 'Profil' : 'Profile'}
-              </ProfessionalButton>
-            </Link>
-          </div>
-        </div>
-
-        {/* Stats Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-1 sm:gap-2 lg:gap-4 mb-2 sm:mb-3 lg:mb-6">
-          {/* Total Products */}
-          <div className="bg-white rounded-lg border border-gray-200 p-1 sm:p-2 lg:p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-medium text-gray-600">
-                  {language === 'ms' ? 'Jumlah Produk' : 'Total Products'}
-                </p>
-                <p className="text-sm sm:text-base lg:text-2xl font-bold text-gray-900">{stats.totalProducts}</p>
-              </div>
-              <div className="p-1 sm:p-2 bg-blue-100 rounded-lg">
-                <svg className="w-4 h-4 sm:w-5 sm:h-5 lg:w-8 lg:h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
-                </svg>
-              </div>
-            </div>
-          </div>
-
-          {/* Total Orders */}
-          <div className="bg-white rounded-lg border border-gray-200 p-1 sm:p-2 lg:p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-medium text-gray-600">
-                  {language === 'ms' ? 'Jumlah Pesanan' : 'Total Orders'}
-                </p>
-                <p className="text-sm sm:text-base lg:text-2xl font-bold text-gray-900">{stats.totalOrders}</p>
-              </div>
-              <div className="p-1 sm:p-2 bg-green-100 rounded-lg">
-                <svg className="w-4 h-4 sm:w-5 sm:h-5 lg:w-8 lg:h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                </svg>
-              </div>
-            </div>
-          </div>
-
-          {/* Total Revenue */}
-          <div className="bg-white rounded-lg border border-gray-200 p-1 sm:p-2 lg:p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-medium text-gray-600">
-                  {language === 'ms' ? 'Jumlah Pendapatan' : 'Total Revenue'}
-                </p>
-                <p className="text-sm sm:text-base lg:text-2xl font-bold text-gray-900">RM {stats.totalRevenue.toFixed(2)}</p>
-              </div>
-              <div className="p-1 sm:p-2 bg-yellow-100 rounded-lg">
-                <svg className="w-4 h-4 sm:w-5 sm:w-5 lg:w-8 lg:h-8 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
-                </svg>
-              </div>
-            </div>
-          </div>
-
-          {/* Pending Orders */}
-          <div className="bg-white rounded-lg border border-gray-200 p-1 sm:p-2 lg:p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-medium text-gray-600">
-                  {language === 'ms' ? 'Pesanan Tertunggak' : 'Pending Orders'}
-                </p>
-                <p className="text-sm sm:text-base lg:text-2xl font-bold text-gray-900">{stats.pendingOrders}</p>
-              </div>
-              <div className="p-1 sm:p-2 bg-orange-100 rounded-lg">
-                <svg className="w-4 h-4 sm:w-5 sm:h-5 lg:w-8 lg:h-8 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Recent Orders */}
-        <div className="bg-white rounded-lg border border-gray-200 p-1 sm:p-2 lg:p-4 mb-2 sm:mb-3 lg:mb-6">
-          <div className="flex items-center justify-between mb-2 sm:mb-3">
-            <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900">
-              {language === 'ms' ? 'Pesanan Terkini' : 'Recent Orders'}
-            </h3>
-            <Link href="/seller/orders">
-              <ProfessionalButton variant="outline" size="small">
-                {language === 'ms' ? 'Lihat Semua' : 'View All'}
-              </ProfessionalButton>
-            </Link>
-          </div>
-          
-          {recentOrders.length === 0 ? (
-            <div className="text-center py-4 sm:py-6 lg:py-8">
-              <svg className="w-12 h-12 sm:w-16 sm:h-16 mx-auto text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-              </svg>
-              <p className="text-sm sm:text-base text-gray-600 mb-2">
-                {language === 'ms' ? 'Tiada pesanan lagi' : 'No orders yet'}
-              </p>
-              <p className="text-xs sm:text-sm text-gray-500">
-                {language === 'ms' ? 'Pesanan akan muncul di sini' : 'Orders will appear here'}
+      <ModernHeader />
+      
+      {/* Main Content */}
+      <main className="pt-24 pb-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Page Header - Mobile Responsive */}
+          <div className="mb-8 lg:mb-12">
+            <div className="max-w-3xl">
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-3 lg:mb-4 tracking-tight">
+                {language === 'ms' ? 'Selamat Datang Kembali!' : 'Welcome Back!'}
+              </h1>
+              <p className="text-base sm:text-lg lg:text-xl text-gray-600 leading-relaxed">
+                {language === 'ms' ? 'Kelola perniagaan anda dengan cekap' : 'Manage your business efficiently'}
               </p>
             </div>
-          ) : (
-            <div className="space-y-1 sm:space-y-2">
-              {recentOrders.map((order) => (
-                <div key={order.id} className="flex items-center justify-between p-1 sm:p-2 lg:p-3 bg-gray-50 rounded-lg">
-                  <div className="flex items-center space-x-2 sm:space-x-3">
-                    <div className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 bg-gray-200 rounded-lg flex items-center justify-center">
-                      <svg className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                      </svg>
-                    </div>
-                    <div>
-                      <p className="text-xs sm:text-sm font-medium text-gray-900">
-                        {order.buyerName || (order.buyer ? order.buyer.name : 'Guest Customer')}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        {order.product?.name || 'Product'} - RM{order.totalAmount}
-                      </p>
           </div>
-        </div>
-                  <div className="flex items-center space-x-1 sm:space-x-2">
-                    <span className={`px-1 py-0.5 sm:px-2 sm:py-1 text-xs font-medium rounded-full ${
-                      order.status === 'delivered' ? 'bg-green-100 text-green-800' :
-                      order.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                      order.status === 'cancelled' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800'
-                    }`}>
-                      {order.status}
-                    </span>
-                    <Link href={`/seller/orders/${order.id}`}>
-                      <ProfessionalButton variant="primary" size="small">
-                        {language === 'ms' ? 'Lihat' : 'View'}
-                      </ProfessionalButton>
-                    </Link>
-                  </div>
+
+          {/* Stats Grid - Mobile Responsive */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-8 lg:mb-12">
+            {/* Total Products */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6 group hover:scale-105 transition-all duration-300 hover:shadow-md">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                <div className="mb-3 sm:mb-0">
+                  <p className="text-xs sm:text-sm font-medium text-gray-500 uppercase tracking-wide mb-1">
+                    {language === 'ms' ? 'Produk' : 'Products'}
+                  </p>
+                  <p className="text-2xl sm:text-3xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors duration-300">{stats.totalProducts}</p>
                 </div>
-              ))}
-            </div>
-          )}
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 rounded-xl flex items-center justify-center group-hover:bg-blue-200 group-hover:scale-110 transition-all duration-300 self-end sm:self-auto">
+                  <i className="fas fa-box text-blue-600 text-lg sm:text-xl group-hover:rotate-12 transition-transform duration-300"></i>
+                </div>
+              </div>
             </div>
 
-        {/* Quick Links */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1 sm:gap-2 lg:gap-4">
-          <Link href="/seller/products">
-            <div className="bg-white rounded-lg border border-gray-200 p-2 sm:p-3 lg:p-4 hover:shadow-md transition-shadow cursor-pointer">
-              <div className="flex items-center space-x-2 sm:space-x-3">
-                <div className="p-1 sm:p-2 bg-blue-100 rounded-lg">
-                  <svg className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
-                            </svg>
-                          </div>
-                <div>
-                  <h4 className="text-xs sm:text-sm font-medium text-gray-900">
+            {/* Total Orders */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6 group hover:scale-105 transition-all duration-300 hover:shadow-md">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                <div className="mb-3 sm:mb-0">
+                  <p className="text-xs sm:text-sm font-medium text-gray-500 uppercase tracking-wide mb-1">
+                    {language === 'ms' ? 'Pesanan' : 'Orders'}
+                  </p>
+                  <p className="text-2xl sm:text-3xl font-bold text-gray-900 group-hover:text-green-600 transition-colors duration-300">{stats.totalOrders}</p>
+                </div>
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-green-100 rounded-xl flex items-center justify-center group-hover:bg-green-200 group-hover:scale-110 transition-all duration-300 self-end sm:self-auto">
+                  <i className="fas fa-shopping-cart text-green-600 text-lg sm:text-xl group-hover:rotate-12 transition-transform duration-300"></i>
+                </div>
+              </div>
+            </div>
+
+            {/* Total Revenue */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6 group hover:scale-105 transition-all duration-300 hover:shadow-md">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                <div className="mb-3 sm:mb-0">
+                  <p className="text-xs sm:text-sm font-medium text-gray-500 uppercase tracking-wide mb-1">
+                    {language === 'ms' ? 'Pendapatan' : 'Revenue'}
+                  </p>
+                  <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 group-hover:text-yellow-600 transition-colors duration-300">{formatCurrency(stats.totalRevenue)}</p>
+                </div>
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-yellow-100 rounded-xl flex items-center justify-center group-hover:bg-yellow-200 group-hover:scale-110 transition-all duration-300 self-end sm:self-auto">
+                  <i className="fas fa-dollar-sign text-yellow-600 text-lg sm:text-xl group-hover:rotate-12 transition-transform duration-300"></i>
+                </div>
+              </div>
+            </div>
+
+            {/* Pending Orders */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6 group hover:scale-105 transition-all duration-300 hover:shadow-md">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                <div className="mb-3 sm:mb-0">
+                  <p className="text-xs sm:text-sm font-medium text-gray-500 uppercase tracking-wide mb-1">
+                    {language === 'ms' ? 'Tertunda' : 'Pending'}
+                  </p>
+                  <p className="text-2xl sm:text-3xl font-bold text-gray-900 group-hover:text-red-600 transition-colors duration-300">{stats.pendingOrders}</p>
+                </div>
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-red-100 rounded-xl flex items-center justify-center group-hover:bg-red-200 group-hover:scale-110 transition-all duration-300 self-end sm:self-auto">
+                  <i className="fas fa-clock text-red-600 text-lg sm:text-xl group-hover:rotate-12 transition-transform duration-300"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Main Content Grid - Mobile Responsive */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
+            {/* Quick Actions */}
+            <div className="lg:col-span-1">
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
+                <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-4 sm:mb-6">
+                  {language === 'ms' ? 'Tindakan Pantas' : 'Quick Actions'}
+                </h3>
+                <div className="space-y-3 sm:space-y-4">
+                  <button
+                    className="btn btn-lg btn-success w-full group hover:scale-105 transition-all duration-200 py-3 sm:py-4"
+                    onClick={() => router.push('/seller/dashboard/create-product')}
+                  >
+                    <i className="fas fa-plus mr-2 group-hover:rotate-90 transition-transform duration-200"></i>
+                    {language === 'ms' ? 'Tambah Produk' : 'Add Product'}
+                  </button>
+                  
+                  <button
+                    className="btn btn-outline w-full group hover:bg-blue-50 hover:border-blue-300 transition-all duration-200 py-3 sm:py-4"
+                    onClick={() => router.push('/seller/orders')}
+                  >
+                    <i className="fas fa-shopping-cart mr-2 group-hover:scale-110 transition-transform duration-200"></i>
+                    {language === 'ms' ? 'Lihat Pesanan' : 'View Orders'}
+                  </button>
+                  
+                  <button
+                    className="btn btn-outline w-full group hover:bg-green-50 hover:border-green-300 transition-all duration-200 py-3 sm:py-4"
+                    onClick={() => router.push('/seller/products')}
+                  >
+                    <i className="fas fa-box mr-2 group-hover:scale-110 transition-transform duration-200"></i>
                     {language === 'ms' ? 'Kelola Produk' : 'Manage Products'}
-                  </h4>
-                  <p className="text-xs text-gray-500">
-                    {language === 'ms' ? 'Tambah, edit, atau padam produk' : 'Add, edit, or delete products'}
-                  </p>
-                                </div>
-                                </div>
-                              </div>
-          </Link>
-
-          <Link href="/seller/analytics">
-            <div className="bg-white rounded-lg border border-gray-200 p-2 sm:p-3 lg:p-4 hover:shadow-md transition-shadow cursor-pointer">
-              <div className="flex items-center space-x-2 sm:space-x-3">
-                <div className="p-1 sm:p-2 bg-green-100 rounded-lg">
-                  <svg className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-                  </svg>
-                          </div>
-                <div>
-                  <h4 className="text-xs sm:text-sm font-medium text-gray-900">
-                    {language === 'ms' ? 'Analitik' : 'Analytics'}
-                  </h4>
-                  <p className="text-xs text-gray-500">
-                    {language === 'ms' ? 'Lihat prestasi perniagaan' : 'View business performance'}
-                  </p>
-                          </div>
-                        </div>
-                      </div>
-          </Link>
-
-          <Link href="/seller/bank-account">
-            <div className="bg-white rounded-lg border border-gray-200 p-2 sm:p-3 lg:p-4 hover:shadow-md transition-shadow cursor-pointer">
-              <div className="flex items-center space-x-2 sm:space-x-3">
-                <div className="p-1 sm:p-2 bg-purple-100 rounded-lg">
-                  <svg className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
-                  </svg>
-                </div>
-                <div>
-                  <h4 className="text-xs sm:text-sm font-medium text-gray-900">
-                    {language === 'ms' ? 'Akaun Bank' : 'Bank Account'}
-                  </h4>
-                  <p className="text-xs text-gray-500">
-                    {language === 'ms' ? 'Urus maklumat pembayaran' : 'Manage payment information'}
-                  </p>
+                  </button>
+                  
+                  <button
+                    className="btn btn-outline w-full group hover:bg-purple-50 hover:border-purple-300 transition-all duration-200 py-3 sm:py-4"
+                    onClick={() => router.push('/seller/profile')}
+                  >
+                    <i className="fas fa-user mr-2 group-hover:scale-110 transition-transform duration-200"></i>
+                    {language === 'ms' ? 'Profil Saya' : 'My Profile'}
+                  </button>
                 </div>
               </div>
             </div>
-          </Link>
+
+            {/* Recent Orders */}
+            <div className="lg:col-span-2">
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
+                <div className="flex items-center justify-between mb-4 sm:mb-6">
+                  <h3 className="text-lg sm:text-xl font-semibold text-gray-900">
+                    {language === 'ms' ? 'Pesanan Terkini' : 'Recent Orders'}
+                  </h3>
+                  <Link href="/seller/orders" className="text-blue-600 hover:text-blue-700 text-sm font-medium">
+                    {language === 'ms' ? 'Lihat Semua' : 'View All'}
+                  </Link>
+                </div>
+                
+                {Array.isArray(recentOrders) && recentOrders.length > 0 ? (
+                  <div className="overflow-x-auto">
+                    <table className="w-full min-w-full mobile-optimized-table">
+                      <thead className="hidden sm:table-header-group">
+                        <tr className="border-b border-gray-200">
+                          <th className="text-left py-3 px-3 text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                            {language === 'ms' ? 'ID' : 'ID'}
+                          </th>
+                          <th className="text-left py-3 px-3 text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                            {language === 'ms' ? 'Produk' : 'Product'}
+                          </th>
+                          <th className="text-left py-3 px-3 text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                            {language === 'ms' ? 'Jumlah' : 'Amount'}
+                          </th>
+                          <th className="text-left py-3 px-3 text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                            {language === 'ms' ? 'Status' : 'Status'}
+                          </th>
+                          <th className="text-left py-3 px-3 text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                            {language === 'ms' ? 'Tarikh' : 'Date'}
+                          </th>
+                          <th className="text-left py-3 px-3 text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                            {language === 'ms' ? 'Tindakan' : 'Action'}
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-200">
+                        {recentOrders.map((order) => (
+                          <tr key={order?.id || Math.random()} className="hover:bg-gray-50">
+                            {/* Mobile: Card-like layout, Desktop: Table layout */}
+                            <td className="py-3 px-3 text-sm font-medium text-gray-900">
+                              <div className="sm:hidden mb-2">
+                                <span className="text-xs text-gray-500 uppercase tracking-wide">ID:</span>
+                              </div>
+                              #{order?.id || 'N/A'}
+                            </td>
+                            <td className="py-3 px-3">
+                              <div className="sm:hidden mb-2">
+                                <span className="text-xs text-gray-500 uppercase tracking-wide">Product:</span>
+                              </div>
+                              <div className="flex items-center">
+                                <div className="w-8 h-8 bg-blue-100 rounded-md flex items-center justify-center mr-3">
+                                  <i className="fas fa-box text-blue-600 text-sm"></i>
+                                </div>
+                                <span className="text-sm text-gray-900 font-medium">
+                                  {order?.productName || order?.product?.name || 'N/A'}
+                                </span>
+                              </div>
+                            </td>
+                            <td className="py-3 px-3 text-sm font-semibold text-gray-900">
+                              <div className="sm:hidden mb-2">
+                                <span className="text-xs text-gray-500 uppercase tracking-wide">Amount:</span>
+                              </div>
+                              {formatCurrency(order?.totalAmount)}
+                            </td>
+                            <td className="py-3 px-3">
+                              <div className="sm:hidden mb-2">
+                                <span className="text-xs text-gray-500 uppercase tracking-wide">Status:</span>
+                              </div>
+                              <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
+                                order?.status === 'delivered' ? 'bg-green-100 text-green-800' :
+                                order?.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                                order?.status === 'cancelled' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800'
+                              }`}>
+                                {order?.status || 'N/A'}
+                              </span>
+                            </td>
+                            <td className="py-3 px-3 text-sm text-gray-600">
+                              <div className="sm:hidden mb-2">
+                                <span className="text-xs text-gray-500 uppercase tracking-wide">Date:</span>
+                              </div>
+                              <div className="flex items-center">
+                                <i className="fas fa-calendar text-gray-400 mr-2 text-xs"></i>
+                                {order?.createdAt ? formatDate(order.createdAt) : 'N/A'}
+                              </div>
+                            </td>
+                            <td className="py-3 px-3">
+                              <div className="sm:hidden mb-2">
+                                <span className="text-xs text-gray-500 uppercase tracking-wide">Action:</span>
+                              </div>
+                              <button
+                                className="btn btn-sm btn-primary w-full sm:w-auto"
+                                onClick={() => router.push(`/seller/orders/${order?.id}`)}
+                              >
+                                <i className="fas fa-eye mr-1"></i>
+                                {language === 'ms' ? 'Lihat' : 'View'}
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div className="text-center py-8 sm:py-12">
+                    <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                      <i className="fas fa-shopping-cart text-lg sm:text-2xl text-gray-400"></i>
+                    </div>
+                    <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-2">
+                      {language === 'ms' ? 'Tiada Pesanan Lagi' : 'No Orders Yet'}
+                    </h3>
+                    <p className="text-gray-500 mb-4 sm:mb-6 text-sm px-4">
+                      {language === 'ms' ? 'Pesanan pertama anda akan muncul di sini' : 'Your first order will appear here'}
+                    </p>
+                    <button
+                      className="btn btn-primary w-full sm:w-auto"
+                      onClick={() => router.push('/seller/dashboard/create-product')}
+                    >
+                      {language === 'ms' ? 'Tambah Produk Pertama' : 'Add Your First Product'}
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
+      </main>
+      
+      <ModernFooter />
     </div>
   );
 }

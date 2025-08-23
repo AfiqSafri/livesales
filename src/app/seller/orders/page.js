@@ -2,7 +2,8 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSellerLanguage } from '../SellerLanguageContext';
-import ProfessionalButton from '../../../components/ProfessionalButton';
+import ModernHeader from '@/components/ModernHeader';
+import ModernFooter from '@/components/ModernFooter';
 
 export default function SellerOrders() {
   const router = useRouter();
@@ -86,6 +87,33 @@ export default function SellerOrders() {
       })
       .catch(err => {
         alert('Error rejecting payment: ' + err.message);
+      });
+  }
+
+  function handleCompletePayment(orderId) {
+    if (!confirm('Are you sure you want to mark this payment as completed? This will update the order status and send confirmation emails.')) return;
+    
+    fetch('/api/seller/orders/complete-payment', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        orderId,
+        sellerId: user.id,
+        paymentMethod: 'manual_confirmation',
+        paymentReference: `MANUAL_${Date.now()}`
+      }),
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          alert('Payment completed successfully! Order status updated to processing.');
+          fetchOrders(user.id);
+        } else {
+          alert('Error completing payment: ' + data.error);
+        }
+      })
+      .catch(err => {
+        alert('Error completing payment: ' + err.message);
       });
   }
 
@@ -186,29 +214,35 @@ export default function SellerOrders() {
   }
 
   return (
-    <div className="min-h-screen text-gray-900">
-      <div className="p-6">
-        <h1 className="text-3xl font-bold mb-2 text-gray-900">Orders</h1>
-        <p className="text-lg mb-8 text-gray-600">{orders.length} total orders</p>
+    <div className="min-h-screen bg-gray-50">
+      <ModernHeader />
+      
+      {/* Main Content */}
+      <main className="pt-20 pb-16 sm:pt-24">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
+          <div className="mb-6 sm:mb-8">
+            <h1 className="text-2xl sm:text-3xl font-bold mb-2 text-gray-900">Orders</h1>
+            <p className="text-base sm:text-lg text-gray-600">{orders.length} total orders</p>
+          </div>
         
         {orders.length === 0 ? (
-          <div className="text-center py-12">
-            <svg className="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="text-center py-8 sm:py-12">
+            <svg className="w-12 h-12 sm:w-16 sm:h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
             </svg>
-            <p className="text-lg font-medium mb-4 text-gray-900">No orders found</p>
+            <p className="text-base sm:text-lg font-medium mb-4 text-gray-900">No orders found</p>
           </div>
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             {orders.map((order) => (
               <div key={order.id} className="rounded-lg border transition-colors duration-300 bg-white border-gray-200">
-                <div className="p-6">
-                  <div className="flex items-start justify-between mb-4">
+                <div className="p-4 sm:p-6">
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-4">
                     <div className="flex-1">
-                      <div className="flex items-center gap-4 mb-3">
-                        <h3 className="text-lg font-semibold text-gray-900">{order.product.name}</h3>
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mb-3">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-2 sm:mb-0">{order.product.name}</h3>
                         {/* Show both payment status and order status clearly */}
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
                           {/* Payment Status */}
                           <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPaymentStatusColor(order.paymentStatus)}`}>
                             Payment: {order.paymentStatus.toUpperCase()}
@@ -221,42 +255,54 @@ export default function SellerOrders() {
                       </div>
                       
                       {/* Customer Details */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
                         <div>
-                          <h4 className="font-medium text-gray-900 mb-2">Customer Information</h4>
-                          <div className="space-y-1 text-sm text-gray-600">
-                            <p><span className="font-medium">Name:</span> {order.buyerName || (order.buyer ? order.buyer.name : 'Guest')}</p>
-                            <p><span className="font-medium">Email:</span> {order.buyerEmail || (order.buyer ? order.buyer.email : 'N/A')}</p>
-                            <p><span className="font-medium">Phone:</span> {order.phone}</p>
-                            <p><span className="font-medium">Address:</span> {order.shippingAddress}</p>
+                          <h4 className="font-medium text-gray-900 mb-3 text-base">Customer Information</h4>
+                          <div className="space-y-2 text-sm text-gray-600">
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                              <span className="font-medium text-gray-700">Name:</span>
+                              <span className="break-words">{order.buyerName || (order.buyer ? order.buyer.name : 'Guest')}</span>
+                            </div>
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                              <span className="font-medium text-gray-700">Email:</span>
+                              <span className="break-words text-blue-600">{order.buyerEmail || (order.buyer ? order.buyer.email : 'N/A')}</span>
+                            </div>
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                              <span className="font-medium text-gray-700">Phone:</span>
+                              <span className="break-words text-green-600">{order.phone}</span>
+                            </div>
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                              <span className="font-medium text-gray-700">Address:</span>
+                              <span className="break-words">{order.shippingAddress}</span>
+                            </div>
                           </div>
                         </div>
                         
                         <div>
                           <h4 className="font-medium text-gray-900 mb-2">Order Details</h4>
-                          <div className="space-y-1 text-sm text-gray-600">
-                            <div className="flex justify-between">
-                              <span>Quantity:</span>
-                              <span className="font-medium">{order.quantity}</span>
+                          <div className="space-y-2 text-sm text-gray-600">
+                            <div className="flex justify-between items-center">
+                              <span className="font-medium text-gray-700">Quantity:</span>
+                              <span className="font-semibold text-gray-900">{order.quantity}</span>
                             </div>
-                            <div className="flex justify-between">
-                              <span>Total Amount:</span>
-                              <span className="font-medium">RM{order.totalAmount}</span>
+                            <div className="flex justify-between items-center">
+                              <span className="font-medium text-gray-700">Total Amount:</span>
+                              <span className="font-semibold text-green-600">RM{order.totalAmount}</span>
                             </div>
-                            <div className="flex justify-between">
-                              <span>Order Date:</span>
-                              <span className="font-medium">{formatDate(order.createdAt)}</span>
+                            <div className="flex justify-between items-center">
+                              <span className="font-medium text-gray-700">Order Date:</span>
+                              <span className="font-semibold text-gray-900">{formatDate(order.createdAt)}</span>
                             </div>
-                            <div className="flex justify-between">
-                              <span>Current Status:</span>
+                            <div className="flex justify-between items-center">
+                              <span className="font-medium text-gray-700">Current Status:</span>
                               <span className={`font-medium px-2 py-1 rounded-full text-xs ${getStatusColor(order.status)}`}>
                                 {order.status.replace('_', ' ').toUpperCase()}
                               </span>
                             </div>
                             {order.trackingNumber && (
-                              <div className="flex justify-between">
-                                <span>Tracking Number:</span>
-                                <span className="font-medium text-blue-600">{order.trackingNumber}</span>
+                              <div className="flex justify-between items-center">
+                                <span className="font-medium text-gray-700">Tracking Number:</span>
+                                <span className="font-medium text-blue-600 break-all">{order.trackingNumber}</span>
                               </div>
                             )}
                           </div>
@@ -267,35 +313,54 @@ export default function SellerOrders() {
                       {order.receiptUrl && (
                         <div className="mb-4">
                           <h4 className="font-medium text-gray-900 mb-2">Payment Receipt</h4>
-                          <div className="flex items-center gap-3">
-                            <ProfessionalButton
-                              variant="primary"
-                              size="medium"
+                          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                            <button
+                              className="btn btn-primary group hover:scale-105 transition-all duration-200 w-full sm:w-auto"
                               onClick={() => {
                                 setSelectedOrder(order);
                                 setShowReceiptModal(true);
                               }}
                             >
+                              <i className="fas fa-eye mr-2 group-hover:scale-110 transition-transform duration-200"></i>
                               View Receipt
-                            </ProfessionalButton>
+                            </button>
                             {order.paymentStatus === 'pending' && (
-                              <div className="flex gap-2">
-                                <ProfessionalButton
-                                  variant="success"
-                                  size="medium"
+                              <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                                <button
+                                  className="btn btn-success group hover:scale-105 transition-all duration-200 w-full sm:w-auto"
                                   onClick={() => handleApprovePayment(order.id)}
                                 >
+                                  <i className="fas fa-check mr-2 group-hover:scale-110 transition-transform duration-200"></i>
                                   Approve Payment
-                                </ProfessionalButton>
-                                <ProfessionalButton
-                                  variant="danger"
-                                  size="medium"
+                                </button>
+                                <button
+                                  className="btn btn-danger group hover:scale-105 transition-all duration-200 w-full sm:w-auto"
                                   onClick={() => handleRejectPayment(order.id)}
                                 >
+                                  <i className="fas fa-times mr-2 group-hover:scale-110 transition-transform duration-200"></i>
                                   Reject Payment
-                                </ProfessionalButton>
+                                </button>
                               </div>
                             )}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Manual Payment Completion Section */}
+                      {order.paymentStatus === 'pending' && (
+                        <div className="mb-4">
+                          <h4 className="font-medium text-gray-900 mb-2">Manual Payment Completion</h4>
+                          <p className="text-sm text-gray-600 mb-3">
+                            If the customer has already made payment but the status is still pending, you can manually complete the payment
+                          </p>
+                          <div className="flex gap-2">
+                            <button
+                              className="btn btn-primary group hover:scale-105 transition-all duration-200 w-full sm:w-auto"
+                              onClick={() => handleCompletePayment(order.id)}
+                            >
+                              <i className="fas fa-check-circle mr-2 group-hover:scale-110 transition-transform duration-200"></i>
+                              Complete Payment
+                            </button>
                           </div>
                         </div>
                       )}
@@ -306,59 +371,63 @@ export default function SellerOrders() {
                         <p className="text-sm text-gray-600 mb-3">
                           Update the shipping status to keep customers informed about their order progress
                         </p>
-                        <div className="flex flex-wrap gap-2">
-                          <ProfessionalButton
-                            variant={order.status === 'pending' ? 'primary' : 'outline'}
-                            size="small"
+                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
+                          <button
+                            className={`btn btn-sm ${order.status === 'pending' ? 'btn-primary' : 'btn-outline'} group hover:scale-105 transition-all duration-200 w-full`}
                             onClick={() => updateOrderStatus(order.id, 'pending')}
                           >
-                            Pending
-                          </ProfessionalButton>
-                          <ProfessionalButton
-                            variant={order.status === 'processing' ? 'primary' : 'outline'}
-                            size="small"
+                            <i className="fas fa-clock mr-1 sm:mr-2 group-hover:scale-110 transition-transform duration-200"></i>
+                            <span className="hidden sm:inline">Pending</span>
+                            <span className="sm:hidden">Pend</span>
+                          </button>
+                          <button
+                            className={`btn btn-sm ${order.status === 'processing' ? 'btn-primary' : 'btn-outline'} group hover:scale-105 transition-all duration-200 w-full`}
                             onClick={() => updateOrderStatus(order.id, 'processing')}
                           >
-                            Processing
-                          </ProfessionalButton>
-                          <ProfessionalButton
-                            variant={order.status === 'shipped' ? 'primary' : 'outline'}
-                            size="small"
+                            <i className="fas fa-cog mr-1 sm:mr-2 group-hover:scale-110 transition-transform duration-200"></i>
+                            <span className="hidden sm:inline">Processing</span>
+                            <span className="sm:hidden">Proc</span>
+                          </button>
+                          <button
+                            className={`btn btn-sm ${order.status === 'shipped' ? 'btn-primary' : 'btn-outline'} group hover:scale-105 transition-all duration-200 w-full`}
                             onClick={() => updateOrderStatus(order.id, 'shipped')}
                           >
-                            Shipped
-                          </ProfessionalButton>
-                          <ProfessionalButton
-                            variant={order.status === 'delivered' ? 'primary' : 'outline'}
-                            size="small"
+                            <i className="fas fa-shipping-fast mr-1 sm:mr-2 group-hover:scale-110 transition-transform duration-200"></i>
+                            <span className="hidden sm:inline">Shipped</span>
+                            <span className="sm:hidden">Ship</span>
+                          </button>
+                          <button
+                            className={`btn btn-sm ${order.status === 'delivered' ? 'btn-primary' : 'btn-outline'} group hover:scale-105 transition-all duration-200 w-full`}
                             onClick={() => updateOrderStatus(order.id, 'delivered')}
                           >
-                            Delivered
-                          </ProfessionalButton>
-                          <ProfessionalButton
-                            variant={order.status === 'cancelled' ? 'primary' : 'outline'}
-                            size="small"
+                            <i className="fas fa-check-circle mr-1 sm:mr-2 group-hover:scale-110 transition-transform duration-200"></i>
+                            <span className="hidden sm:inline">Delivered</span>
+                            <span className="sm:hidden">Deliv</span>
+                          </button>
+                          <button
+                            className={`btn btn-sm ${order.status === 'cancelled' ? 'btn-primary' : 'btn-outline'} group hover:scale-105 transition-all duration-200 w-full`}
                             onClick={() => updateOrderStatus(order.id, 'cancelled')}
                           >
-                            Cancelled
-                          </ProfessionalButton>
+                            <i className="fas fa-ban mr-1 sm:mr-2 group-hover:scale-110 transition-transform duration-200"></i>
+                            <span className="hidden sm:inline">Cancelled</span>
+                            <span className="sm:hidden">Cancel</span>
+                          </button>
                         </div>
                       </div>
 
                       {/* Tracking Number Section */}
                       <div className="mb-4">
                         <h4 className="font-medium text-gray-900 mb-2">Tracking Information</h4>
-                        <div className="flex items-center gap-3">
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
                           <input
                             type="text"
                             placeholder="Enter tracking number"
                             defaultValue={order.trackingNumber || ''}
-                            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full"
                             onBlur={(e) => updateTrackingNumber(order.id, e.target.value)}
                           />
-                          <ProfessionalButton
-                            variant="info"
-                            size="medium"
+                          <button
+                            className="btn btn-sm btn-primary group hover:scale-105 transition-all duration-200 w-full sm:w-auto"
                             onClick={() => {
                               const trackingInput = document.querySelector(`input[placeholder="Enter tracking number"]`);
                               if (trackingInput) {
@@ -366,12 +435,13 @@ export default function SellerOrders() {
                               }
                             }}
                           >
+                            <i className="fas fa-truck mr-2 group-hover:scale-110 transition-transform duration-200"></i>
                             Update Tracking
-                          </ProfessionalButton>
+                          </button>
                         </div>
                         {order.trackingNumber && (
                           <p className="text-sm text-gray-600 mt-2">
-                            Current tracking: <span className="font-medium">{order.trackingNumber}</span>
+                            Current tracking: <span className="font-medium break-all">{order.trackingNumber}</span>
                           </p>
                         )}
                       </div>
@@ -424,42 +494,43 @@ export default function SellerOrders() {
                       </div>
 
                       {/* Action Buttons */}
-                      <div className="flex gap-2 flex-wrap">
-                        <ProfessionalButton
-                          variant="primary"
-                          size="medium"
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                        <button
+                          className="btn btn-primary group hover:scale-105 transition-all duration-200 w-full"
                           onClick={() => router.push(`/seller/orders/${order.id}`)}
                         >
+                          <i className="fas fa-eye mr-2 group-hover:scale-110 transition-transform duration-200"></i>
                           View Details
-                        </ProfessionalButton>
-                        <ProfessionalButton
-                          variant="warning"
-                          size="medium"
+                        </button>
+                        <button
+                          className="btn btn-warning group hover:scale-105 transition-all duration-200 w-full"
                           onClick={() => router.push(`/seller/orders/${order.id}/edit`)}
                         >
+                          <i className="fas fa-edit mr-2 group-hover:rotate-12 transition-transform duration-200"></i>
                           Update Status
-                        </ProfessionalButton>
+                        </button>
                         {order.buyerEmail && (
-                          <ProfessionalButton
-                            variant="info"
-                            size="medium"
+                          <button
+                            className="btn btn-outline group hover:scale-105 transition-all duration-200 w-full"
                             onClick={() => window.open(`mailto:${order.buyerEmail}`, '_blank')}
                           >
-                            Contact Customer
-                          </ProfessionalButton>
+                            <i className="fas fa-envelope mr-2 group-hover:scale-110 transition-transform duration-200"></i>
+                            <span className="hidden sm:inline">Contact Customer</span>
+                            <span className="sm:hidden">Email</span>
+                          </button>
                         )}
                         {order.phone && (
-                          <ProfessionalButton
-                            variant="success"
-                            size="medium"
+                          <button
+                            className="btn btn-success group hover:scale-105 transition-all duration-200 w-full"
                             onClick={() => window.open(`tel:${order.phone}`, '_blank')}
                           >
-                            Call Customer
-                          </ProfessionalButton>
+                            <i className="fas fa-phone mr-2 group-hover:scale-110 transition-transform duration-200"></i>
+                            <span className="hidden sm:inline">Call Customer</span>
+                            <span className="sm:hidden">Call</span>
+                          </button>
                         )}
-                        <ProfessionalButton
-                          variant="danger"
-                          size="medium"
+                        <button
+                          className="btn btn-danger group hover:scale-105 transition-all duration-200 w-full"
                           onClick={() => {
                             if (confirm('Are you sure you want to delete this order?')) {
                               // Handle order deletion
@@ -467,8 +538,9 @@ export default function SellerOrders() {
                             }
                           }}
                         >
+                          <i className="fas fa-trash mr-2 group-hover:scale-110 transition-transform duration-200"></i>
                           Delete Order
-                        </ProfessionalButton>
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -480,17 +552,17 @@ export default function SellerOrders() {
 
         {/* Receipt Modal */}
         {showReceiptModal && selectedOrder && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-              <div className="flex justify-between items-center mb-4">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4">
+            <div className="bg-white rounded-lg p-4 sm:p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4">
                 <h3 className="text-lg font-semibold text-gray-900">Payment Receipt</h3>
-                <ProfessionalButton
-                  variant="outline"
-                  size="small"
+                <button
+                  className="btn btn-outline group hover:scale-105 transition-all duration-200 w-full sm:w-auto"
                   onClick={() => setShowReceiptModal(false)}
                 >
+                  <i className="fas fa-times mr-2 group-hover:rotate-90 transition-transform duration-200"></i>
                   Close
-                </ProfessionalButton>
+                </button>
               </div>
               
               {selectedOrder.receiptUrl && (
@@ -504,18 +576,21 @@ export default function SellerOrders() {
               )}
               
               <div className="mt-4 flex gap-2 justify-end">
-                <ProfessionalButton
-                  variant="outline"
-                  size="medium"
+                <button
+                  className="btn btn-outline group hover:scale-105 transition-all duration-200 w-full sm:w-auto"
                   onClick={() => setShowReceiptModal(false)}
                 >
+                  <i className="fas fa-times mr-2 group-hover:rotate-90 transition-transform duration-200"></i>
                   Close
-                </ProfessionalButton>
+                </button>
               </div>
             </div>
           </div>
         )}
       </div>
-    </div>
+    </main>
+    
+    <ModernFooter />
+  </div>
   );
 } 
