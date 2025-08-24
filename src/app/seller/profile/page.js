@@ -539,6 +539,72 @@ export default function SellerProfile() {
                 </div>
               </div>
 
+              {/* Bank Account Information */}
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 lg:p-6">
+                <h3 className="text-lg lg:text-xl font-semibold text-gray-900 mb-4 lg:mb-6 flex items-center">
+                  <i className="fas fa-university text-blue-600 mr-2"></i>
+                  Bank Account
+                </h3>
+                
+                {user?.bankAccountNumber && user?.bankName ? (
+                  <div className="space-y-3 lg:space-y-4 text-sm">
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                      <div className="flex items-center text-green-800">
+                        <i className="fas fa-check-circle mr-2"></i>
+                        <span className="font-medium text-xs">Configured</span>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                        <span className="text-gray-600">Bank:</span>
+                        <span className="font-medium text-gray-900">{user.bankName}</span>
+                      </div>
+                      <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                        <span className="text-gray-600">Account:</span>
+                        <span className="font-medium text-gray-900 font-mono text-xs">{user.bankAccountNumber}</span>
+                      </div>
+                      {user.bankCode && (
+                        <div className="flex justify-between items-center py-2">
+                          <span className="text-gray-600">Bank Code:</span>
+                          <span className="font-medium text-gray-900">{user.bankCode}</span>
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div className="pt-2">
+                      <button
+                        onClick={() => router.push('/seller/bank-account')}
+                        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-3 rounded-lg transition-all duration-200 hover:scale-105 flex items-center justify-center gap-2 text-xs"
+                      >
+                        <i className="fas fa-edit"></i>
+                        Update Bank Info
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-3 lg:space-y-4">
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                      <div className="flex items-center text-yellow-800">
+                        <i className="fas fa-exclamation-triangle mr-2"></i>
+                        <span className="font-medium text-xs">Not Configured</span>
+                      </div>
+                      <p className="text-yellow-700 text-xs mt-2">
+                        Buyers need your bank information to make payments
+                      </p>
+                    </div>
+                    
+                    <button
+                      onClick={() => router.push('/seller/bank-account')}
+                      className="w-full bg-orange-600 hover:bg-orange-700 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 hover:scale-105 flex items-center justify-center gap-2"
+                    >
+                      <i className="fas fa-university"></i>
+                      Setup Bank Account
+                    </button>
+                  </div>
+                )}
+              </div>
+
               {/* Quick Actions */}
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 lg:p-6">
                 <h3 className="text-lg lg:text-xl font-semibold text-gray-900 mb-4 lg:mb-6">Quick Actions</h3>

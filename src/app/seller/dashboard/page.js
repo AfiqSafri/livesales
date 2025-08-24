@@ -173,7 +173,7 @@ export default function SellerDashboard() {
           </div>
 
           {/* Stats Grid - Mobile Responsive */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-8 lg:mb-12">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-6 lg:mb-8">
             {/* Total Products */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6 group hover:scale-105 transition-all duration-300 hover:shadow-md">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
@@ -181,7 +181,7 @@ export default function SellerDashboard() {
                   <p className="text-xs sm:text-sm font-medium text-gray-500 uppercase tracking-wide mb-1">
                     {language === 'ms' ? 'Produk' : 'Products'}
                   </p>
-                  <p className="text-2xl sm:text-3xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors duration-300">{stats.totalProducts}</p>
+                  <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors duration-300">{stats.totalProducts}</p>
                 </div>
                 <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 rounded-xl flex items-center justify-center group-hover:bg-blue-200 group-hover:scale-110 transition-all duration-300 self-end sm:self-auto">
                   <i className="fas fa-box text-blue-600 text-lg sm:text-xl group-hover:rotate-12 transition-transform duration-300"></i>
@@ -196,7 +196,7 @@ export default function SellerDashboard() {
                   <p className="text-xs sm:text-sm font-medium text-gray-500 uppercase tracking-wide mb-1">
                     {language === 'ms' ? 'Pesanan' : 'Orders'}
                   </p>
-                  <p className="text-2xl sm:text-3xl font-bold text-gray-900 group-hover:text-green-600 transition-colors duration-300">{stats.totalOrders}</p>
+                  <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 group-hover:text-green-600 transition-colors duration-300">{stats.totalOrders}</p>
                 </div>
                 <div className="w-10 h-10 sm:w-12 sm:h-12 bg-green-100 rounded-xl flex items-center justify-center group-hover:bg-green-200 group-hover:scale-110 transition-all duration-300 self-end sm:self-auto">
                   <i className="fas fa-shopping-cart text-green-600 text-lg sm:text-xl group-hover:rotate-12 transition-transform duration-300"></i>
@@ -234,6 +234,48 @@ export default function SellerDashboard() {
               </div>
             </div>
           </div>
+
+          {/* Payment Setup Alert - Mobile Responsive */}
+          {!user?.bankAccountNumber && (
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-4 sm:p-6 mb-6 lg:mb-8">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-start mb-4 sm:mb-0">
+                  <div className="flex-shrink-0 mr-3 sm:mr-4">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                      <i className="fas fa-university text-blue-600 text-lg sm:text-xl"></i>
+                    </div>
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-lg sm:text-xl font-semibold text-blue-900 mb-2">
+                      {language === 'ms' ? 'Selesaikan Konfigurasi Pembayaran' : 'Complete Payment Setup'}
+                    </h3>
+                    <p className="text-blue-800 text-sm sm:text-base mb-3">
+                      {language === 'ms' 
+                        ? 'Pembeli memerlukan maklumat bank anda untuk membuat pembayaran. Sila konfigurasi akaun bank anda untuk mula menerima pembayaran.'
+                        : 'Buyers need your bank information to make payments. Please configure your bank account to start receiving payments.'
+                      }
+                    </p>
+                    <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+                      <button
+                        className="btn btn-primary group hover:scale-105 transition-all duration-200 py-2 sm:py-3 px-4 sm:px-6"
+                        onClick={() => router.push('/seller/bank-account')}
+                      >
+                        <i className="fas fa-cog mr-2 group-hover:rotate-180 transition-transform duration-200"></i>
+                        {language === 'ms' ? 'Konfigurasi Sekarang' : 'Configure Now'}
+                      </button>
+                      <button
+                        className="btn btn-outline text-blue-700 border-blue-300 hover:bg-blue-50 group hover:scale-105 transition-all duration-200 py-2 sm:py-3 px-4 sm:px-6"
+                        onClick={() => router.push('/seller/profile')}
+                      >
+                        <i className="fas fa-info-circle mr-2"></i>
+                        {language === 'ms' ? 'Ketahui Lebih Lanjut' : 'Learn More'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Main Content Grid - Mobile Responsive */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
@@ -275,6 +317,91 @@ export default function SellerDashboard() {
                     <i className="fas fa-user mr-2 group-hover:scale-110 transition-transform duration-200"></i>
                     {language === 'ms' ? 'Profil Saya' : 'My Profile'}
                   </button>
+
+                  {/* Bank Account Configuration Quick Action */}
+                  {!user?.bankAccountNumber && (
+                    <button
+                      className="btn btn-warning w-full group hover:scale-105 transition-all duration-200 py-3 sm:py-4 border-2 border-orange-300"
+                      onClick={() => router.push('/seller/bank-account')}
+                    >
+                      <i className="fas fa-university mr-2 group-hover:scale-110 transition-transform duration-200"></i>
+                      {language === 'ms' ? 'Konfigurasi Bank' : 'Setup Bank'}
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Bank Account Configuration */}
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6 mt-6">
+                <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-4 sm:mb-6 flex items-center">
+                  <i className="fas fa-university text-blue-600 mr-3"></i>
+                  {language === 'ms' ? 'Akaun Bank' : 'Bank Account'}
+                </h3>
+                
+                {user?.bankAccountNumber && user?.bankName ? (
+                  <div className="space-y-3 mb-4">
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                      <div className="flex items-center text-green-800">
+                        <i className="fas fa-check-circle mr-2"></i>
+                        <span className="text-sm font-medium">
+                          {language === 'ms' ? 'Akaun Bank Dikonfigurasi' : 'Bank Account Configured'}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <div className="bg-gray-50 rounded-lg p-3 space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600 font-medium">
+                          {language === 'ms' ? 'Bank:' : 'Bank:'}
+                        </span>
+                        <span className="text-gray-900">{user.bankName}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600 font-medium">
+                          {language === 'ms' ? 'Akaun:' : 'Account:'}
+                        </span>
+                        <span className="text-gray-900 font-mono">{user.bankAccountNumber}</span>
+                      </div>
+                      {user.bankCode && (
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-600 font-medium">
+                            {language === 'ms' ? 'Kod Bank:' : 'Bank Code:'}
+                          </span>
+                          <span className="text-gray-900">{user.bankCode}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
+                    <div className="flex items-center text-yellow-800">
+                      <i className="fas fa-exclamation-triangle mr-2"></i>
+                      <span className="text-sm font-medium">
+                        {language === 'ms' ? 'Akaun Bank Belum Dikonfigurasi' : 'Bank Account Not Configured'}
+                      </span>
+                    </div>
+                    <p className="text-yellow-700 text-xs mt-2">
+                      {language === 'ms' 
+                        ? 'Pembeli memerlukan maklumat bank anda untuk membuat pembayaran. Sila konfigurasi akaun bank anda.'
+                        : 'Buyers need your bank information to make payments. Please configure your bank account.'
+                      }
+                    </p>
+                  </div>
+                )}
+                
+                <button
+                  className="btn btn-primary w-full group hover:scale-105 transition-all duration-200 py-3"
+                  onClick={() => router.push('/seller/bank-account')}
+                >
+                  <i className="fas fa-cog mr-2 group-hover:rotate-180 transition-transform duration-200"></i>
+                  {language === 'ms' ? 'Konfigurasi Akaun Bank' : 'Configure Bank Account'}
+                </button>
+                
+                <div className="mt-3 text-xs text-gray-500 text-center">
+                  {language === 'ms' 
+                    ? 'Maklumat bank diperlukan untuk pembayaran pembeli'
+                    : 'Bank information required for buyer payments'
+                  }
                 </div>
               </div>
             </div>
