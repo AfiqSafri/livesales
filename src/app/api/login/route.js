@@ -1,3 +1,4 @@
+import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 
@@ -6,11 +7,11 @@ export async function POST(req) {
     const { email, password } = await req.json();
     
     if (!email || !password) {
-      return new Response(JSON.stringify({ error: 'Email and password required' }), { status: 400 });
+      return NextResponse.json({ error: 'Email and password required' }, { status: 400 });
     }
 
     const user = await prisma.user.findUnique({ 
-      where: { email },
+      where: { email: email.toLowerCase() },
       select: {
         id: true,
         name: true,
@@ -32,31 +33,31 @@ export async function POST(req) {
     });
 
     if (!user) {
-      return new Response(JSON.stringify({ error: 'Invalid email or password' }), { status: 401 });
+      return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 });
     }
 
     // Check if user is active
     if (user.status !== 'active') {
-      return new Response(JSON.stringify({ error: 'Account is deactivated. Please contact admin.' }), { status: 401 });
+      return NextResponse.json({ error: 'Account is deactivated. Please contact admin.' }, { status: 401 });
     }
 
     // Verify password
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
-      return new Response(JSON.stringify({ error: 'Invalid email or password' }), { status: 401 });
+      return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 });
     }
 
     // Remove password from response
     const { password: _, ...userWithoutPassword } = user;
 
-    return new Response(JSON.stringify({ 
+    return NextResponse.json({ 
       success: true,
       message: 'Login successful',
       user: userWithoutPassword
-    }), { status: 200 });
+    });
 
   } catch (error) {
     console.error('Login error:', error);
-    return new Response(JSON.stringify({ error: 'Internal server error' }), { status: 500 });
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 } 

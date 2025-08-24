@@ -1,3 +1,4 @@
+import { NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 import { v2 as cloudinary } from 'cloudinary';
 
@@ -35,10 +36,10 @@ export async function POST(req) {
     } = fields;
     
     if (!userId || !name || !email) {
-      return new Response(JSON.stringify({ 
+      return NextResponse.json({ 
         error: 'Missing required fields',
         details: 'Name and email are required'
-      }), { status: 400 });
+      }, { status: 400 });
     }
 
     // Check if user exists
@@ -47,10 +48,10 @@ export async function POST(req) {
     });
 
     if (!existingUser) {
-      return new Response(JSON.stringify({ 
+      return NextResponse.json({ 
         error: 'User not found',
         details: 'The user you are trying to update does not exist'
-      }), { status: 404 });
+      }, { status: 404 });
     }
 
     // Handle profile image deletion (if needed, we can clear the profileImage field)
@@ -107,34 +108,34 @@ export async function POST(req) {
       data: userData,
     });
     
-    return new Response(JSON.stringify({ 
+    return NextResponse.json({ 
       user: updatedUser,
       profileImageUrl,
       message: profileImageUrl ? 'Profile updated successfully with Cloudinary image' : 'Profile updated successfully'
-    }), { status: 200 });
+    });
     
   } catch (e) {
     console.error('Error updating profile:', e);
     
     // Provide more specific error messages
     if (e.code === 'P2002') {
-      return new Response(JSON.stringify({ 
+      return NextResponse.json({ 
         error: 'Email already exists',
         details: 'This email address is already registered by another user'
-      }), { status: 400 });
+      }, { status: 400 });
     }
     
     if (e.code === 'P2003') {
-      return new Response(JSON.stringify({ 
+      return NextResponse.json({ 
         error: 'Invalid user reference',
         details: 'The user ID provided is not valid'
-      }), { status: 400 });
+      }, { status: 400 });
     }
     
-    return new Response(JSON.stringify({ 
+    return NextResponse.json({ 
       error: 'Internal server error',
       details: 'An unexpected error occurred while updating the profile'
-    }), { status: 500 });
+    }, { status: 500 });
   } finally {
     await prisma.$disconnect();
   }

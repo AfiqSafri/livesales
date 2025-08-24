@@ -337,6 +337,14 @@ export default function Login() {
                     </button>
                   </div>
                 </form>
+                <div className="text-center">
+                  <Link
+                    href="/test-email-page"
+                    className="text-sm font-medium text-gray-500 hover:text-gray-700 hover:underline transition-colors duration-200"
+                  >
+                    🧪 Test Email Configuration
+                  </Link>
+                </div>
               </div>
             )}
           </div>

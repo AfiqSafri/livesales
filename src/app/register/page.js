@@ -1,6 +1,8 @@
 "use client";
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import ModernHeader from '@/components/ModernHeader';
+import ModernFooter from '@/components/ModernFooter';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -9,7 +11,7 @@ export default function RegisterPage() {
     email: '',
     password: '',
     confirmPassword: '',
-    userType: 'seller', // Fixed to seller only
+    userType: 'seller',
     bio: '',
     phone: '',
     address: '',
@@ -21,6 +23,8 @@ export default function RegisterPage() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleChange = e => {
     const { name, value, type, checked } = e.target;
@@ -74,11 +78,12 @@ export default function RegisterPage() {
       
       if (!res.ok) {
         setError(data.error || 'Registration failed');
+        setLoading(false);
         return;
       }
       
-      setSuccess('Registration successful! Your 3-month free trial has started. Redirecting to login...');
-      setTimeout(() => router.push('/login'), 2000);
+      setSuccess('🎉 Registration successful! Your 3-month free trial has started. Redirecting to login...');
+      setTimeout(() => router.push('/login'), 3000);
     } catch (error) {
       setError('Network error. Please try again.');
     } finally {
@@ -86,323 +91,424 @@ export default function RegisterPage() {
     }
   };
 
+  const currentPlans = [
+    {
+      id: 'pro',
+      name: 'Pro Plan',
+      description: 'Complete features for professional sellers',
+      price: 20.00,
+      features: ['Unlimited products', 'Advanced analytics', 'Priority support', 'Custom branding', 'Express shipping', 'API access'],
+      popular: true
+    }
+  ];
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-      <div className="bg-white rounded-xl shadow-2xl p-6 sm:p-8 w-full max-w-2xl">
-        {/* Header */}
-        <div className="text-center mb-6 sm:mb-8">
-          <div className="flex items-center justify-center gap-2 sm:gap-3 mb-4">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-600 rounded-xl flex items-center justify-center">
-              <span className="text-white font-bold text-xl sm:text-2xl">L</span>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+      <main className="pt-8 pb-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Header */}
+          <div className="text-center mb-8 lg:mb-12">
+            <div className="flex items-center justify-center gap-3 mb-6">
+              <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center shadow-lg">
+                <span className="text-white font-bold text-3xl">L</span>
+              </div>
+              <span className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                Livesalez
+              </span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Livesalez</h1>
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-4">
+              Create Your Seller Account
+            </h1>
+            <p className="text-lg sm:text-xl text-gray-600 max-w-2xl mx-auto">
+              Start selling your products online with our powerful platform
+            </p>
           </div>
-          <p className="text-gray-600 text-sm sm:text-base">Create your seller account</p>
-          <p className="text-blue-600 text-xs mt-1">Start selling your products online</p>
-        </div>
 
-        {/* Trial Benefits Banner */}
-        <div className="bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 rounded-lg p-4 mb-6">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
-              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-              </svg>
-            </div>
-            <div>
-              <h3 className="font-semibold text-green-800">🎉 3-Month Free Trial</h3>
-              <p className="text-sm text-green-700">Get full access to all seller features for 3 months, no credit card required!</p>
-            </div>
-          </div>
-        </div>
 
-        <form onSubmit={handleSubmit}>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Register Form */}
-            <div>
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Account Information</h2>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Full Name
-                  </label>
-                  <input 
-                    name="name" 
-                    placeholder="Enter your full name"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors text-base"
-                    value={form.name} 
-                    onChange={handleChange} 
-                    required 
-                  />
-                </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Email Address
-                  </label>
-                  <input 
-                    name="email" 
-                    type="email" 
-                    placeholder="Enter your email"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors text-base"
-                    value={form.email} 
-                    onChange={handleChange} 
-                    required 
-                  />
-                </div>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
+            {/* Registration Form */}
+            <div className="lg:col-span-2">
+              <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6 sm:p-8">
+                <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                  <svg className="w-6 h-6 text-blue-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                  </svg>
+                  Account Information
+                </h2>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <form onSubmit={handleSubmit} className="space-y-6">
+                  {/* Basic Information */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        Full Name *
+                      </label>
+                      <input 
+                        name="name" 
+                        placeholder="Enter your full name"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 text-base shadow-sm"
+                        value={form.name} 
+                        onChange={handleChange} 
+                        required 
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        Email Address *
+                      </label>
+                      <input 
+                        name="email" 
+                        type="email" 
+                        placeholder="Enter your email"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 text-base shadow-sm"
+                        value={form.email} 
+                        onChange={handleChange} 
+                        required 
+                      />
+                    </div>
+                  </div>
+
+                  {/* Password Fields */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        Password *
+                      </label>
+                      <div className="relative">
+                        <input 
+                          name="password" 
+                          type={showPassword ? "text" : "password"}
+                          placeholder="Create a password"
+                          className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 text-base shadow-sm"
+                          value={form.password} 
+                          onChange={handleChange} 
+                          required 
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                        >
+                          {showPassword ? (
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21"></path>
+                            </svg>
+                          ) : (
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                            </svg>
+                          )}
+                        </button>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1">Minimum 6 characters</p>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        Confirm Password *
+                      </label>
+                      <div className="relative">
+                        <input 
+                          name="confirmPassword" 
+                          type={showConfirmPassword ? "text" : "password"}
+                          placeholder="Confirm your password"
+                          className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 text-base shadow-sm"
+                          value={form.confirmPassword} 
+                          onChange={handleChange} 
+                          required 
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                        >
+                          {showConfirmPassword ? (
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21"></path>
+                            </svg>
+                          ) : (
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                            </svg>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Contact Information */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        Phone Number *
+                      </label>
+                      <input 
+                        name="phone" 
+                        type="tel" 
+                        placeholder="+60 12-345 6789"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 text-base shadow-sm"
+                        value={form.phone} 
+                        onChange={handleChange} 
+                        required 
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        Business Type
+                      </label>
+                      <select 
+                        name="businessType" 
+                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 text-base shadow-sm"
+                        value={form.businessType} 
+                        onChange={handleChange} 
+                      >
+                        <option value="">Select business type</option>
+                        <option value="retail">Retail</option>
+                        <option value="wholesale">Wholesale</option>
+                        <option value="manufacturing">Manufacturing</option>
+                        <option value="services">Services</option>
+                        <option value="ecommerce">E-commerce</option>
+                        <option value="other">Other</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Address and Company */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Password
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Address *
                     </label>
-                    <input 
-                      name="password" 
-                      type="password" 
-                      placeholder="Create a password"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors text-base"
-                      value={form.password} 
+                    <textarea 
+                      name="address" 
+                      placeholder="Enter your complete address"
+                      rows="3"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 resize-none text-base shadow-sm"
+                      value={form.address} 
                       onChange={handleChange} 
                       required 
                     />
                   </div>
+
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Confirm Password
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Company Name
                     </label>
                     <input 
-                      name="confirmPassword" 
-                      type="password" 
-                      placeholder="Confirm your password"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors text-base"
-                      value={form.confirmPassword} 
+                      name="companyName" 
+                      placeholder="Enter your company name (optional)"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 text-base shadow-sm"
+                      value={form.companyName} 
                       onChange={handleChange} 
-                      required 
                     />
                   </div>
-                </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Phone Number
-                  </label>
-                  <input 
-                    name="phone" 
-                    type="tel" 
-                    placeholder="Enter your phone number"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors text-base"
-                    value={form.phone} 
-                    onChange={handleChange} 
-                    required 
-                  />
-                </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Bio
+                    </label>
+                    <textarea 
+                      name="bio" 
+                      placeholder="Tell us about your business..."
+                      rows="3"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 resize-none text-base shadow-sm"
+                      value={form.bio} 
+                      onChange={handleChange} 
+                    />
+                  </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Address
-                  </label>
-                  <textarea 
-                    name="address" 
-                    placeholder="Enter your complete address"
-                    rows="3"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors resize-none text-base"
-                    value={form.address} 
-                    onChange={handleChange} 
-                    required 
-                  />
-                </div>
+                  {/* Agreements */}
+                  <div className="space-y-4 pt-4">
+                    <div className="flex items-start gap-3">
+                      <input
+                        type="checkbox"
+                        name="agreeToTerms"
+                        checked={form.agreeToTerms}
+                        onChange={handleChange}
+                        className="w-5 h-5 text-blue-600 mt-1 rounded focus:ring-blue-500"
+                        required
+                      />
+                      <div>
+                        <label className="text-sm text-gray-700">
+                          I agree to the{' '}
+                          <a href="/terms" className="text-blue-600 hover:text-blue-700 underline font-medium">Terms of Service</a>
+                          {' '}and{' '}
+                          <a href="/privacy" className="text-blue-600 hover:text-blue-700 underline font-medium">Privacy Policy</a>
+                        </label>
+                      </div>
+                    </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Company Name (Optional)
-                  </label>
-                  <input 
-                    name="companyName" 
-                    placeholder="Enter your company name"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors text-base"
-                    value={form.companyName} 
-                    onChange={handleChange} 
-                  />
-                </div>
+                    <div className="flex items-start gap-3">
+                      <input
+                        type="checkbox"
+                        name="agreeToSubscription"
+                        checked={form.agreeToSubscription}
+                        onChange={handleChange}
+                        className="w-5 h-5 text-blue-600 mt-1 rounded focus:ring-blue-500"
+                        required
+                      />
+                      <div>
+                        <label className="text-sm text-gray-700">
+                          I understand that after the 3-month free trial, I will be charged RM 20/month for the Pro Plan. I can cancel anytime.
+                        </label>
+                      </div>
+                    </div>
+                  </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Business Type (Optional)
-                  </label>
-                  <select 
-                    name="businessType" 
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors text-base"
-                    value={form.businessType} 
-                    onChange={handleChange} 
+                  {/* Error and Success Messages */}
+                  {error && (
+                    <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-xl text-sm flex items-center gap-2">
+                      <svg className="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                      </svg>
+                      {error}
+                    </div>
+                  )}
+
+                  {success && (
+                    <div className="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-xl text-sm flex items-center gap-2">
+                      <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                      </svg>
+                      {success}
+                    </div>
+                  )}
+
+                  {/* Submit Button */}
+                  <button 
+                    type="submit" 
+                    disabled={loading}
+                    className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-4 rounded-xl font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-lg shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
                   >
-                    <option value="">Select business type</option>
-                    <option value="retail">Retail</option>
-                    <option value="wholesale">Wholesale</option>
-                    <option value="manufacturing">Manufacturing</option>
-                    <option value="services">Services</option>
-                    <option value="other">Other</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Bio (Optional)
-                  </label>
-                  <textarea 
-                    name="bio" 
-                    placeholder="Tell us about your business..."
-                    rows="3"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors resize-none text-base"
-                    value={form.bio} 
-                    onChange={handleChange} 
-                  />
-                </div>
+                    {loading ? (
+                      <div className="flex items-center justify-center">
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white mr-3"></div>
+                        Creating Your Account...
+                      </div>
+                    ) : (
+                      '🎉 Start Free Trial - Create Account'
+                    )}
+                  </button>
+                </form>
               </div>
             </div>
 
             {/* Subscription Information */}
-            <div>
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Subscription & Trial</h2>
-              
-              {/* Trial Benefits */}
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-                <h3 className="font-semibold text-blue-900 mb-3">✨ What&apos;s Included in Your Free Trial:</h3>
-                <ul className="space-y-2 text-sm text-blue-800">
-                  <li className="flex items-center gap-2">
-                    <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+            <div className="lg:col-span-1">
+              <div className="space-y-6">
+                {/* Trial Benefits */}
+                <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
+                  <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
+                    <svg className="w-6 h-6 text-blue-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path>
                     </svg>
-                    Unlimited product listings
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-                    </svg>
-                    Advanced analytics & sales reports
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-                    </svg>
-                    Order management system
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-                    </svg>
-                    Discount & promotion tools
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-                    </svg>
-                    Customer support
-                  </li>
-                </ul>
-              </div>
-
-              {/* Subscription Plans */}
-              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6">
-                <h3 className="font-semibold text-gray-900 mb-3">📋 After Trial - Choose Your Plan:</h3>
-                <div className="space-y-3 text-sm">
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-700">Basic Plan</span>
-                    <span className="font-semibold text-gray-900">RM 29/month</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-700">Premium Plan</span>
-                    <span className="font-semibold text-gray-900">RM 59/month</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-700">Enterprise Plan</span>
-                    <span className="font-semibold text-gray-900">RM 99/month</span>
-                  </div>
-                </div>
-                <p className="text-xs text-gray-500 mt-2">* Prices shown are after trial period</p>
-              </div>
-
-              {/* Agreements */}
-              <div className="space-y-4">
-                <div className="flex items-start gap-3">
-                  <input
-                    type="checkbox"
-                    name="agreeToTerms"
-                    checked={form.agreeToTerms}
-                    onChange={handleChange}
-                    className="w-4 h-4 text-blue-600 mt-1"
-                    required
-                  />
-                  <div>
-                    <label className="text-sm text-gray-700">
-                      I agree to the{' '}
-                      <a href="/terms" className="text-blue-600 hover:text-blue-700 underline">Terms of Service</a>
-                      {' '}and{' '}
-                      <a href="/privacy" className="text-blue-600 hover:text-blue-700 underline">Privacy Policy</a>
-                    </label>
-                  </div>
+                    What's Included in Your Free Trial
+                  </h3>
+                  <ul className="space-y-3 text-sm text-gray-700">
+                    <li className="flex items-center gap-3">
+                      <div className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center">
+                        <svg className="w-3 h-3 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                      </div>
+                      Unlimited product listings
+                    </li>
+                    <li className="flex items-center gap-3">
+                      <div className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center">
+                        <svg className="w-3 h-3 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                      </div>
+                      Advanced analytics & sales reports
+                    </li>
+                    <li className="flex items-center gap-3">
+                      <div className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center">
+                        <svg className="w-3 h-3 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                      </div>
+                      Order management system
+                    </li>
+                    <li className="flex items-center gap-3">
+                      <div className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center">
+                        <svg className="w-3 h-3 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                      </div>
+                      Discount & promotion tools
+                    </li>
+                    <li className="flex items-center gap-3">
+                      <div className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center">
+                        <svg className="w-3 h-3 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                      </div>
+                      Priority customer support
+                    </li>
+                  </ul>
                 </div>
 
-                <div className="flex items-start gap-3">
-                  <input
-                    type="checkbox"
-                    name="agreeToSubscription"
-                    checked={form.agreeToSubscription}
-                    onChange={handleChange}
-                    className="w-4 h-4 text-blue-600 mt-1"
-                    required
-                  />
-                  <div>
-                    <label className="text-sm text-gray-700">
-                      I understand that after the 3-month free trial, I will be charged according to the selected subscription plan. I can cancel anytime.
-                    </label>
+                {/* After Trial Plans */}
+                <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
+                  <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
+                    <svg className="w-6 h-6 text-purple-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    After Trial - Choose Your Plan
+                  </h3>
+                  <div className="space-y-4">
+                    {currentPlans.map((plan) => (
+                      <div key={plan.id} className={`p-4 rounded-xl border-2 ${
+                        plan.popular 
+                          ? 'border-purple-300 bg-purple-50' 
+                          : 'border-gray-200 bg-gray-50'
+                      }`}>
+                        {plan.popular && (
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="bg-purple-600 text-white text-xs font-bold px-2 py-1 rounded-full">
+                              Most Popular
+                            </span>
+                          </div>
+                        )}
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <h4 className="font-semibold text-gray-900">{plan.name}</h4>
+                            <p className="text-sm text-gray-600">{plan.description}</p>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-2xl font-bold text-gray-900">RM {plan.price}</div>
+                            <div className="text-sm text-gray-500">/month</div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
+                  <p className="text-xs text-gray-500 mt-3 text-center">* Prices shown are after trial period</p>
+                </div>
+
+                {/* Login Link */}
+                <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6 text-center">
+                  <p className="text-gray-600 text-sm mb-3">
+                    Already have a seller account?
+                  </p>
+                  <a 
+                    href="/login" 
+                    className="inline-block bg-gray-100 text-gray-700 px-6 py-3 rounded-xl font-medium hover:bg-gray-200 transition-all duration-200"
+                  >
+                    Sign in here
+                  </a>
                 </div>
               </div>
             </div>
           </div>
-
-          {/* Error and Success Messages */}
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg text-sm mt-6">
-              {error}
-            </div>
-          )}
-
-          {success && (
-            <div className="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg text-sm mt-6">
-              {success}
-            </div>
-          )}
-
-          {/* Submit Button */}
-          <div className="mt-6">
-            <button 
-              type="submit" 
-              disabled={loading}
-              className="w-full bg-blue-600 text-white py-3 sm:py-4 rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed text-base"
-            >
-              {loading ? 'Creating Seller Account...' : 'Start Free Trial - Create Account'}
-            </button>
-          </div>
-        </form>
-
-        {/* Login Link */}
-        <div className="text-center mt-6">
-          <p className="text-gray-600 text-sm sm:text-base">
-            Already have a seller account?{' '}
-            <a href="/login" className="text-blue-600 hover:text-blue-700 font-medium">
-              Sign in here
-            </a>
-          </p>
         </div>
-
-        {/* Footer */}
-        <div className="text-center mt-4 sm:mt-6 lg:mt-8 pt-2 sm:pt-4 lg:pt-6 border-t border-gray-200">
-          <p className="text-xs sm:text-sm text-gray-500">
-            © 2025 MyTech Padu Solutions. All rights reserved.
-          </p>
-        </div>
-      </div>
+      </main>
+      
+      <ModernFooter />
     </div>
   );
 } 

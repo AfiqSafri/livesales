@@ -5,8 +5,8 @@ const createTransporter = () => {
   return nodemailer.createTransport({
     service: 'gmail',
     auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS
+      user: process.env.EMAIL_SERVER_USER || process.env.EMAIL_USER,
+      pass: process.env.EMAIL_SERVER_PASSWORD || process.env.EMAIL_PASS
     }
   });
 };
@@ -15,15 +15,20 @@ const createTransporter = () => {
 export const sendEmail = async ({ to, subject, html, text }) => {
   try {
     // Check if email credentials are configured
-    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+    const emailUser = process.env.EMAIL_SERVER_USER || process.env.EMAIL_USER;
+    const emailPass = process.env.EMAIL_SERVER_PASSWORD || process.env.EMAIL_PASS;
+    
+    if (!emailUser || !emailPass) {
       console.log('⚠️ Email credentials not configured, skipping email send');
-      return { success: true, messageId: 'skipped-no-credentials' };
+      console.log('📧 Required environment variables: EMAIL_SERVER_USER and EMAIL_SERVER_PASSWORD');
+      console.log('📧 Or alternatively: EMAIL_USER and EMAIL_PASS');
+      return { success: false, messageId: 'skipped-no-credentials', error: 'Email credentials not configured' };
     }
     
     const transporter = createTransporter();
     
     const mailOptions = {
-      from: process.env.EMAIL_USER,
+      from: emailUser,
       to,
       subject,
       html,
@@ -36,7 +41,7 @@ export const sendEmail = async ({ to, subject, html, text }) => {
     
   } catch (error) {
     console.error('❌ Email sending failed:', error);
-    return { success: true, messageId: 'skipped-error' }; // Return success to not break the flow
+    return { success: false, messageId: 'error', error: error.message };
   }
 };
 

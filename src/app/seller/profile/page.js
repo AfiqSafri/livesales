@@ -260,7 +260,7 @@ export default function SellerProfile() {
                     <div>
                       <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-1">
                         {user.name}
-                      </h1>
+              </h1>
                       <p className="text-gray-600 mb-2">
                         <i className="fas fa-envelope mr-2 text-purple-500"></i>
                         {user.email}
@@ -653,22 +653,22 @@ export default function SellerProfile() {
                   <span className="text-sm text-gray-500">{filteredProducts.length} of {products.length} products</span>
                   {products.length > 1 && (
                     <div className="flex items-center space-x-2">
-                      <button 
-                        onClick={() => setShowProductSelector(!showProductSelector)}
-                        className="btn btn-outline group hover:scale-105 transition-all duration-200"
-                      >
-                        <i className={`fas ${showProductSelector ? 'fa-times' : 'fa-link'} mr-2 group-hover:scale-110 transition-transform duration-200`}></i>
-                        {showProductSelector ? 'Close Selector' : 'Select Products for Link'}
-                      </button>
-                      {selectedProducts.length > 0 && (
-                        <button 
-                          onClick={generateMultiProductLink}
-                          className="btn btn-success ml-2 group hover:scale-105 transition-all duration-200"
-                        >
-                          <i className="fas fa-magic mr-2 group-hover:rotate-12 transition-transform duration-200"></i>
-                          Generate Link ({selectedProducts.length})
-                        </button>
-                      )}
+                                        <button 
+                    onClick={() => setShowProductSelector(!showProductSelector)}
+                    className="btn btn-outline group hover:scale-105 transition-all duration-200"
+                  >
+                    <i className={`fas ${showProductSelector ? 'fa-times' : 'fa-link'} mr-2 group-hover:scale-110 transition-transform duration-200`}></i>
+                    {showProductSelector ? 'Close Selector' : 'Select Products for Link'}
+                  </button>
+                  {selectedProducts.length > 0 && (
+                    <button 
+                      onClick={generateMultiProductLink}
+                      className="btn btn-success ml-2 group hover:scale-105 transition-all duration-200"
+                    >
+                      <i className="fas fa-magic mr-2 group-hover:rotate-12 transition-transform duration-200"></i>
+                      Generate Link ({selectedProducts.length})
+                    </button>
+                  )}
                     </div>
                   )}
                 </div>
@@ -701,15 +701,15 @@ export default function SellerProfile() {
                   </div>
                   <h3 className="text-lg font-medium text-gray-900 mb-2">No products yet</h3>
                   <p className="text-gray-500 mb-4">Start selling by creating your first product</p>
-                  <button 
-                    onClick={() => router.push('/seller/dashboard/create-product')}
+                                     <button 
+                     onClick={() => router.push('/seller/dashboard/create-product')}
                     className="bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 hover:scale-105 flex items-center justify-center gap-2 mx-auto"
-                  >
+                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
                     </svg>
-                    Create Product
-                  </button>
+                     Create Product
+                   </button>
                 </div>
               ) : (
                 <>
@@ -827,23 +827,23 @@ export default function SellerProfile() {
                         </div>
                         <p className="text-sm text-gray-600 mb-4">Quantity: {p.quantity}</p>
                         <div className="flex gap-3">
-                          <button 
-                            onClick={() => {
-                              navigator.clipboard.writeText(`${window.location.origin}/product/${p.id}`);
-                              alert('Product link copied to clipboard!');
-                            }}
-                            className="flex-1 btn btn-sm btn-outline group hover:scale-105 transition-all duration-200"
-                          >
-                            <i className="fas fa-share-alt mr-1 group-hover:scale-110 transition-transform duration-200"></i>
-                            Share
-                          </button>
-                          <button 
-                            onClick={() => router.push(`/product/${p.id}`)}
-                            className="flex-1 btn btn-sm btn-primary group hover:scale-105 transition-all duration-200"
-                          >
-                            <i className="fas fa-eye mr-1 group-hover:scale-110 transition-transform duration-200"></i>
-                            View
-                          </button>
+                                                   <button 
+                           onClick={() => {
+                             navigator.clipboard.writeText(`${window.location.origin}/product/${p.id}`);
+                             alert('Product link copied to clipboard!');
+                           }}
+                           className="flex-1 btn btn-sm btn-outline group hover:scale-105 transition-all duration-200"
+                         >
+                           <i className="fas fa-share-alt mr-1 group-hover:scale-110 transition-transform duration-200"></i>
+                           Share
+                         </button>
+                         <button 
+                           onClick={() => router.push(`/product/${p.id}`)}
+                           className="flex-1 btn btn-sm btn-primary group hover:scale-105 transition-all duration-200"
+                         >
+                           <i className="fas fa-eye mr-1 group-hover:scale-110 transition-transform duration-200"></i>
+                           View
+                         </button>
                         </div>
                       </div>
                     ))}
