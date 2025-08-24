@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { sendEmail } from '../../utils/email.js';
+import { sendEmail } from '../../../utils/email.js';
 
 export async function POST(request) {
   try {
