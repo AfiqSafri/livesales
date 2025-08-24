@@ -19,6 +19,7 @@ export default function CreateProduct() {
   const [images, setImages] = useState([]);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false); // Add loading state
 
   const handleChange = e => {
     const { name, value, type, checked } = e.target;
@@ -67,19 +68,34 @@ export default function CreateProduct() {
 
   const handleSubmit = async e => {
     e.preventDefault();
+    
+    // Prevent multiple submissions
+    if (isSubmitting) {
+      console.log('Form submission already in progress, ignoring duplicate click');
+      return;
+    }
+    
+    // Add a small delay to prevent accidental double-clicks
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
     setError('');
     setSuccess('');
+    setIsSubmitting(true); // Set loading state
+    
     const user = JSON.parse(localStorage.getItem('currentUser'));
     if (!user || user.userType !== 'seller') {
       router.push('/login');
+      setIsSubmitting(false);
       return;
     }
     if (!form.name || !form.description || !form.price || !form.quantity || !form.shippingPrice) {
       setError('Please fill in all required fields.');
+      setIsSubmitting(false);
       return;
     }
     if (images.length === 0) {
       setError('Please upload at least 1 image.');
+      setIsSubmitting(false);
       return;
     }
     
@@ -87,14 +103,17 @@ export default function CreateProduct() {
     if (form.hasDiscount) {
       if (!form.discountPercentage || parseFloat(form.discountPercentage) <= 0) {
         setError('Please enter a valid discount amount.');
+        setIsSubmitting(false);
         return;
       }
       if (form.discountType === 'percentage' && parseFloat(form.discountPercentage) > 100) {
         setError('Discount percentage cannot exceed 100%.');
+        setIsSubmitting(false);
         return;
       }
       if (form.discountType === 'fixed' && parseFloat(form.discountPercentage) >= parseFloat(form.price)) {
         setError('Fixed discount cannot be greater than or equal to the original price.');
+        setIsSubmitting(false);
         return;
       }
     }
@@ -122,6 +141,7 @@ export default function CreateProduct() {
       
       if (!res.ok) {
         setError(data.error || data.details || 'Failed to create product');
+        setIsSubmitting(false);
         return;
       }
       
@@ -141,6 +161,7 @@ export default function CreateProduct() {
     } catch (error) {
       console.error('Submit error:', error);
       setError('Network error. Please try again.');
+      setIsSubmitting(false);
     }
   };
 
@@ -152,13 +173,39 @@ export default function CreateProduct() {
         <h2 className="text-2xl font-bold mb-2">Create Product</h2>
         
         <label className="block font-semibold">Product Name <span className="text-red-600">*</span></label>
-        <input name="name" placeholder="Product Name" className="w-full border p-2 rounded" value={form.name} onChange={handleChange} required />
+        <input 
+          name="name" 
+          placeholder="Product Name" 
+          className="w-full border p-2 rounded" 
+          value={form.name} 
+          onChange={handleChange} 
+          required 
+          disabled={isSubmitting}
+        />
         
         <label className="block font-semibold">Description <span className="text-red-600">*</span></label>
-        <textarea name="description" placeholder="Description" className="w-full border p-2 rounded" value={form.description} onChange={handleChange} required />
+        <textarea 
+          name="description" 
+          placeholder="Description" 
+          className="w-full border p-2 rounded" 
+          value={form.description} 
+          onChange={handleChange} 
+          required 
+          disabled={isSubmitting}
+        />
         
         <label className="block font-semibold">Price (RM) <span className="text-red-600">*</span></label>
-        <input name="price" type="number" step="0.01" placeholder="Price in RM" className="w-full border p-2 rounded" value={form.price} onChange={handleChange} required />
+        <input 
+          name="price" 
+          type="number" 
+          step="0.01" 
+          placeholder="Price in RM" 
+          className="w-full border p-2 rounded" 
+          value={form.price} 
+          onChange={handleChange} 
+          required 
+          disabled={isSubmitting}
+        />
         
         {/* Discount Section */}
         <div className="border-t pt-4 mt-4">
@@ -169,6 +216,7 @@ export default function CreateProduct() {
               checked={form.hasDiscount}
               onChange={handleChange}
               className="w-4 h-4 text-blue-600"
+              disabled={isSubmitting}
             />
             <label className="font-semibold">Add Discount</label>
           </div>
@@ -182,6 +230,7 @@ export default function CreateProduct() {
                   value={form.discountType}
                   onChange={handleChange}
                   className="w-full border p-2 rounded"
+                  disabled={isSubmitting}
                 >
                   <option value="percentage">Percentage (%)</option>
                   <option value="fixed">Fixed Amount (RM)</option>
@@ -203,6 +252,7 @@ export default function CreateProduct() {
                   value={form.discountPercentage}
                   onChange={handleChange}
                   required={form.hasDiscount}
+                  disabled={isSubmitting}
                 />
               </div>
               
@@ -214,6 +264,7 @@ export default function CreateProduct() {
                   className="w-full border p-2 rounded"
                   value={form.discountEndDate}
                   onChange={handleChange}
+                  disabled={isSubmitting}
                 />
                 <p className="text-xs text-gray-500 mt-1">Leave empty for no expiration</p>
               </div>
@@ -253,8 +304,13 @@ export default function CreateProduct() {
         />
         <button
           type="button"
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+          className={`px-4 py-2 rounded transition-all duration-200 ${
+            isSubmitting 
+              ? 'bg-gray-400 text-gray-200 cursor-not-allowed' 
+              : 'bg-blue-600 text-white hover:bg-blue-700'
+          }`}
           onClick={handleChooseFiles}
+          disabled={isSubmitting}
         >
           Choose Images
         </button>
@@ -278,16 +334,66 @@ export default function CreateProduct() {
         </div>
         
         <label className="block font-semibold">Quantity <span className="text-red-600">*</span></label>
-        <input name="quantity" type="number" min="0" placeholder="Quantity in stock" className="w-full border p-2 rounded" value={form.quantity} onChange={handleChange} required />
+        <input 
+          name="quantity" 
+          type="number" 
+          min="0" 
+          placeholder="Quantity in stock" 
+          className="w-full border p-2 rounded" 
+          value={form.quantity} 
+          onChange={handleChange} 
+          required 
+          disabled={isSubmitting}
+        />
         
         <label className="block font-semibold">Shipping Price (RM) <span className="text-red-600">*</span></label>
-        <input name="shippingPrice" type="number" step="0.01" min="0" placeholder="Shipping price in RM" className="w-full border p-2 rounded" value={form.shippingPrice} onChange={handleChange} required />
+        <input 
+          name="shippingPrice" 
+          type="number" 
+          step="0.01" 
+          min="0" 
+          placeholder="Shipping price in RM" 
+          className="w-full border p-2 rounded" 
+          value={form.shippingPrice} 
+          onChange={handleChange} 
+          required 
+          disabled={isSubmitting}
+        />
         
         {error && <div className="text-red-600 bg-red-50 p-3 rounded">{error}</div>}
         {success && <div className="text-green-600 bg-green-50 p-3 rounded">{success}</div>}
         
-        <button type="submit" className="w-full bg-green-600 text-white p-2 rounded hover:bg-green-700">Create Product</button>
-        <button type="button" className="w-full bg-gray-200 text-gray-800 p-2 rounded mt-2 hover:bg-gray-300" onClick={() => router.push('/seller/dashboard')}>Cancel</button>
+        <button 
+          type="submit" 
+          className={`w-full p-3 rounded font-semibold transition-all duration-200 ${
+            isSubmitting 
+              ? 'bg-gray-400 text-gray-200 cursor-not-allowed' 
+              : 'bg-green-600 text-white hover:bg-green-700 hover:scale-[1.02]'
+          }`} 
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? (
+            <div className="flex items-center justify-center">
+              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-3"></div>
+              Creating Product...
+            </div>
+          ) : (
+            'Create Product'
+          )}
+        </button>
+        
+        <button 
+          type="button" 
+          className={`w-full p-3 rounded font-semibold transition-all duration-200 ${
+            isSubmitting 
+              ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+              : 'bg-gray-200 text-gray-800 hover:bg-gray-300 hover:scale-[1.02]'
+          }`} 
+          onClick={() => router.push('/seller/dashboard')} 
+          disabled={isSubmitting}
+        >
+          Cancel
+        </button>
       </form>
     </div>
   );
