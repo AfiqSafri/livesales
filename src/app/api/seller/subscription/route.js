@@ -1,16 +1,12 @@
 import { prisma } from '@/lib/prisma';
-
-// Billplz Sandbox Configuration
-const BILLPLZ_API_KEY = process.env.BILLPLZ_API_KEY || '73eb57f0-7d4e-42b9-a76d-e84b6c0c8968';
-const BILLPLZ_COLLECTION_ID = process.env.BILLPLZ_COLLECTION_ID || 'inbmmepb';
-const BILLPLZ_BASE_URL = process.env.BILLPLZ_BASE_URL || 'https://www.billplz-sandbox.com/api/v3';
+import { NextResponse } from 'next/server';
 
 export async function POST(req) {
   try {
     const { userId, action, plan } = await req.json();
     
     if (!userId) {
-      return new Response(JSON.stringify({ error: 'Missing userId' }), { status: 400 });
+      return NextResponse.json({ error: 'Missing userId' }, { status: 400 });
     }
 
     const user = await prisma.user.findUnique({
@@ -32,11 +28,11 @@ export async function POST(req) {
     });
 
     if (!user) {
-      return new Response(JSON.stringify({ error: 'User not found' }), { status: 404 });
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
     if (user.userType !== 'seller') {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 403 });
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
     // Check if trial has expired and update status if needed
@@ -68,21 +64,21 @@ export async function POST(req) {
     if (action === 'create_payment' && plan) {
       const planDetails = getPlanDetails(plan);
       if (!planDetails) {
-        return new Response(JSON.stringify({ error: 'Invalid plan' }), { status: 400 });
+        return NextResponse.json({ error: 'Invalid plan' }, { status: 400 });
       }
 
       // Create a unique reference for this subscription payment
       const reference = `SUB_${userId}_${plan}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
-      // Create Billplz bill for subscription
+      // Create Billplz bill for subscription using production V4 API
       const billplzData = {
-        collection_id: BILLPLZ_COLLECTION_ID,
+        collection_id: process.env.BILLPLZ_COLLECTION_ID,
         description: `Subscription: ${planDetails.name} - ${planDetails.description}`,
         email: user.email,
         name: user.name,
         amount: Math.round(planDetails.price * 100), // Convert to cents
-        callback_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/payment/callback`,
-        redirect_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/seller/subscription?success=true&reference=${reference}`,
+        callback_url: `${process.env.NEXT_PUBLIC_BASE_URL}/api/payment/callback`,
+        redirect_url: `${process.env.NEXT_PUBLIC_BASE_URL}/seller/subscription?success=true&reference=${reference}`,
         reference_1_label: 'User ID',
         reference_1: userId.toString(),
         reference_2_label: 'Plan',
@@ -94,10 +90,10 @@ export async function POST(req) {
       console.log('🔍 Creating Billplz subscription bill:', billplzData);
 
       try {
-        const billplzResponse = await fetch(`${BILLPLZ_BASE_URL}/bills`, {
+        const billplzResponse = await fetch(`${process.env.BILLPLZ_API_BASE_URL}/bills`, {
           method: 'POST',
           headers: {
-            'Authorization': `Basic ${Buffer.from(BILLPLZ_API_KEY + ':').toString('base64')}`,
+            'Authorization': `Basic ${Buffer.from(process.env.BILLPLZ_API_KEY + ':').toString('base64')}`,
             'Content-Type': 'application/json'
           },
           body: JSON.stringify(billplzData)
@@ -106,7 +102,7 @@ export async function POST(req) {
         if (!billplzResponse.ok) {
           const errorData = await billplzResponse.text();
           console.error('Billplz API error:', errorData);
-          return new Response(JSON.stringify({ error: 'Failed to create subscription bill' }), { status: 500 });
+          return NextResponse.json({ error: 'Failed to create Billplz bill' }, { status: 500 });
         }
 
         const billplzBill = await billplzResponse.json();
@@ -123,33 +119,32 @@ export async function POST(req) {
             billplzBillId: billplzBill.id,
             billplzUrl: billplzBill.url,
             reference: reference,
-            description: `Subscription payment for ${planDetails.name}`,
-            plan: 'subscription'
+            description: `Subscription: ${planDetails.name}`,
+            plan: plan
           }
         });
 
-        return new Response(JSON.stringify({
+        return NextResponse.json({
           success: true,
-          subscription,
           payment: {
             id: payment.id,
             billplzUrl: billplzBill.url,
-            reference: reference,
             amount: planDetails.price,
-            plan: planDetails
+            plan: plan,
+            reference: reference
           }
-        }), { status: 200 });
+        });
 
       } catch (error) {
         console.error('❌ Error creating Billplz bill:', error);
-        return new Response(JSON.stringify({ error: 'Failed to create subscription payment' }), { status: 500 });
+        return NextResponse.json({ error: 'Failed to create payment bill' }, { status: 500 });
       }
     }
 
-    return new Response(JSON.stringify({ subscription }), { status: 200 });
+    return NextResponse.json({ subscription });
   } catch (e) {
     console.error('Error in subscription API:', e);
-    return new Response(JSON.stringify({ error: 'Internal server error' }), { status: 500 });
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 

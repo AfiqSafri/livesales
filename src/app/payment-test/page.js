@@ -1,258 +1,151 @@
 "use client";
-import { useEffect, useState, Suspense } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useState } from 'react';
+import BankSelectionModal from '@/components/BankSelectionModal';
 
-function PaymentTestContent() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const [loading, setLoading] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState('credit_card');
-  const [testCard, setTestCard] = useState('4000 0000 0000 0002');
-  const [expiry, setExpiry] = useState('12/25');
-  const [cvv, setCvv] = useState('123');
-  const [name, setName] = useState('Test Customer');
+export default function PaymentTestPage() {
+  const [showBankSelection, setShowBankSelection] = useState(false);
+  const [selectedBank, setSelectedBank] = useState('');
+  const [testResults, setTestResults] = useState([]);
 
-  const billId = searchParams.get('billId');
-  const orderId = searchParams.get('orderId');
-  const amount = searchParams.get('amount');
+  const addLog = (message, type = 'info') => {
+    const timestamp = new Date().toLocaleTimeString();
+    setTestResults(prev => [...prev, { timestamp, message, type }]);
+  };
 
-  const handlePayment = async () => {
-    setLoading(true);
+  const handleBankSelect = (bankId) => {
+    addLog(`🏦 Bank selected: ${bankId}`, 'success');
+    setSelectedBank(bankId);
+    setShowBankSelection(false);
     
-    // Simulate payment processing delay
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    // Simulate payment API call
+    addLog('🚀 Calling payment API...', 'info');
     
+    // Test the payment API
+    testPaymentAPI(bankId);
+  };
+
+  const testPaymentAPI = async (bankId) => {
     try {
-      // Simulate successful payment
-      const response = await fetch('/api/payment/billplz/callback', {
+      addLog('📡 Making API request to /api/payment/buy-product', 'info');
+      
+      const testData = {
+        productId: 11,
+        quantity: 1,
+        sellerId: 1,
+        productName: 'Test Product',
+        unitPrice: 1.99,
+        totalAmount: 1.99,
+        buyerEmail: 'test@example.com',
+        buyerName: 'Test User',
+        shippingAddress: '123 Test Street',
+        phone: '0123456789',
+        selectedBank: bankId
+      };
+
+      addLog(`📋 Test data: ${JSON.stringify(testData, null, 2)}`, 'info');
+
+      const response = await fetch('/api/payment/buy-product', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          billplz_id: billId,
-          billplz_paid: 'true',
-          billplz_paid_at: new Date().toISOString(),
-          billplz_paid_amount: amount
-        })
+        body: JSON.stringify(testData),
       });
 
+      addLog(`📡 Response status: ${response.status}`, 'info');
+      
+      const data = await response.json();
+      addLog(`📡 Response data: ${JSON.stringify(data, null, 2)}`, 'info');
+
       if (response.ok) {
-        // Redirect to success page
-        const successUrl = `/order-success?product=Test Product&quantity=1&total=${amount}&orderId=${orderId}`;
-        router.push(successUrl);
+        addLog('✅ Payment API call successful!', 'success');
+        if (data.billUrl) {
+          addLog(`🔗 Billplz URL: ${data.billUrl}`, 'success');
+          addLog('🎯 Payment flow completed successfully!', 'success');
+        } else {
+          addLog('⚠️ No billUrl received', 'warning');
+        }
       } else {
-        alert('Payment failed. Please try again.');
+        addLog(`❌ Payment API failed: ${data.error}`, 'error');
       }
     } catch (error) {
-      console.error('Payment error:', error);
-      alert('Payment failed. Please try again.');
-    } finally {
-      setLoading(false);
+      addLog(`❌ API call error: ${error.message}`, 'error');
     }
   };
 
-  const handleCancel = () => {
-    // Simulate failed payment
-    fetch('/api/payment/billplz/callback', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        billplz_id: billId,
-        billplz_paid: 'false'
-      })
-    });
-    
-    router.push('/');
+  const clearLogs = () => {
+    setTestResults([]);
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg shadow-lg max-w-md w-full p-6">
-        {/* Header */}
-        <div className="text-center mb-6">
-          <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
-            </svg>
-          </div>
-          <h1 className="text-2xl font-bold text-gray-900">Test Payment</h1>
-          <p className="text-gray-600 mt-2">Complete your payment securely</p>
-        </div>
-
-        {/* Order Summary */}
-        <div className="bg-gray-50 rounded-lg p-4 mb-6">
-          <h2 className="font-semibold text-gray-900 mb-3">Order Summary</h2>
-          <div className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span className="text-gray-600">Order ID:</span>
-              <span className="font-medium">#{orderId}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">Bill ID:</span>
-              <span className="font-medium">{billId}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">Amount:</span>
-              <span className="font-medium text-green-600">RM{amount}</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Payment Method Selection */}
-        <div className="mb-6">
-          <h3 className="font-semibold text-gray-900 mb-3">Payment Method</h3>
-          <div className="space-y-3">
-            <label className="flex items-center">
-              <input
-                type="radio"
-                value="credit_card"
-                checked={paymentMethod === 'credit_card'}
-                onChange={(e) => setPaymentMethod(e.target.value)}
-                className="mr-3"
-              />
-              <span>Credit Card</span>
-            </label>
-            <label className="flex items-center">
-              <input
-                type="radio"
-                value="bank_transfer"
-                checked={paymentMethod === 'bank_transfer'}
-                onChange={(e) => setPaymentMethod(e.target.value)}
-                className="mr-3"
-              />
-              <span>Bank Transfer</span>
-            </label>
-          </div>
-        </div>
-
-        {/* Payment Form */}
-        {paymentMethod === 'credit_card' && (
-          <div className="space-y-4 mb-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Card Number
-              </label>
-              <input
-                type="text"
-                value={testCard}
-                onChange={(e) => setTestCard(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="4000 0000 0000 0002"
-              />
-              <p className="text-xs text-gray-500 mt-1">Test card number</p>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Expiry Date
-                </label>
-                <input
-                  type="text"
-                  value={expiry}
-                  onChange={(e) => setExpiry(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="MM/YY"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  CVV
-                </label>
-                <input
-                  type="text"
-                  value={cvv}
-                  onChange={(e) => setCvv(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="123"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Cardholder Name
-              </label>
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Cardholder Name"
-              />
-            </div>
-          </div>
-        )}
-
-        {paymentMethod === 'bank_transfer' && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-            <h4 className="font-semibold text-blue-900 mb-2">Bank Transfer Details</h4>
-            <div className="space-y-2 text-sm text-blue-800">
-              <p><strong>Bank:</strong> Test Bank Malaysia</p>
-              <p><strong>Account Number:</strong> 1234-5678-9012-3456</p>
-                              <p><strong>Account Name:</strong> Livesalez Test Account</p>
-              <p><strong>Reference:</strong> {billId}</p>
-            </div>
-          </div>
-        )}
-
-        {/* Security Notice */}
-        <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
-          <div className="flex items-center gap-2">
-            <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
-            </svg>
-            <span className="text-green-800 font-medium">Secure Test Payment</span>
-          </div>
-          <p className="text-green-700 text-sm mt-1">
-            This is a test payment environment. No real money will be charged.
-          </p>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="space-y-3">
-          <button
-            onClick={handlePayment}
-            disabled={loading}
-            className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
-          >
-            {loading ? (
-              <div className="flex items-center justify-center">
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                Processing Payment...
-              </div>
-            ) : (
-              `Pay RM${amount}`
-            )}
-          </button>
+    <div className="min-h-screen bg-gray-50 py-8">
+      <div className="max-w-4xl mx-auto px-4">
+        <div className="bg-white rounded-lg shadow-lg p-6">
+          <h1 className="text-3xl font-bold text-gray-900 mb-6">Payment Flow Test</h1>
           
-          <button
-            onClick={handleCancel}
-            disabled={loading}
-            className="w-full bg-gray-200 text-gray-800 py-3 px-4 rounded-lg hover:bg-gray-300 transition-colors disabled:opacity-50"
-          >
-            Cancel Payment
-          </button>
-        </div>
+          <div className="mb-6">
+            <button
+              onClick={() => setShowBankSelection(true)}
+              className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              🏦 Test Bank Selection
+            </button>
+            
+            <button
+              onClick={clearLogs}
+              className="ml-4 bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700 transition-colors"
+            >
+              🗑️ Clear Logs
+            </button>
+          </div>
 
-        {/* Test Information */}
-        <div className="mt-6 pt-6 border-t border-gray-200">
-          <h4 className="font-semibold text-gray-900 mb-2">Test Information</h4>
-          <div className="text-xs text-gray-600 space-y-1">
-            <p><strong>Test Card:</strong> 4000 0000 0000 0002</p>
-            <p><strong>Expiry:</strong> Any future date</p>
-            <p><strong>CVV:</strong> Any 3 digits</p>
-            <p><strong>Environment:</strong> Sandbox (No real charges)</p>
+          {selectedBank && (
+            <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+              <h3 className="font-semibold text-green-800">Selected Bank</h3>
+              <p className="text-green-700">{selectedBank}</p>
+            </div>
+          )}
+
+          <div className="bg-gray-900 text-green-400 p-4 rounded-lg font-mono text-sm max-h-96 overflow-y-auto">
+            <div className="mb-2 text-white">📋 Test Results:</div>
+            {testResults.length === 0 ? (
+              <div className="text-gray-500">No test results yet. Click "Test Bank Selection" to start.</div>
+            ) : (
+              testResults.map((result, index) => (
+                <div key={index} className={`mb-1 ${
+                  result.type === 'success' ? 'text-green-400' :
+                  result.type === 'error' ? 'text-red-400' :
+                  result.type === 'warning' ? 'text-yellow-400' :
+                  'text-blue-400'
+                }`}>
+                  [{result.timestamp}] {result.message}
+                </div>
+              ))
+            )}
+          </div>
+
+          <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <h3 className="font-semibold text-blue-800 mb-2">How to Test:</h3>
+            <ol className="text-blue-700 text-sm space-y-1">
+              <li>1. Click "Test Bank Selection" button</li>
+              <li>2. Select a bank from the modal</li>
+              <li>3. Watch the logs for payment flow</li>
+              <li>4. Check browser console for additional logs</li>
+              <li>5. Verify API response and Billplz integration</li>
+            </ol>
           </div>
         </div>
       </div>
-    </div>
-  );
-}
 
-export default function PaymentTest() {
-  return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <PaymentTestContent />
-    </Suspense>
+      <BankSelectionModal
+        isOpen={showBankSelection}
+        onClose={() => setShowBankSelection(false)}
+        onBankSelect={handleBankSelect}
+        orderDetails={{
+          productName: 'Test Product',
+          quantity: 1,
+          totalAmount: 1.99
+        }}
+        loading={false}
+      />
+    </div>
   );
 } 

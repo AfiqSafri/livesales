@@ -1,18 +1,12 @@
 import { prisma } from '@/lib/prisma';
-
-// Dummy Billplz configuration for testing
-const DUMMY_BILLPLZ_CONFIG = {
-  apiKey: 'dummy-api-key-for-testing',
-  collectionId: 'dummy-collection-id',
-  sandbox: true
-};
+import { NextResponse } from 'next/server';
 
 export async function POST(req) {
   try {
     const { orderId, amount, description, buyerName, buyerEmail, buyerPhone } = await req.json();
 
     if (!orderId || !amount || !description) {
-      return new Response(JSON.stringify({ error: 'Missing required fields' }), { status: 400 });
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
     // Get order details from database
@@ -22,38 +16,71 @@ export async function POST(req) {
     });
 
     if (!order) {
-      return new Response(JSON.stringify({ error: 'Order not found' }), { status: 404 });
+      return NextResponse.json({ error: 'Order not found' }, { status: 404 });
     }
 
-    // Create dummy Billplz bill response
-    const dummyBillId = `bill_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    const dummyPaymentUrl = `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/payment-test?billId=${dummyBillId}&orderId=${orderId}&amount=${amount}`;
+    // Create real Billplz bill using production API
+    // Use sandbox or production based on environment
+    const isSandbox = process.env.BILLPLZ_SANDBOX === 'true';
+    const billplzApiUrl = isSandbox 
+      ? 'https://www.billplz-sandbox.com/api/v3'
+      : 'https://www.billplz.com/api/v3';
+    console.log('🔧 Using Billplz API URL for order creation:', billplzApiUrl);
+    
+    const billplzResponse = await fetch(`${billplzApiUrl}/bills`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Basic ${Buffer.from(process.env.BILLPLZ_API_KEY + ':').toString('base64')}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        collection_id: process.env.BILLPLZ_COLLECTION_ID,
+        description: description,
+        email: buyerEmail || 'customer@example.com',
+        name: buyerName || 'Customer',
+        amount: Math.round(amount * 100), // Convert to cents
+        callback_url: `${process.env.NEXT_PUBLIC_BASE_URL}/api/payment/billplz/callback`,
+        redirect_url: `${process.env.NEXT_PUBLIC_BASE_URL}/payment/success`,
+        reference_1_label: 'Order ID',
+        reference_1: orderId.toString(),
+        reference_2_label: 'Product',
+        reference_2: order.product.name,
+      }),
+    });
 
-    // Update order with dummy Billplz bill ID
+    const billData = await billplzResponse.json();
+    
+    if (billData.error) {
+      console.error('Billplz API Error:', billData.error);
+      return NextResponse.json({ error: billData.error.message || 'Failed to create Billplz bill' }, { status: 400 });
+    }
+
+    // Update order with real Billplz bill ID
     await prisma.order.update({
       where: { id: Number(orderId) },
       data: {
-        billplzBillId: dummyBillId,
-        paymentMethod: 'billplz'
+        billplzBillId: billData.id,
+        paymentMethod: 'billplz',
+        updatedAt: new Date()
       }
     });
 
-    return new Response(JSON.stringify({
+    return NextResponse.json({
       success: true,
-      billId: dummyBillId,
-      paymentUrl: dummyPaymentUrl,
+      billId: billData.id,
+      paymentUrl: billData.url,
       bill: {
-        id: dummyBillId,
-        url: dummyPaymentUrl,
-        amount: Math.round(amount * 100),
-        description: description,
-        email: buyerEmail || 'customer@example.com',
-        name: buyerName || 'Customer'
+        id: billData.id,
+        url: billData.url,
+        amount: billData.amount,
+        description: billData.description,
+        email: billData.email,
+        name: billData.name
       }
-    }), { status: 200 });
+    });
 
   } catch (error) {
-    console.error('Error creating dummy Billplz bill:', error);
-    return new Response(JSON.stringify({ error: 'Internal server error' }), { status: 500 });
+    console.error('Error creating Billplz bill:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 } 

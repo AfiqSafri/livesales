@@ -3,10 +3,10 @@ import { sendEmail, emailTemplates } from '../../../../../utils/email.js';
 
 const prisma = new PrismaClient();
 
-// Billplz Sandbox Configuration
-const BILLPLZ_API_KEY = process.env.BILLPLZ_API_KEY || '73eb57f0-7d4e-42b9-a76d-e84b6c0c8968';
-const BILLPLZ_COLLECTION_ID = process.env.BILLPLZ_COLLECTION_ID || 'inbmmepb';
-const BILLPLZ_BASE_URL = process.env.BILLPLZ_BASE_URL || 'https://www.billplz-sandbox.com/api/v3';
+// Billplz Configuration
+const BILLPLZ_API_KEY = process.env.BILLPLZ_API_KEY;
+const BILLPLZ_COLLECTION_ID = process.env.BILLPLZ_COLLECTION_ID;
+const BILLPLZ_BASE_URL = process.env.BILLPLZ_API_BASE_URL;
 
 export async function POST(req) {
   try {

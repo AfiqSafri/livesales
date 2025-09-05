@@ -66,7 +66,13 @@ export async function POST(req) {
     };
 
     // Create Billplz bill
-    const billplzResponse = await fetch('https://www.billplz.com/api/v3/bills', {
+    // Use sandbox or production based on environment
+    const isSandbox = process.env.BILLPLZ_SANDBOX === 'true';
+    const billplzApiUrl = isSandbox 
+      ? 'https://www.billplz-sandbox.com/api/v3'
+      : 'https://www.billplz.com/api/v3';
+    
+    const billplzResponse = await fetch(`${billplzApiUrl}/bills`, {
       method: 'POST',
       headers: {
         'Authorization': `Basic ${Buffer.from(BILLPLZ_API_KEY + ':').toString('base64')}`,

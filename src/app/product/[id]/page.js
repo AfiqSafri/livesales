@@ -2,18 +2,15 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { calculateDiscountedPrice, formatDiscountInfo } from '@/utils/productUtils';
+import EnhancedProductPurchase from '@/components/EnhancedProductPurchase';
+import ImageCarousel from '@/components/ImageCarousel';
 
 export default function ProductDetail() {
   const params = useParams();
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [quantity, setQuantity] = useState(1);
   const [paymentLoading, setPaymentLoading] = useState(false);
-  const [buyerEmail, setBuyerEmail] = useState('');
-  const [buyerName, setBuyerName] = useState('');
-  const [shippingAddress, setShippingAddress] = useState('');
-  const [phone, setPhone] = useState('');
 
   useEffect(() => {
     if (params.id) {
@@ -42,58 +39,77 @@ export default function ProductDetail() {
     }
   };
 
-  const handleTestPayment = async () => {
-    if (!product) return;
+  const handleEnhancedPurchase = async (purchaseData) => {
+    console.log('🚀🚀🚀 handleEnhancedPurchase FUNCTION CALLED! 🚀🚀🚀');
+    console.log('🛒 Purchase initiated with data:', purchaseData);
+    console.log('📋 Product available:', !!product);
+    console.log('📋 Product details:', product);
     
-    // Validate required fields
-    if (!buyerEmail || !buyerName || !shippingAddress || !phone) {
-      alert('Please provide all required information (name, email, shipping address, and phone) to continue');
-      return;
-    }
-
-    if (quantity < 1) {
-      alert('Please select a valid quantity');
+    if (!product) {
+      console.log('❌ No product available');
       return;
     }
     
     setPaymentLoading(true);
+    
     try {
-      const totalAmount = calculateDiscountedPrice(product) * quantity + (product.shippingPrice || 0);
+      // Use the exact same logic as the working multi-products page
+      const totalAmount = calculateDiscountedPrice(product) * purchaseData.quantity + (product.shippingPrice || 0);
       
-      const requestBody = {
-        productId: product.id,
-        quantity: quantity,
-        sellerId: product.seller.id,
-        productName: product.name,
-        unitPrice: calculateDiscountedPrice(product),
-        totalAmount: totalAmount,
-        buyerEmail: buyerEmail,
-        buyerName: buyerName,
-        shippingAddress: shippingAddress,
-        phone: phone
-      };
-
-      console.log('🧪 Creating test payment:', requestBody);
-
-      const res = await fetch('/api/payment/buy-product', {
+      console.log('🧮 Frontend calculation (same as multi-products):');
+      console.log('   - Unit Price:', calculateDiscountedPrice(product));
+      console.log('   - Quantity:', purchaseData.quantity);
+      console.log('   - Shipping Cost:', product.shippingPrice || 0);
+      console.log('   - Calculation:', `${calculateDiscountedPrice(product)} × ${purchaseData.quantity} + ${product.shippingPrice || 0}`);
+      console.log('   - Total Amount:', totalAmount);
+      
+      // Create payment through the CHIP Collect API (exact same structure as multi-products)
+      const paymentResponse = await fetch('/api/payment/buy-product', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(requestBody),
+        body: JSON.stringify({
+          productId: product.id,
+          quantity: purchaseData.quantity,
+          sellerId: product.seller.id,
+          productName: product.name,
+          unitPrice: calculateDiscountedPrice(product),
+          totalAmount: totalAmount,
+          buyerEmail: purchaseData.email,
+          buyerName: purchaseData.name,
+          shippingAddress: purchaseData.shippingAddress,
+          phone: purchaseData.phone,
+          selectedBank: purchaseData.selectedBank
+        })
       });
-      
-      const data = await res.json();
-      
-      if (res.ok) {
-        console.log('✅ Test payment created successfully:', data);
+
+      if (paymentResponse.ok) {
+        const paymentData = await paymentResponse.json();
+        console.log('✅ Payment created successfully:', paymentData);
         
-        if (data.testPaymentUrl) {
-          // Redirect to test payment page
-          window.location.href = data.testPaymentUrl;
+        // Store order details for success page
+        localStorage.setItem('pendingOrder', JSON.stringify({
+          orderId: paymentData.orderIds?.[0] || paymentData.reference,
+          totalAmount: totalAmount,
+          productName: product.name,
+          quantity: purchaseData.quantity,
+          selectedBank: purchaseData.selectedBank
+        }));
+        
+        // Redirect to CHIP Collect payment page (same as multi-products)
+        if (paymentData.paymentUrl) {
+          console.log('🔗 Redirecting to CHIP Collect payment page:', paymentData.paymentUrl);
+          window.location.href = paymentData.paymentUrl;
+        } else if (paymentData.checkoutUrl) {
+          console.log('🔗 Redirecting to CHIP Collect checkout:', paymentData.checkoutUrl);
+          window.location.href = paymentData.checkoutUrl;
         } else {
-          alert('Test payment created successfully! Check your email for confirmation.');
+          console.log('⚠️ No payment URL received, showing alert');
+          alert('Payment created successfully! Check your email for confirmation.');
         }
       } else {
-        alert(data.error || 'Failed to create test payment');
+        const errorData = await paymentResponse.json();
+        console.error('❌ Payment creation failed:', errorData);
+        alert(errorData.error || 'Failed to create payment');
       }
     } catch (error) {
       console.error('❌ Payment error:', error);
@@ -127,7 +143,7 @@ export default function ProductDetail() {
 
   const discountInfo = formatDiscountInfo(product);
   const finalPrice = calculateDiscountedPrice(product);
-  const totalPrice = finalPrice * quantity + (product.shippingPrice || 0);
+  const totalPrice = finalPrice * 1 + (product.shippingPrice || 0);
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
@@ -158,6 +174,28 @@ export default function ProductDetail() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               {/* Left Column - Product Info */}
               <div>
+                                {/* Main Product Image with Carousel */}
+                <div className="mb-6">
+                  <div className="w-full h-64 sm:h-80 rounded-lg border border-gray-200 shadow-lg overflow-hidden">
+                    {product.images && product.images.length > 0 ? (
+                      <ImageCarousel 
+                        images={product.images} 
+                        productName={product.name}
+                        autoSlideInterval={4000}
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+                        <div className="text-center">
+                          <svg className="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                          </svg>
+                          <p className="text-gray-500 text-sm">No product image available</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
                 <div className="mb-6">
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">Product Description</h3>
                   <p className="text-gray-600">{product.description}</p>
@@ -167,303 +205,59 @@ export default function ProductDetail() {
                   <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
                     <div className="flex items-center">
                       <svg className="w-5 h-5 text-red-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                       </svg>
-                      <span className="text-red-800 font-medium">{discountInfo.discountLabel}</span>
-                    </div>
-                    <div className="mt-2 text-sm text-red-700">
-                      <p>Save RM {discountInfo.savings.toFixed(2)}!</p>
-                      <p>Original Price: RM {discountInfo.originalPrice.toFixed(2)}</p>
-                      <p>Discounted Price: RM {discountInfo.discountedPrice.toFixed(2)}</p>
+                      <div>
+                        <p className="font-semibold text-red-800">Special Offer!</p>
+                        <p className="text-red-700 text-sm">{discountInfo.message}</p>
+                      </div>
                     </div>
                   </div>
                 )}
 
-                <div className="mb-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Product Details</h3>
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <span className="text-gray-600">Category:</span>
-                      <p className="font-medium capitalize">{product.category}</p>
-                    </div>
-                    <div>
-                      <span className="text-gray-600">Stock:</span>
-                      <p className="font-medium">{product.quantity} units</p>
-                    </div>
-                    <div>
-                      <span className="text-gray-600">Condition:</span>
-                      <p className="font-medium capitalize">{product.condition}</p>
-                    </div>
-                    <div>
-                      <span className="text-gray-600">Shipping:</span>
-                      <p className="font-medium">RM {(product.shippingPrice || 0).toFixed(2)}</p>
-                    </div>
-                  </div>
-                </div>
+                
 
-                {/* Product Images */}
+                {/* Product Specifications */}
                 <div className="mb-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Product Images</h3>
-                  
-                  {/* Debug Info */}
-                  <div className="mb-2 p-2 bg-gray-100 rounded text-xs text-gray-600">
-                    <strong>Debug:</strong> Images count: {product.images ? product.images.length : 0}
-                    {product.images && product.images.length > 0 && (
-                      <div>First image URL: {product.images[0].url}</div>
-                    )}
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Product Details</h3>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Category:</span>
+                      <span className="font-medium">{product.category || 'N/A'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Stock Available:</span>
+                      <span className={`font-medium ${product.quantity > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        {product.quantity > 0 ? `${product.quantity} units` : 'Out of Stock'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Shipping Cost:</span>
+                      <span className="font-medium">RM {(product.shippingPrice || 0).toFixed(2)}</span>
+                    </div>
                   </div>
-                  
-                  {product.images && product.images.length > 0 ? (
-                    <div className="grid grid-cols-2 gap-4">
-                      {product.images.map((image, index) => (
-                        <div key={image.id} className="relative">
-                          <img
-                            src={image.url}
-                            alt={`${product.name} ${index + 1}`}
-                            className="w-full h-48 object-cover rounded-lg"
-                            onError={(e) => {
-                              console.error('Image failed to load:', image.url);
-                              e.target.style.display = 'none';
-                              e.target.nextSibling.style.display = 'block';
-                            }}
-                          />
-                          {/* Fallback when image fails */}
-                          <div 
-                            className="w-full h-48 bg-gray-200 rounded-lg flex items-center justify-center text-gray-500 text-sm"
-                            style={{ display: 'none' }}
-                          >
-                            Image not available
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="w-full h-48 bg-gray-200 rounded-lg flex items-center justify-center text-gray-500">
-                      <div className="text-center">
-                        <svg className="w-16 h-16 mx-auto text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 00-2-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                        </svg>
-                        <p>No product images available</p>
-                        <p className="text-xs">Product ID: {product.id}</p>
-                      </div>
-                    </div>
-                  )}
                 </div>
               </div>
 
-              {/* Right Column - Purchase Form */}
+              {/* Right Column - Enhanced Payment Form */}
               <div>
-                <div className="bg-gray-50 p-6 rounded-lg">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Purchase Information</h3>
-                  
-                  {/* Quantity Selection */}
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Quantity
-                    </label>
-                    <div className="flex items-center space-x-2">
-                      <button
-                        onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                        className="w-8 h-8 bg-gray-200 rounded-lg flex items-center justify-center hover:bg-gray-300"
-                      >
-                        -
-                      </button>
-                      <span className="w-12 text-center font-medium">{quantity}</span>
-                      <button
-                        onClick={() => setQuantity(quantity + 1)}
-                        disabled={quantity >= product.quantity}
-                        className="w-8 h-8 bg-gray-200 rounded-lg flex items-center justify-center hover:bg-gray-300 disabled:opacity-50"
-                      >
-                        +
-                      </button>
-                    </div>
-                    <p className="text-sm text-gray-500 mt-1">
-                      {product.quantity} units available
-                    </p>
+                {product.quantity > 0 ? (
+                  <EnhancedProductPurchase
+                    product={product}
+                    onPurchase={handleEnhancedPurchase}
+                    loading={paymentLoading}
+                    showPaymentGuide={true}
+                  />
+                ) : (
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+                    <svg className="w-12 h-12 text-red-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                    </svg>
+                    <h3 className="text-lg font-semibold text-red-800 mb-2">Out of Stock</h3>
+                    <p className="text-red-700">This product is currently unavailable. Please check back later.</p>
                   </div>
+                )}
 
-                  {/* Price Summary */}
-                  <div className="mb-4 p-3 bg-white rounded border">
-                    <div className="flex justify-between mb-2">
-                      <span>Unit Price:</span>
-                      <span>RM {finalPrice.toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between mb-2">
-                      <span>Quantity:</span>
-                      <span>{quantity}</span>
-                    </div>
-                    <div className="flex justify-between mb-2">
-                      <span>Subtotal:</span>
-                      <span>RM {(finalPrice * quantity).toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between mb-2">
-                      <span>Shipping:</span>
-                      <span>RM {(product.shippingPrice || 0).toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between font-bold text-lg border-t pt-2">
-                      <span>Total:</span>
-                      <span>RM {totalPrice.toFixed(2)}</span>
-                    </div>
-                  </div>
-
-                  {/* Buyer Information Form */}
-                  <div className="space-y-4 mb-6">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Your Name *
-                      </label>
-                      <input
-                        type="text"
-                        value={buyerName}
-                        onChange={(e) => setBuyerName(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="Enter your full name"
-                        required
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Email Address *
-                      </label>
-                      <input
-                        type="email"
-                        value={buyerEmail}
-                        onChange={(e) => setBuyerEmail(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="Enter your email address"
-                        required
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Phone Number *
-                      </label>
-                      <input
-                        type="tel"
-                        value={phone}
-                        onChange={(e) => setPhone(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="Enter your phone number"
-                        required
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Shipping Address *
-                      </label>
-                      <textarea
-                        value={shippingAddress}
-                        onChange={(e) => setShippingAddress(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="Enter your complete shipping address"
-                        rows={3}
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  {/* Single Test Payment Button */}
-                  <button
-                    onClick={handleTestPayment}
-                    disabled={product.quantity === 0 || paymentLoading || !buyerEmail || !buyerName || !shippingAddress || !phone}
-                    className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex items-center justify-center space-x-2"
-                  >
-                    {paymentLoading ? (
-                      <>
-                        <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        <span>Processing...</span>
-                      </>
-                    ) : (
-                      <>
-                        <span>🧪</span>
-                        <span>{product.quantity === 0 ? 'Out of Stock' : 'Test Payment'}</span>
-                      </>
-                    )}
-                  </button>
-
-                  <p className="text-xs text-gray-500 mt-2 text-center">
-                    This is a test payment. No real charges will be made.
-                  </p>
-                </div>
-
-                {/* Seller Information */}
-                <div className="mt-6 bg-gray-50 p-6 rounded-lg">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Seller Information</h3>
-                  <div className="space-y-3">
-                    <div>
-                      <span className="text-sm text-gray-600">Seller:</span>
-                      <p className="font-medium">{product.seller.name}</p>
-                    </div>
-                    {product.seller.companyName && (
-                      <div>
-                        <span className="text-sm text-gray-600">Company:</span>
-                        <p className="font-medium">{product.seller.companyName}</p>
-                      </div>
-                    )}
-                    {product.seller.businessType && (
-                      <div>
-                        <span className="text-sm text-gray-600">Business Type:</span>
-                        <p className="font-medium capitalize">{product.seller.businessType}</p>
-                      </div>
-                    )}
-                    {product.seller.bio && (
-                      <div>
-                        <span className="text-sm text-gray-600">About:</span>
-                        <p className="text-sm">{product.seller.bio}</p>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Bank Account Information */}
-                  {product.seller.bankName && product.seller.bankAccountNumber && (
-                    <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                      <h4 className="text-md font-semibold text-blue-900 mb-3 flex items-center">
-                        <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
-                        </svg>
-                        Bank Account Information
-                      </h4>
-                      <div className="space-y-2 text-sm">
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Bank:</span>
-                          <span className="font-medium">{product.seller.bankName}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Account Holder:</span>
-                          <span className="font-medium">{product.seller.bankAccountHolder}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Account Number:</span>
-                          <span className="font-medium font-mono">{product.seller.bankAccountNumber}</span>
-                        </div>
-                        {product.seller.bankCode && (
-                          <div className="flex justify-between">
-                            <span className="text-gray-600">Bank Code:</span>
-                            <span className="font-medium">{product.seller.bankCode}</span>
-                          </div>
-                        )}
-                      </div>
-                      <div className="mt-3 p-2 bg-green-50 border border-green-200 rounded text-xs text-green-700">
-                        ✅ Seller has verified bank account for direct transfers
-                      </div>
-                    </div>
-                  )}
-                  
-                  <div className="mt-6 space-y-3">
-                    <button className="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors">
-                      Contact Seller
-                    </button>
-                    <button className="w-full border border-blue-600 text-blue-600 py-2 px-4 rounded-lg hover:bg-blue-50 transition-colors">
-                      Share Product
-                    </button>
-                  </div>
-                </div>
               </div>
             </div>
           </div>

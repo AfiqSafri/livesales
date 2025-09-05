@@ -35,10 +35,15 @@ model User {
   bankName              String?
   resetToken            String?
   resetTokenExpiry      DateTime?
+  qrCodeImage           String?        // QR code image for sellers
+  qrCodeDescription     String?        // Description for QR code payment
   notifications         Notification[]
   orders                Order[]        @relation("buyerOrders")
   payments              Payment[]
   products              Product[]
+  payouts               Payout[]       @relation("sellerPayouts")
+  receipts              Receipt[]      @relation("sellerReceipts")
+  buyerReceipts         Receipt[]      @relation("buyerReceipts")
 }
 
 model Product {
@@ -100,6 +105,8 @@ model Order {
   payment           Payment?             @relation(fields: [paymentId], references: [id])
   product           Product              @relation("productOrders", fields: [productId], references: [id])
   statusHistory     OrderStatusHistory[]
+  payouts           Payout[]             @relation("orderPayouts")
+  receipts          Receipt[]
 }
 
 model OrderStatusHistory {
@@ -172,4 +179,66 @@ model Payment {
   updatedAt     DateTime  @updatedAt
   orders        Order[]
   user          User      @relation(fields: [userId], references: [id])
+}
+
+model Payout {
+  id                Int       @id @default(autoincrement())
+  sellerId          Int
+  orderId           Int
+  amount            Float     // Amount to seller (after platform fee)
+  platformFee       Float     // Platform fee deducted
+  totalAmount       Float     // Total order amount
+  status            String    @default("pending") // pending, processing, completed, failed
+  bankName          String
+  bankAccountNumber String
+  bankAccountHolder String
+  bankCode          String
+  description       String?
+  reference         String    @unique
+  billplzPayoutId   String?   // Billplz payout reference
+  processedAt       DateTime?
+  completedAt       DateTime?
+  failureReason     String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  
+  seller            User      @relation("sellerPayouts", fields: [sellerId], references: [id])
+  order             Order     @relation("orderPayouts", fields: [orderId], references: [id])
+
+  @@index([sellerId, status])
+  @@index([orderId])
+  @@index([status, createdAt])
+}
+
+model Receipt {
+  id            Int      @id @default(autoincrement())
+  orderId       Int?     // Optional for QR payments
+  sellerId      Int
+  buyerId       Int
+  receiptImage  String   // Path to uploaded receipt image
+  amount        Float    // Amount shown in receipt
+  status        String   @default("pending") // pending, approved, rejected
+  sellerNotes   String?  // Seller's notes when approving/rejecting
+  paymentType   String   @default("order_payment") // order_payment, qr_payment
+  uploadedAt    DateTime @default(now())
+  reviewedAt    DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  // QR Payment specific fields
+  buyerName     String?  // Actual buyer name from form
+  buyerEmail    String?  // Actual buyer email from form
+  buyerPhone    String?  // Actual buyer phone from form
+  productName   String?  // Actual product name
+  productId     Int?     // Product ID for QR payments
+  quantity      Int?     // Quantity ordered
+  shippingAddress String? // Shipping address from form
+  
+  order         Order?   @relation(fields: [orderId], references: [id])
+  seller        User     @relation("sellerReceipts", fields: [sellerId], references: [id])
+  buyer         User     @relation("buyerReceipts", fields: [buyerId], references: [id])
+
+  @@index([orderId])
+  @@index([sellerId, status])
+  @@index([status, uploadedAt])
 }

@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useRef } from 'react';
+import DualPaymentModal from '@/components/DualPaymentModal';
 
 export default function BuyerOrders() {
   const router = useRouter();
@@ -15,6 +16,9 @@ export default function BuyerOrders() {
   const [uploadingOrderId, setUploadingOrderId] = useState(null);
   const [uploadError, setUploadError] = useState('');
   const [uploadSuccess, setUploadSuccess] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [selectedSeller, setSelectedSeller] = useState(null);
   const fileInputRefs = useRef({});
 
   useEffect(() => {
@@ -48,6 +52,41 @@ export default function BuyerOrders() {
         setLoading(false);
       });
   }
+
+  const handlePaymentClick = async (order) => {
+    try {
+      // Fetch seller information
+      const sellerResponse = await fetch(`/api/seller/qr-code?sellerId=${order.product.sellerId}`);
+      const sellerData = await sellerResponse.json();
+      
+      if (sellerData.success) {
+        setSelectedOrder(order);
+        setSelectedSeller(sellerData.seller);
+        setShowPaymentModal(true);
+      } else {
+        alert('Failed to load seller information');
+      }
+    } catch (error) {
+      console.error('Error fetching seller info:', error);
+      alert('Failed to load seller information');
+    }
+  };
+
+  const handlePaymentSuccess = (data) => {
+    setShowPaymentModal(false);
+    setSelectedOrder(null);
+    setSelectedSeller(null);
+    // Refresh orders to show updated status
+    if (user) {
+      fetchOrders(user.id);
+    }
+  };
+
+  const handlePaymentClose = () => {
+    setShowPaymentModal(false);
+    setSelectedOrder(null);
+    setSelectedSeller(null);
+  };
 
   function handleLogout() {
     localStorage.removeItem('currentUser');
@@ -315,9 +354,17 @@ export default function BuyerOrders() {
                             </p>
                           )}
                           {order.paymentStatus === 'pending' && !order.receiptUrl && (
-                            <p className="text-yellow-700 text-sm mt-2">
-                              ⚠️ Please upload your payment receipt to proceed with the order.
-                            </p>
+                            <div className="mt-2">
+                              <p className="text-yellow-700 text-sm mb-2">
+                                ⚠️ Please make payment to proceed with the order.
+                              </p>
+                              <button
+                                onClick={() => handlePaymentClick(order)}
+                                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+                              >
+                                Make Payment
+                              </button>
+                            </div>
                           )}
                           {order.paymentStatus === 'paid' && (
                             <p className="text-green-700 text-sm mt-2">
@@ -529,6 +576,17 @@ export default function BuyerOrders() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Dual Payment Modal */}
+      {showPaymentModal && selectedOrder && selectedSeller && (
+        <DualPaymentModal
+          isOpen={showPaymentModal}
+          onClose={handlePaymentClose}
+          order={selectedOrder}
+          seller={selectedSeller}
+          onSuccess={handlePaymentSuccess}
+        />
       )}
     </div>
   );

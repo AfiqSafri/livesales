@@ -1,14 +1,34 @@
 import { prisma } from '@/lib/prisma';
+import { NextResponse } from 'next/server';
+import crypto from 'crypto';
 
 export async function POST(req) {
   try {
-    const data = await req.json();
+    // Billplz sends data as form data, not JSON
+    const formData = await req.formData();
     
-    // Handle dummy Billplz callback for testing
-    const { billplz_id, billplz_paid, billplz_paid_at, billplz_paid_amount } = data;
+    // Extract Billplz webhook data
+    const billplz_id = formData.get('billplz[id]');
+    const billplz_paid = formData.get('billplz[paid]');
+    const billplz_paid_at = formData.get('billplz[paid_at]');
+    const billplz_paid_amount = formData.get('billplz[paid_amount]');
+    const billplz_x_signature = formData.get('x_signature');
 
     if (!billplz_id) {
-      return new Response(JSON.stringify({ error: 'Invalid callback data' }), { status: 400 });
+      return NextResponse.json({ error: 'Invalid callback data' }, { status: 400 });
+    }
+
+    // Verify webhook signature for security
+    if (process.env.BILLPLZ_X_SIGNATURE_KEY) {
+      const expectedSignature = crypto
+        .createHmac('sha256', process.env.BILLPLZ_X_SIGNATURE_KEY)
+        .update(`billplz[id]${billplz_id}billplz[paid]${billplz_paid}billplz[paid_at]${billplz_paid_at}`)
+        .digest('hex');
+
+      if (billplz_x_signature !== expectedSignature) {
+        console.error('Invalid webhook signature');
+        return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
+      }
     }
 
     // Find order by Billplz bill ID
@@ -24,7 +44,8 @@ export async function POST(req) {
     });
 
     if (!order) {
-      return new Response(JSON.stringify({ error: 'Order not found' }), { status: 404 });
+      console.error('Order not found for bill ID:', billplz_id);
+      return NextResponse.json({ error: 'Order not found' }, { status: 404 });
     }
 
     // Update order payment status based on Billplz response
@@ -127,6 +148,8 @@ export async function POST(req) {
         }
       }
 
+      console.log(`Payment successful for order ${order.id}, bill ${billplz_id}`);
+
     } else {
       // Payment failed
       await prisma.order.update({
@@ -177,12 +200,14 @@ export async function POST(req) {
           console.error('Error sending payment failure email:', emailError);
         }
       }
+
+      console.log(`Payment failed for order ${order.id}, bill ${billplz_id}`);
     }
 
-    return new Response(JSON.stringify({ success: true }), { status: 200 });
+    return NextResponse.json({ success: true });
 
   } catch (error) {
     console.error('Error processing Billplz callback:', error);
-    return new Response(JSON.stringify({ error: 'Internal server error' }), { status: 500 });
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 } 

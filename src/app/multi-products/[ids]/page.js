@@ -3,6 +3,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import { calculateDiscountedPrice, formatDiscountInfo } from '@/utils/productUtils';
 import ImageCarousel from '@/components/ImageCarousel';
+import DualPaymentModal from '@/components/DualPaymentModal';
 
 export default function MultiProductPage() {
   const params = useParams();
@@ -16,6 +17,43 @@ export default function MultiProductPage() {
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [debugInfo, setDebugInfo] = useState({});
   const [hasFetched, setHasFetched] = useState(false);
+  
+  // Payment modal state
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [selectedSeller, setSelectedSeller] = useState(null);
+  const [orderData, setOrderData] = useState(null);
+  
+  // QR Payment state
+  const [showQRPayment, setShowQRPayment] = useState(false);
+  const [sellerQRCode, setSellerQRCode] = useState(null);
+  const [receiptFile, setReceiptFile] = useState(null);
+  const [uploadingReceipt, setUploadingReceipt] = useState(false);
+  
+  // Payment session state
+  const [paymentSession, setPaymentSession] = useState(null);
+  const [showPaymentRecovery, setShowPaymentRecovery] = useState(false);
+
+  // Check for existing payment session on page load
+  useEffect(() => {
+    const savedSession = localStorage.getItem('qrPaymentSession');
+    if (savedSession) {
+      try {
+        const session = JSON.parse(savedSession);
+        // Check if session is not expired (24 hours)
+        const now = Date.now();
+        if (session.timestamp && (now - session.timestamp) < 24 * 60 * 60 * 1000) {
+          setPaymentSession(session);
+          setShowPaymentRecovery(true);
+        } else {
+          // Clear expired session
+          localStorage.removeItem('qrPaymentSession');
+        }
+      } catch (error) {
+        console.error('Error parsing saved payment session:', error);
+        localStorage.removeItem('qrPaymentSession');
+      }
+    }
+  }, []);
 
   const fetchProducts = useCallback(async (productIds) => {
     // Prevent multiple fetches
@@ -146,49 +184,240 @@ export default function MultiProductPage() {
       return;
     }
 
-    setPaymentLoading(true);
+    // For multi-product orders, we'll use the first product's seller as the main seller
+    const mainProduct = productsToOrder[0];
+    const sellerId = mainProduct.seller.id;
+    
+    // Fetch seller information including QR code
     try {
-      // Create orders for each product with quantity > 0
-      const orderPromises = productsToOrder.map(product => {
-        const quantity = quantities[product.id] || 0;
+      const sellerResponse = await fetch(`/api/seller/public-profile?id=${sellerId}`);
+      if (sellerResponse.ok) {
+        const sellerData = await sellerResponse.json();
+        setSelectedSeller(sellerData);
         
-        return fetch('/api/buyer/orders', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            productId: product.id,
-            buyerName: buyerInfo.name,
-            quantity: quantity,
-            shippingAddress: buyerInfo.shippingAddress,
-            phone: buyerInfo.phone,
-            email: buyerInfo.email
-          }),
-        });
-      });
-
-      const responses = await Promise.all(orderPromises);
-      const results = await Promise.all(responses.map(res => res.json()));
-      const successfulOrders = results.filter((result, index) => responses[index].ok);
-      
-      if (successfulOrders.length === productsToOrder.length) {
-        // For multi-product orders, redirect to a combined payment confirmation
-        const firstOrder = results[0];
-        if (firstOrder.redirectUrl) {
-          // Modify the redirect URL to include multi-product information
-          const multiProductUrl = firstOrder.redirectUrl.replace('/payment-confirmation', '/payment-confirmation-multi');
-          window.location.href = multiProductUrl;
-        } else {
-          alert(`All ${productsToOrder.length} orders created successfully! Check your email for confirmation.`);
-          setBuyerInfo({ name: '', email: '', phone: '', shippingAddress: '' });
-        }
+        // Create order data for the modal
+        const totalAmount = calculateGrandTotal();
+        const orderData = {
+          id: `temp-${Date.now()}`, // Temporary ID for the modal
+          product: {
+            name: productsToOrder.length === 1 
+              ? mainProduct.name 
+              : `${mainProduct.name} + ${productsToOrder.length - 1} other product(s)`,
+            seller: mainProduct.seller
+          },
+          quantity: productsToOrder.reduce((total, product) => total + (quantities[product.id] || 0), 0),
+          totalAmount: totalAmount,
+          buyerId: 1, // Temporary buyer ID
+          buyerName: buyerInfo.name,
+          buyerEmail: buyerInfo.email,
+          productId: mainProduct.id,
+          shippingAddress: buyerInfo.shippingAddress,
+          phone: buyerInfo.phone,
+          // Store additional products info
+          additionalProducts: productsToOrder.slice(1).map(product => ({
+            id: product.id,
+            name: product.name,
+            quantity: quantities[product.id] || 0,
+            price: calculateDiscountedPrice(product),
+            shippingPrice: product.shippingPrice || 0
+          }))
+        };
+        
+        setOrderData(orderData);
+        setShowPaymentModal(true);
       } else {
-        alert(`Created ${successfulOrders.length} out of ${productsToOrder.length} orders.`);
+        throw new Error('Failed to fetch seller information');
       }
     } catch (error) {
-      console.error('Purchase error:', error);
-      alert('Purchase error. Please try again.');
+      console.error('Error fetching seller info:', error);
+      alert('Failed to load payment options. Please try again.');
+    }
+  };
+
+  const handlePaymentSuccess = (result) => {
+    setShowPaymentModal(false);
+    setSelectedSeller(null);
+    setOrderData(null);
+    
+    // Reset form
+    setBuyerInfo({ name: '', email: '', phone: '', shippingAddress: '' });
+    const newQuantities = {};
+    products.forEach(product => {
+      newQuantities[product.id] = 0;
+    });
+    setQuantities(newQuantities);
+    
+    alert('Payment processed successfully! Check your email for confirmation.');
+  };
+
+  const handlePaymentClose = () => {
+    setShowPaymentModal(false);
+    setSelectedSeller(null);
+    setOrderData(null);
+  };
+
+  const handleQRPayment = async () => {
+    if (!buyerInfo.name || !buyerInfo.email || !buyerInfo.phone || !buyerInfo.shippingAddress) {
+      alert('Please provide all required information');
+      return;
+    }
+
+    // Filter products with quantity > 0
+    const productsToOrder = products.filter(product => (quantities[product.id] || 0) > 0);
+    
+    if (productsToOrder.length === 0) {
+      alert('Please select at least one product with quantity > 0');
+      return;
+    }
+
+    // For multi-product orders, we'll use the first product's seller as the main seller
+    const mainProduct = productsToOrder[0];
+    
+    console.log('Main product:', mainProduct);
+    console.log('Seller object:', mainProduct.seller);
+    
+    if (!mainProduct.seller) {
+      console.error('No seller object found for product:', mainProduct);
+      alert('Unable to find seller information. Please try again.');
+      return;
+    }
+    
+    const sellerId = mainProduct.seller.id;
+    console.log('Seller ID:', sellerId);
+    
+    if (!sellerId) {
+      console.error('No seller ID found for product:', mainProduct);
+      console.error('Product structure:', JSON.stringify(mainProduct, null, 2));
+      alert('Unable to find seller information. Please try again.');
+      return;
+    }
+    
+    try {
+      console.log('Fetching QR code for seller ID:', sellerId);
+      // Fetch seller QR code
+      const sellerResponse = await fetch(`/api/seller/public-profile?id=${sellerId}`);
+      console.log('Response status:', sellerResponse.status);
+      
+      if (sellerResponse.ok) {
+        const responseData = await sellerResponse.json();
+        console.log('Response data:', responseData);
+        const sellerData = responseData.seller; // Extract seller from response
+        console.log('Seller data:', sellerData);
+        
+        // Create payment session
+        const session = {
+          timestamp: Date.now(),
+          sellerData: sellerData,
+          buyerInfo: buyerInfo,
+          products: productsToOrder.map(product => ({
+            id: product.id,
+            name: product.name,
+            quantity: quantities[product.id] || 0,
+            price: calculateDiscountedPrice(product),
+            shippingPrice: product.shippingPrice || 0
+          })),
+          totalAmount: calculateGrandTotal(),
+          pageType: 'multi-product',
+          pageUrl: window.location.href
+        };
+        
+        // Save to localStorage
+        localStorage.setItem('qrPaymentSession', JSON.stringify(session));
+        setPaymentSession(session);
+        
+        setSellerQRCode(sellerData);
+        setShowQRPayment(true);
+      } else {
+        const errorText = await sellerResponse.text();
+        console.error('API Error:', sellerResponse.status, errorText);
+        throw new Error(`Failed to fetch seller QR code: ${sellerResponse.status}`);
+      }
+    } catch (error) {
+      console.error('Error fetching seller QR code:', error);
+      alert('Failed to load QR code. Please try again.');
+    }
+  };
+
+  // Payment session recovery functions
+  const recoverPaymentSession = () => {
+    if (paymentSession) {
+      setSellerQRCode(paymentSession.sellerData);
+      setBuyerInfo(paymentSession.buyerInfo);
+      setShowQRPayment(true);
+      setShowPaymentRecovery(false);
+    }
+  };
+
+  const clearPaymentSession = () => {
+    localStorage.removeItem('qrPaymentSession');
+    setPaymentSession(null);
+    setShowPaymentRecovery(false);
+  };
+
+  const handleReceiptUpload = async () => {
+    if (!receiptFile) {
+      alert('Please select a receipt file');
+      return;
+    }
+
+    setUploadingReceipt(true);
+
+    try {
+      // Filter products with quantity > 0
+      const productsToOrder = products.filter(product => (quantities[product.id] || 0) > 0);
+      const mainProduct = productsToOrder[0];
+      const sellerId = mainProduct.seller.id;
+      const totalAmount = calculateGrandTotal();
+
+      // Create form data for receipt upload
+      const formData = new FormData();
+      formData.append('orderId', `temp-${Date.now()}`);
+      formData.append('sellerId', sellerId);
+      formData.append('buyerId', 4); // Using buyer ID 4 (Mike Chen)
+      formData.append('amount', totalAmount);
+      formData.append('receipt', receiptFile);
+      
+      // Add buyer and product information for QR payments
+      formData.append('buyerName', buyerInfo.name);
+      formData.append('buyerEmail', buyerInfo.email);
+      formData.append('buyerPhone', buyerInfo.phone);
+      formData.append('productName', productsToOrder.length === 1 
+        ? mainProduct.name 
+        : `${mainProduct.name} + ${productsToOrder.length - 1} other product(s)`);
+      formData.append('productId', mainProduct.id);
+      formData.append('quantity', productsToOrder.reduce((total, product) => total + (quantities[product.id] || 0), 0));
+      formData.append('shippingAddress', buyerInfo.shippingAddress);
+
+      const response = await fetch('/api/receipt/upload', {
+        method: 'POST',
+        body: formData
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        alert('Receipt uploaded successfully! The seller will review it shortly.');
+        setShowQRPayment(false);
+        setReceiptFile(null);
+        
+        // Clear payment session after successful upload
+        clearPaymentSession();
+        
+        // Reset form
+        setBuyerInfo({ name: '', email: '', phone: '', shippingAddress: '' });
+        const newQuantities = {};
+        products.forEach(product => {
+          newQuantities[product.id] = 0;
+        });
+        setQuantities(newQuantities);
+      } else {
+        alert(data.error || 'Failed to upload receipt');
+      }
+    } catch (error) {
+      console.error('Receipt upload error:', error);
+      alert('Failed to upload receipt. Please try again.');
     } finally {
-      setPaymentLoading(false);
+      setUploadingReceipt(false);
     }
   };
 
@@ -241,12 +470,17 @@ export default function MultiProductPage() {
           <p className="text-sm sm:text-base text-gray-600 px-4">
             You have {products.length} product(s) available • {products.filter(p => (quantities[p.id] || 0) > 0).length} in cart
           </p>
+          {loading && (
+            <div className="mt-4 flex justify-center">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+            </div>
+          )}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
           {/* Products Grid */}
           <div className="lg:col-span-2">
-            <div className="grid grid-cols-1 gap-4 sm:gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {products.map((product) => {
                 const discountInfo = formatDiscountInfo(product);
                 const finalPrice = calculateDiscountedPrice(product);
@@ -255,82 +489,83 @@ export default function MultiProductPage() {
                 const isExcluded = quantity === 0;
 
                 return (
-                  <div key={product.id} className={`bg-white rounded-lg shadow-lg overflow-hidden ${isExcluded ? 'opacity-60 border-2 border-gray-200' : ''}`}>
-                    <div className="aspect-square overflow-hidden">
+                  <div key={product.id} className={`bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-200 overflow-hidden border border-gray-100 ${isExcluded ? 'opacity-60 border-2 border-gray-200' : 'hover:scale-[1.02] hover:border-gray-200'}`}>
+                    <div className="h-48 sm:h-56 overflow-hidden bg-gray-50">
                       {product.images && product.images.length > 0 ? (
                         <ImageCarousel 
                           images={product.images} 
                           productName={product.name}
                           autoSlideInterval={4000}
+                          compact={true}
                         />
                       ) : (
                         <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-500">
                           <div className="text-center">
-                            <svg className="w-16 h-16 mx-auto text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-12 h-12 mx-auto text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 00-2-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                             </svg>
-                            <p>No image</p>
+                            <p className="text-xs">No image</p>
                           </div>
                         </div>
                       )}
                     </div>
 
-                    <div className="p-3 sm:p-4">
-                      <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2">{product.name}</h3>
-                      <p className="text-xs sm:text-sm text-gray-600 mb-3">{product.description}</p>
+                    <div className="p-3">
+                      <h3 className="text-sm font-semibold text-gray-900 mb-2 line-clamp-2">{product.name}</h3>
+                      <p className="text-xs text-gray-600 mb-2 line-clamp-2">{product.description}</p>
                       
-                      <div className="mb-3">
-                        <div className="text-lg sm:text-xl font-bold text-orange-600">
+                      <div className="mb-2">
+                        <div className="text-base font-bold text-orange-600">
                           RM {finalPrice.toFixed(2)}
                         </div>
                         {discountInfo && discountInfo.isValid && (
-                          <div className="text-xs sm:text-sm text-gray-500 line-through">
+                          <div className="text-xs text-gray-500 line-through">
                             RM {product.price.toFixed(2)}
                           </div>
                         )}
                       </div>
 
-                      <div className="mb-3">
-                        <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Quantity</label>
+                      <div className="mb-2">
+                        <label className="block text-xs font-medium text-gray-700 mb-1">Quantity</label>
                         <div className="flex items-center space-x-2">
                           <button
                             onClick={() => updateQuantity(product.id, quantity - 1)}
-                            className="w-7 h-7 sm:w-8 sm:h-8 bg-gray-200 rounded-lg flex items-center justify-center hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
+                            className="w-6 h-6 bg-gray-200 rounded flex items-center justify-center hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed text-xs"
                             disabled={quantity <= 0}
                           >-</button>
-                          <span className={`w-10 sm:w-12 text-center font-medium text-sm sm:text-base ${quantity === 0 ? 'text-gray-400' : 'text-gray-900'}`}>
+                          <span className={`w-8 text-center font-medium text-xs ${quantity === 0 ? 'text-gray-400' : 'text-gray-900'}`}>
                             {quantity}
                           </span>
                           <button
                             onClick={() => updateQuantity(product.id, quantity + 1)}
-                            className="w-7 h-7 sm:w-8 sm:h-8 bg-gray-200 rounded-lg flex items-center justify-center hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
+                            className="w-6 h-6 bg-gray-200 rounded flex items-center justify-center hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed text-xs"
                             disabled={quantity >= product.quantity}
                           >+</button>
                         </div>
                         <div className="flex items-center justify-between mt-1">
-                          <p className="text-xs sm:text-sm text-gray-500">{product.quantity} units available</p>
+                          <p className="text-xs text-gray-500">{product.quantity} units available</p>
                           {quantity === 0 && (
-                            <span className="text-xs text-orange-600 bg-orange-50 px-2 py-1 rounded-full">
-                              Not included in order
+                            <span className="text-xs text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded-full">
+                              Not included
                             </span>
                           )}
                         </div>
                       </div>
 
-                      <div className="p-2 sm:p-3 bg-gray-50 rounded border">
-                        <div className="flex justify-between mb-1 sm:mb-2 text-xs sm:text-sm">
+                      <div className="p-2 bg-gray-50 rounded border text-xs">
+                        <div className="flex justify-between mb-1">
                           <span>Unit Price:</span>
                           <span>RM {finalPrice.toFixed(2)}</span>
                         </div>
-                        <div className="flex justify-between mb-1 sm:mb-2 text-xs sm:text-sm">
+                        <div className="flex justify-between mb-1">
                           <span>Quantity:</span>
                           <span>{quantity}</span>
                         </div>
-                        <div className="flex justify-between mb-1 sm:mb-2 text-xs sm:text-sm">
+                        <div className="flex justify-between mb-1">
                           <span>Shipping:</span>
                           <span>RM {(product.shippingPrice || 0).toFixed(2)}</span>
                         </div>
-                        <div className="flex justify-between font-bold text-base sm:text-lg border-t pt-1 sm:pt-2">
+                        <div className="flex justify-between font-bold text-sm border-t pt-1">
                           <span>Total:</span>
                           <span>RM {productTotal.toFixed(2)}</span>
                         </div>
@@ -460,36 +695,333 @@ export default function MultiProductPage() {
               </div>
 
               <button
-                onClick={handlePurchase}
-                disabled={paymentLoading || products.filter(p => (quantities[p.id] || 0) > 0).length === 0}
-                className="w-full bg-blue-600 text-white py-2.5 sm:py-3 px-4 sm:px-6 rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex items-center justify-center space-x-2 text-sm sm:text-base"
+                onClick={() => alert('Coming Soon! Use QR Code Payment instead.')}
+                disabled={true}
+                className="w-full bg-gray-500 text-white py-2.5 sm:py-3 px-4 sm:px-6 rounded-lg font-medium cursor-not-allowed transition-colors flex items-center justify-center space-x-2 text-sm sm:text-base"
               >
-                {paymentLoading ? (
-                  <>
-                    <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    <span>Processing...</span>
-                  </>
-                ) : (
-                  <>
-                    <span>🛒</span>
-                    <span>
-                      Purchase {products.filter(p => (quantities[p.id] || 0) > 0).length} Product{products.filter(p => (quantities[p.id] || 0) > 0).length !== 1 ? 's' : ''}
-                    </span>
-                  </>
-                )}
+                <span>🚧</span>
+                <span>
+                  Coming Soon ({products.filter(p => (quantities[p.id] || 0) > 0).length} Product{products.filter(p => (quantities[p.id] || 0) > 0).length !== 1 ? 's' : ''})
+                </span>
               </button>
 
               <p className="text-xs text-gray-500 mt-2 text-center">
-                Only products with quantity &gt; 0 will be ordered. You will be redirected to complete your payment after order creation.
+                Only products with quantity &gt; 0 will be ordered. Use QR Code Payment for checkout.
+              </p>
+
+
+              {/* QR Payment Button */}
+              <button
+                onClick={handleQRPayment}
+                disabled={paymentLoading || products.filter(p => (quantities[p.id] || 0) > 0).length === 0}
+                className="w-full bg-green-600 text-white py-2.5 sm:py-3 px-4 sm:px-6 rounded-lg font-medium hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex items-center justify-center space-x-2 text-sm sm:text-base mt-3"
+                style={{ zIndex: 10, position: 'relative' }}
+              >
+                <span>📱</span>
+                <span>Purchase with QR Code</span>
+              </button>
+
+              <p className="text-xs text-gray-500 mt-2 text-center">
+                Scan seller's QR code and upload payment receipt for manual verification.
               </p>
             </div>
           </div>
         </div>
       </div>
+      
+      {/* Dual Payment Modal */}
+      {showPaymentModal && orderData && selectedSeller && (
+        <DualPaymentModal
+          isOpen={showPaymentModal}
+          onClose={handlePaymentClose}
+          order={orderData}
+          seller={selectedSeller}
+          onSuccess={handlePaymentSuccess}
+        />
+      )}
+
+
+      {/* QR Payment Modal */}
+      {showQRPayment && sellerQRCode && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              {/* Header */}
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-semibold text-gray-900">QR Code Payment</h2>
+                <button
+                  onClick={() => setShowQRPayment(false)}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+                  </svg>
+                </button>
+              </div>
+
+              {/* Order Summary */}
+              <div className="bg-gray-50 rounded-lg p-4 mb-6">
+                <h3 className="font-medium text-gray-900 mb-2">Order Summary</h3>
+                <div className="space-y-1 text-sm text-gray-600">
+                  {products.filter(product => (quantities[product.id] || 0) > 0).map((product) => {
+                    const quantity = quantities[product.id] || 0;
+                    const finalPrice = calculateDiscountedPrice(product);
+                    const productTotal = finalPrice * quantity + (product.shippingPrice || 0);
+                    
+                    return (
+                      <div key={product.id}>
+                        <div>Product: {product.name}</div>
+                        <div>Quantity: {quantity}</div>
+                        <div>Total: RM {productTotal.toFixed(2)}</div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* QR Code Display */}
+              <div className="text-center mb-6">
+                <h3 className="font-medium text-gray-900 mb-2">Scan QR Code to Pay</h3>
+                <p className="text-sm text-gray-600 mb-4">
+                  Scan the QR code below to make payment, then upload your receipt
+                </p>
+                
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 mb-4">
+                  <img
+                    src={sellerQRCode.qrCodeImage}
+                    alt="Payment QR Code"
+                    className="mx-auto max-w-xs max-h-64 object-contain"
+                  />
+                  {sellerQRCode.qrCodeDescription && (
+                    <p className="text-sm text-gray-600 mt-2">
+                      {sellerQRCode.qrCodeDescription}
+                    </p>
+                  )}
+                  
+                  {/* Download QR Code with Amount Button */}
+                  <div className="mt-4 text-center">
+                    <button
+                      onClick={async () => {
+                        try {
+                          // Create a canvas to combine QR code and amount
+                          const canvas = document.createElement('canvas');
+                          const ctx = canvas.getContext('2d');
+                          
+                          // Set canvas size
+                          canvas.width = 400;
+                          canvas.height = 500;
+                          
+                          // Load QR code image
+                          const qrImg = new Image();
+                          qrImg.crossOrigin = 'anonymous';
+                          
+                          qrImg.onload = () => {
+                            // Draw white background
+                            ctx.fillStyle = '#ffffff';
+                            ctx.fillRect(0, 0, canvas.width, canvas.height);
+                            
+                            // Draw QR code (centered, smaller)
+                            const qrSize = 300;
+                            const qrX = (canvas.width - qrSize) / 2;
+                            const qrY = 50;
+                            ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize);
+                            
+                            // Draw amount text
+                            ctx.fillStyle = '#1f2937';
+                            ctx.font = 'bold 24px Arial';
+                            ctx.textAlign = 'center';
+                            ctx.fillText('Amount to Pay:', canvas.width / 2, qrY + qrSize + 40);
+                            
+                            ctx.fillStyle = '#dc2626';
+                            ctx.font = 'bold 32px Arial';
+                            ctx.fillText(`RM ${calculateGrandTotal().toFixed(2)}`, canvas.width / 2, qrY + qrSize + 80);
+                            
+                            // Draw seller info
+                            ctx.fillStyle = '#6b7280';
+                            ctx.font = '16px Arial';
+                            ctx.fillText(`Seller: ${sellerQRCode.name}`, canvas.width / 2, qrY + qrSize + 120);
+                            
+                            // Draw date
+                            ctx.font = '14px Arial';
+                            ctx.fillText(`Date: ${new Date().toLocaleDateString()}`, canvas.width / 2, qrY + qrSize + 150);
+                            
+                            // Download the combined image
+                            canvas.toBlob((blob) => {
+                              const url = URL.createObjectURL(blob);
+                              const link = document.createElement('a');
+                              link.href = url;
+                              link.download = `qr-payment-${sellerQRCode.name || 'seller'}-${calculateGrandTotal().toFixed(2)}.png`;
+                              document.body.appendChild(link);
+                              link.click();
+                              document.body.removeChild(link);
+                              URL.revokeObjectURL(url);
+                            }, 'image/png');
+                          };
+                          
+                          qrImg.src = `http://localhost:3000${sellerQRCode.qrCodeImage}`;
+                        } catch (error) {
+                          console.error('Error creating combined image:', error);
+                          alert('Failed to create download image. Please try again.');
+                        }
+                      }}
+                      className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm"
+                    >
+                      📥 Download QR + Amount
+                    </button>
+                  </div>
+                </div>
+
+                {/* Bank Account Information */}
+                {sellerQRCode.bankName && sellerQRCode.bankAccountNumber && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                    <h4 className="text-sm font-semibold text-blue-900 mb-3 flex items-center">
+                      <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
+                      </svg>
+                      Bank Account Information
+                    </h4>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Bank:</span>
+                        <span className="font-medium">{sellerQRCode.bankName}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Account Holder:</span>
+                        <span className="font-medium">{sellerQRCode.bankAccountHolder}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Account Number:</span>
+                        <span className="font-medium font-mono">{sellerQRCode.bankAccountNumber}</span>
+                      </div>
+                      {sellerQRCode.bankCode && (
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Bank Code:</span>
+                          <span className="font-medium">{sellerQRCode.bankCode}</span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="mt-3 p-2 bg-green-50 border border-green-200 rounded text-xs text-green-700">
+                      ✅ Seller has verified bank account for secure payments
+                    </div>
+                    
+                    {/* Download Bank Info Button */}
+                    <div className="mt-3 text-center">
+                      <button
+                        onClick={() => {
+                          const bankInfo = `Bank Account Information\n\nBank: ${sellerQRCode.bankName}\nAccount Holder: ${sellerQRCode.bankAccountHolder}\nAccount Number: ${sellerQRCode.bankAccountNumber}${sellerQRCode.bankCode ? `\nBank Code: ${sellerQRCode.bankCode}` : ''}\n\nAmount to Pay: RM ${calculateGrandTotal().toFixed(2)}\n\nPayment Date: ${new Date().toLocaleString()}`;
+                          
+                          const blob = new Blob([bankInfo], { type: 'text/plain' });
+                          const url = window.URL.createObjectURL(blob);
+                          const link = document.createElement('a');
+                          link.href = url;
+                          link.download = `bank-info-${sellerQRCode.name || 'seller'}.txt`;
+                          document.body.appendChild(link);
+                          link.click();
+                          document.body.removeChild(link);
+                          window.URL.revokeObjectURL(url);
+                        }}
+                        className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors text-sm"
+                      >
+                        📥 Download Bank Info
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
+                  <p className="text-sm text-yellow-800">
+                    <strong>Amount to pay:</strong> RM {calculateGrandTotal().toFixed(2)}
+                  </p>
+                </div>
+
+                {/* Receipt Upload */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Upload Payment Receipt
+                  </label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => setReceiptFile(e.target.files[0])}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4"
+                  />
+                  <p className="text-xs text-gray-500">
+                    Upload a screenshot or photo of your payment receipt
+                  </p>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex space-x-3">
+                <button
+                  onClick={() => setShowQRPayment(false)}
+                  className="flex-1 bg-gray-500 text-white py-2 px-4 rounded-md hover:bg-gray-600 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleReceiptUpload}
+                  disabled={!receiptFile || uploadingReceipt}
+                  className="flex-1 bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {uploadingReceipt ? 'Uploading...' : 'Upload Receipt'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Payment Recovery Modal */}
+      {showPaymentRecovery && paymentSession && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              {/* Header */}
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-semibold text-gray-900">Continue Payment</h2>
+                <button
+                  onClick={clearPaymentSession}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+                  </svg>
+                </button>
+              </div>
+
+              {/* Recovery Information */}
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                <h3 className="font-medium text-blue-900 mb-2">📱 Payment Session Detected</h3>
+                <p className="text-sm text-blue-800 mb-3">
+                  We found an incomplete QR payment session. You can continue where you left off or start fresh.
+                </p>
+                <div className="text-sm text-blue-700">
+                  <p><strong>Amount:</strong> RM {paymentSession.totalAmount?.toFixed(2)}</p>
+                  <p><strong>Products:</strong> {paymentSession.products?.length || 0} items</p>
+                  <p><strong>Started:</strong> {new Date(paymentSession.timestamp).toLocaleString()}</p>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex space-x-3">
+                <button
+                  onClick={clearPaymentSession}
+                  className="flex-1 bg-gray-500 text-white py-2 px-4 rounded-md hover:bg-gray-600 transition-colors"
+                >
+                  Start Fresh
+                </button>
+                <button
+                  onClick={recoverPaymentSession}
+                  className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors"
+                >
+                  Continue Payment
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
-

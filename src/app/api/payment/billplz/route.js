@@ -1,10 +1,5 @@
 import { prisma } from '@/lib/prisma';
-
-// Billplz API Configuration
-const BILLPLZ_API_KEY = process.env.BILLPLZ_API_KEY;
-const BILLPLZ_COLLECTION_ID = process.env.BILLPLZ_COLLECTION_ID;
-const BILLPLZ_X_SIGNATURE_KEY = process.env.BILLPLZ_X_SIGNATURE_KEY;
-const BILLPLZ_API_URL = 'https://www.billplz.com/api/v3';
+import { NextResponse } from 'next/server';
 
 // Subscription plan prices
 const SUBSCRIPTION_PRICES = {
@@ -16,12 +11,12 @@ export async function POST(req) {
     const { userId, plan, email, name, phone } = await req.json();
     
     if (!userId || !plan || !email || !name) {
-      return new Response(JSON.stringify({ error: 'Missing required fields' }), { status: 400 });
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
     // Validate plan
     if (!SUBSCRIPTION_PRICES[plan]) {
-      return new Response(JSON.stringify({ error: 'Invalid subscription plan' }), { status: 400 });
+      return NextResponse.json({ error: 'Invalid subscription plan' }, { status: 400 });
     }
 
     // Get user details
@@ -30,16 +25,16 @@ export async function POST(req) {
     });
 
     if (!user) {
-      return new Response(JSON.stringify({ error: 'User not found' }), { status: 404 });
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
     const amount = SUBSCRIPTION_PRICES[plan] * 100; // Convert to cents
     const description = `Livesalez ${plan.charAt(0).toUpperCase() + plan.slice(1)} Plan - Monthly Subscription`;
     const reference = `LIVESALEZ_${userId}_${Date.now()}`;
 
-    // Create Billplz bill
+    // Create Billplz bill using V4 API
     const billData = {
-      collection_id: BILLPLZ_COLLECTION_ID,
+      collection_id: process.env.BILLPLZ_COLLECTION_ID,
       description: description,
       email: email,
       name: name,
@@ -55,10 +50,18 @@ export async function POST(req) {
       due_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // Due in 24 hours
     };
 
-    const response = await fetch(`${BILLPLZ_API_URL}/bills`, {
+    // Use sandbox or production based on environment
+    const isSandbox = process.env.BILLPLZ_SANDBOX === 'true';
+    const billplzApiUrl = isSandbox 
+      ? 'https://www.billplz-sandbox.com/api/v3'
+      : 'https://www.billplz.com/api/v3';
+    console.log('🔧 Environment:', isSandbox ? 'SANDBOX' : 'PRODUCTION');
+    console.log('🔧 Using Billplz API URL for subscription:', billplzApiUrl);
+    
+    const response = await fetch(`${billplzApiUrl}/bills`, {
       method: 'POST',
       headers: {
-        'Authorization': `Basic ${Buffer.from(BILLPLZ_API_KEY + ':').toString('base64')}`,
+        'Authorization': `Basic ${Buffer.from(process.env.BILLPLZ_API_KEY + ':').toString('base64')}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(billData)
@@ -68,7 +71,7 @@ export async function POST(req) {
 
     if (!response.ok) {
       console.error('Billplz API Error:', billResponse);
-      return new Response(JSON.stringify({ error: 'Failed to create payment bill' }), { status: 500 });
+      return NextResponse.json({ error: 'Failed to create payment bill' }, { status: 500 });
     }
 
     // Create payment record in database
@@ -87,17 +90,17 @@ export async function POST(req) {
       }
     });
 
-    return new Response(JSON.stringify({
+    return NextResponse.json({
       success: true,
       paymentId: payment.id,
       billUrl: billResponse.url,
       billId: billResponse.id,
       amount: amount / 100,
       plan: plan
-    }), { status: 200 });
+    });
 
   } catch (error) {
     console.error('Payment creation error:', error);
-    return new Response(JSON.stringify({ error: 'Internal server error' }), { status: 500 });
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 } 

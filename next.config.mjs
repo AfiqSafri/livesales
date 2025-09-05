@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Enable static optimization for Vercel
-  output: 'standalone',
+  // Only enable standalone output in production
+  ...(process.env.NODE_ENV === 'production' && { output: 'standalone' }),
   
   // Handle image optimization
   images: {

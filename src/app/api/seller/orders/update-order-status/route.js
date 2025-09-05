@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import { sendEmail, emailTemplates } from '../../../../../utils/email.js';
 
 export async function POST(req) {
   try {
@@ -55,27 +56,48 @@ export async function POST(req) {
     // Send email notification to buyer if email exists
     if (order.buyerEmail) {
       try {
-        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-        await fetch(`${baseUrl}/api/email/send`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            to: order.buyerEmail,
-            subject: `Order Status Updated - ${status.toUpperCase()}`,
-            html: `
-              <h2>Order Status Updated</h2>
-              <p>Your order #${orderId} status has been updated to: <strong>${status.toUpperCase()}</strong></p>
-              ${trackingNumber ? `<p>Tracking Number: ${trackingNumber}</p>` : ''}
-              ${courierName ? `<p>Courier: ${courierName}</p>` : ''}
-              ${sellerNotes ? `<p>Seller Notes: ${sellerNotes}</p>` : ''}
-              <p>Thank you for your purchase!</p>
-            `,
-            text: `Order Status Updated - Your order #${orderId} status has been updated to: ${status.toUpperCase()}`
-          })
+        console.log('📧 Sending shipping status update email to:', order.buyerEmail);
+        
+        // Get product name for the email
+        const orderWithProduct = await prisma.order.findUnique({
+          where: { id: Number(orderId) },
+          include: {
+            product: {
+              select: {
+                name: true
+              }
+            }
+          }
         });
+
+        const emailTemplate = emailTemplates.shippingStatusUpdate({
+          buyerName: order.buyerName || 'Customer',
+          orderId: orderId,
+          productName: orderWithProduct?.product?.name || 'Product',
+          status: status,
+          trackingNumber: trackingNumber,
+          courierName: courierName,
+          sellerNotes: sellerNotes,
+          estimatedDelivery: estimatedDelivery
+        });
+
+        const emailResult = await sendEmail({
+          to: order.buyerEmail,
+          subject: emailTemplate.subject,
+          html: emailTemplate.html,
+          text: emailTemplate.text
+        });
+
+        if (emailResult.success) {
+          console.log('✅ Shipping status update email sent successfully');
+        } else {
+          console.log('❌ Failed to send shipping status update email:', emailResult.error);
+        }
       } catch (emailError) {
-        console.error('Error sending status update email:', emailError);
+        console.error('❌ Error sending status update email:', emailError);
       }
+    } else {
+      console.log('⚠️ No buyer email found for order:', orderId);
     }
 
     return new Response(JSON.stringify({ 

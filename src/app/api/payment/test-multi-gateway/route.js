@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import { sendEmail, emailTemplates } from '../../../../utils/email.js';
+import { NextResponse } from 'next/server';
 
 const prisma = new PrismaClient();
 
@@ -7,9 +8,9 @@ const prisma = new PrismaClient();
 const PAYMENT_GATEWAYS = {
   billplz: {
     name: 'Billplz',
-    apiKey: process.env.BILLPLZ_API_KEY || '73eb57f0-7d4e-42b9-a76d-e84b6c0c8968',
-    collectionId: process.env.BILLPLZ_COLLECTION_ID || 'inbmmepb',
-    baseUrl: process.env.BILLPLZ_BASE_URL || 'https://www.billplz-sandbox.com/api/v3',
+    apiKey: process.env.BILLPLZ_API_KEY,
+    collectionId: process.env.BILLPLZ_COLLECTION_ID,
+    baseUrl: process.env.BILLPLZ_API_BASE_URL,
     enabled: true
   },
   fpx: {

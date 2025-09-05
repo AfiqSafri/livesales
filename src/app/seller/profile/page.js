@@ -6,6 +6,7 @@ import { useSellerLanguage } from '../SellerLanguageContext';
 import { generateMultiProductUrl } from '@/utils/productUtils';
 import ModernHeader from '@/components/ModernHeader';
 import ModernFooter from '@/components/ModernFooter';
+import QRCodeManager from '@/components/QRCodeManager';
 
 export default function SellerProfile() {
   const router = useRouter();
@@ -130,6 +131,19 @@ export default function SellerProfile() {
     const fullUrl = `${window.location.origin}${multiProductUrl}`;
     navigator.clipboard.writeText(fullUrl);
     alert(`Multi-product link copied to clipboard!\nSelected ${selectedProducts.length} product(s)`);
+  };
+
+  const handleQRCodeUpdate = (qrData) => {
+    // Update the user state with new QR code data
+    setUser(prev => ({
+      ...prev,
+      qrCodeImage: qrData.qrCodeImage,
+      qrCodeDescription: qrData.qrCodeDescription
+    }));
+    
+    // Update localStorage
+    const updatedUser = { ...user, ...qrData };
+    localStorage.setItem('currentUser', JSON.stringify(updatedUser));
   };
 
   const handleSave = async e => {
@@ -639,6 +653,11 @@ export default function SellerProfile() {
                 </div>
               </div>
             </div>
+          </div>
+
+          {/* QR Code Payment Section */}
+          <div className="mt-8">
+            <QRCodeManager seller={user} onUpdate={handleQRCodeUpdate} />
           </div>
 
           {/* Products Section */}

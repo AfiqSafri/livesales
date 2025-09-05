@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import { sendEmail, emailTemplates } from '../../../../../utils/email.js';
 
 async function sendPaymentEmail(to, status) {
   let subject, html, text;
@@ -100,6 +101,51 @@ export async function POST(req) {
     // Send email notification if payment status changed
     if (paymentStatus && (paymentStatus === 'paid' || paymentStatus === 'failed') && order.buyerEmail) {
       await sendPaymentEmail(order.buyerEmail, paymentStatus);
+    }
+
+    // Send email notification if shipping status changed
+    if (status && order.buyerEmail) {
+      try {
+        console.log('📧 Sending shipping status update email to:', order.buyerEmail);
+        
+        // Get product name for the email
+        const orderWithProduct = await prisma.order.findUnique({
+          where: { id: Number(orderId) },
+          include: {
+            product: {
+              select: {
+                name: true
+              }
+            }
+          }
+        });
+
+        const emailTemplate = emailTemplates.shippingStatusUpdate({
+          buyerName: order.buyerName || 'Customer',
+          orderId: orderId,
+          productName: orderWithProduct?.product?.name || 'Product',
+          status: status,
+          trackingNumber: order.trackingNumber,
+          courierName: order.courierName,
+          sellerNotes: order.sellerNotes,
+          estimatedDelivery: order.estimatedDelivery
+        });
+
+        const emailResult = await sendEmail({
+          to: order.buyerEmail,
+          subject: emailTemplate.subject,
+          html: emailTemplate.html,
+          text: emailTemplate.text
+        });
+
+        if (emailResult.success) {
+          console.log('✅ Shipping status update email sent successfully');
+        } else {
+          console.log('❌ Failed to send shipping status update email:', emailResult.error);
+        }
+      } catch (emailError) {
+        console.error('❌ Error sending shipping status update email:', emailError);
+      }
     }
 
     return new Response(JSON.stringify({ success: true, order: updatedOrder }), { status: 200 });

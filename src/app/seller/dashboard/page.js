@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useSellerLanguage } from '../SellerLanguageContext';
 import ModernHeader from '@/components/ModernHeader';
 import ModernFooter from '@/components/ModernFooter';
+import ReceiptManager from '@/components/ReceiptManager';
 
 export default function SellerDashboard() {
   const router = useRouter();
@@ -20,6 +21,12 @@ export default function SellerDashboard() {
     pendingOrders: 0
   });
   const [loading, setLoading] = useState(true);
+  
+  // QR Code state
+  const [qrCodeFile, setQrCodeFile] = useState(null);
+  const [qrCodeDescription, setQrCodeDescription] = useState('');
+  const [isUploading, setIsUploading] = useState(false);
+  const [showQRModal, setShowQRModal] = useState(false);
 
   // Custom CSS for mobile optimization
   useEffect(() => {
@@ -63,6 +70,27 @@ export default function SellerDashboard() {
       // Initialize with empty arrays to prevent errors
       let orders = [];
       let products = [];
+      
+      // Fetch seller profile data (including QR code)
+      try {
+        const profileResponse = await fetch('/api/seller/profile', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sellerId })
+        });
+        
+        if (profileResponse.ok) {
+          const profileData = await profileResponse.json();
+          if (profileData.user) {
+            // Update user state with fresh data from database
+            const updatedUser = { ...user, ...profileData.user };
+            setUser(updatedUser);
+            localStorage.setItem('currentUser', JSON.stringify(updatedUser));
+          }
+        }
+      } catch (profileError) {
+        console.error('Error fetching seller profile:', profileError);
+      }
       
       // Fetch recent orders
       try {
@@ -123,6 +151,73 @@ export default function SellerDashboard() {
       setLoading(false);
     }
   }
+
+  // QR Code handling functions
+  const handleQRCodeFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setQrCodeFile(file);
+    }
+  };
+
+  const handleQRCodeSubmit = async (e) => {
+    e.preventDefault();
+    if (!qrCodeFile || !user?.id) return;
+
+    setIsUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('qrCodeImage', qrCodeFile);
+      formData.append('qrCodeDescription', qrCodeDescription);
+      formData.append('sellerId', user.id);
+
+      const response = await fetch('/api/seller/qr-code', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        // Update user state with new QR code
+        const updatedUser = { ...user, qrCodeImage: result.qrCodeImage, qrCodeDescription: result.qrCodeDescription };
+        setUser(updatedUser);
+        localStorage.setItem('currentUser', JSON.stringify(updatedUser));
+        
+        // Reset form
+        setQrCodeFile(null);
+        setQrCodeDescription('');
+        document.querySelector('input[type="file"]').value = '';
+        
+        alert(language === 'ms' ? 'QR Code berjaya dimuat naik!' : 'QR Code uploaded successfully!');
+      } else {
+        throw new Error('Upload failed');
+      }
+    } catch (error) {
+      console.error('Error uploading QR code:', error);
+      alert(language === 'ms' ? 'Ralat memuat naik QR Code' : 'Error uploading QR Code');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleDownloadQR = () => {
+    if (user?.qrCodeImage) {
+      const link = document.createElement('a');
+      link.href = user.qrCodeImage;
+      link.download = `qr-code-${user.name || 'seller'}.jpg`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  };
+
+  const handleViewQR = () => {
+    setShowQRModal(true);
+  };
+
+  const handleCloseQRModal = () => {
+    setShowQRModal(false);
+  };
 
   function formatCurrency(amount) {
     if (!amount || isNaN(amount)) return 'RM 0.00';
@@ -331,78 +426,118 @@ export default function SellerDashboard() {
                 </div>
               </div>
 
-              {/* Bank Account Configuration */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6 mt-6">
-                <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-4 sm:mb-6 flex items-center">
-                  <i className="fas fa-university text-blue-600 mr-3"></i>
-                  {language === 'ms' ? 'Akaun Bank' : 'Bank Account'}
-                </h3>
+            </div>
+
+            {/* QR Code Management */}
+            <div className="lg:col-span-1">
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
+                <div className="flex items-center mb-4 sm:mb-6">
+                  <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mr-3">
+                    <i className="fas fa-qrcode text-green-600 text-lg"></i>
+                  </div>
+                  <h3 className="text-lg sm:text-xl font-semibold text-gray-900">
+                    {language === 'ms' ? 'QR Code Pembayaran' : 'Payment QR Code'}
+                  </h3>
+                </div>
                 
-                {user?.bankAccountNumber && user?.bankName ? (
-                  <div className="space-y-3 mb-4">
-                    <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-                      <div className="flex items-center text-green-800">
-                        <i className="fas fa-check-circle mr-2"></i>
-                        <span className="text-sm font-medium">
-                          {language === 'ms' ? 'Akaun Bank Dikonfigurasi' : 'Bank Account Configured'}
-                        </span>
-                      </div>
-                    </div>
-                    
-                    <div className="bg-gray-50 rounded-lg p-3 space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600 font-medium">
-                          {language === 'ms' ? 'Bank:' : 'Bank:'}
-                        </span>
-                        <span className="text-gray-900">{user.bankName}</span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600 font-medium">
-                          {language === 'ms' ? 'Akaun:' : 'Account:'}
-                        </span>
-                        <span className="text-gray-900 font-mono">{user.bankAccountNumber}</span>
-                      </div>
-                      {user.bankCode && (
-                        <div className="flex justify-between text-sm">
-                          <span className="text-gray-600 font-medium">
-                            {language === 'ms' ? 'Kod Bank:' : 'Bank Code:'}
-                          </span>
-                          <span className="text-gray-900">{user.bankCode}</span>
-                        </div>
-                      )}
-                    </div>
+                {loading ? (
+                  <div className="text-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto mb-4"></div>
+                    <p className="text-gray-500 text-sm">Loading...</p>
                   </div>
                 ) : (
-                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
-                    <div className="flex items-center text-yellow-800">
-                      <i className="fas fa-exclamation-triangle mr-2"></i>
-                      <span className="text-sm font-medium">
-                        {language === 'ms' ? 'Akaun Bank Belum Dikonfigurasi' : 'Bank Account Not Configured'}
-                      </span>
+                  <>
+                    {/* QR Code Upload Form */}
+                <form onSubmit={handleQRCodeSubmit} className="space-y-4 mb-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      {language === 'ms' ? 'Muat Naik QR Code' : 'Upload QR Code'}
+                    </label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleQRCodeFileChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-sm"
+                      required
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      {language === 'ms' ? 'Penerangan (Pilihan)' : 'Description (Optional)'}
+                    </label>
+                    <textarea
+                      value={qrCodeDescription}
+                      onChange={(e) => setQrCodeDescription(e.target.value)}
+                      placeholder={language === 'ms' ? 'Contoh: Scan untuk bayar dengan Maybank2U' : 'Example: Scan to pay with Maybank2U'}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-sm resize-none"
+                      rows="3"
+                    />
+                  </div>
+                  
+                  <button
+                    type="submit"
+                    disabled={isUploading}
+                    className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white font-semibold py-2 px-4 rounded-lg transition-all duration-200 flex items-center justify-center gap-2"
+                  >
+                    {isUploading ? (
+                      <>
+                        <i className="fas fa-spinner fa-spin"></i>
+                        {language === 'ms' ? 'Memuat Naik...' : 'Uploading...'}
+                      </>
+                    ) : (
+                      <>
+                        <i className="fas fa-upload"></i>
+                        {language === 'ms' ? 'Muat Naik QR Code' : 'Upload QR Code'}
+                      </>
+                    )}
+                  </button>
+                </form>
+
+                {/* Current QR Code Display */}
+                {user?.qrCodeImage && (
+                  <div className="border-t pt-4">
+                    <div className="text-center">
+                      <p className="text-sm font-medium text-gray-700 mb-3">
+                        {language === 'ms' ? 'QR Code Semasa' : 'Current QR Code'}
+                      </p>
+                      
+                      <div className="bg-gray-50 rounded-lg p-4 mb-4">
+                        <img
+                          src={user.qrCodeImage}
+                          alt="QR Code"
+                          className="max-w-full h-auto max-h-48 mx-auto rounded-lg shadow-sm"
+                        />
+                      </div>
+                      
+                      {user.qrCodeDescription && (
+                        <p className="text-sm text-gray-600 mb-4 italic">
+                          "{user.qrCodeDescription}"
+                        </p>
+                      )}
+                      
+                      <div className="flex gap-2">
+                        <button
+                          onClick={handleViewQR}
+                          className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-3 rounded-lg transition-all duration-200 flex items-center justify-center gap-2 text-sm"
+                        >
+                          <i className="fas fa-eye"></i>
+                          {language === 'ms' ? 'Lihat' : 'View'}
+                        </button>
+                        
+                        <button
+                          onClick={handleDownloadQR}
+                          className="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-3 rounded-lg transition-all duration-200 flex items-center justify-center gap-2 text-sm"
+                        >
+                          <i className="fas fa-download"></i>
+                          {language === 'ms' ? 'Muat Turun' : 'Download'}
+                        </button>
+                      </div>
                     </div>
-                    <p className="text-yellow-700 text-xs mt-2">
-                      {language === 'ms' 
-                        ? 'Pembeli memerlukan maklumat bank anda untuk membuat pembayaran. Sila konfigurasi akaun bank anda.'
-                        : 'Buyers need your bank information to make payments. Please configure your bank account.'
-                      }
-                    </p>
                   </div>
                 )}
-                
-                <button
-                  className="btn btn-primary w-full group hover:scale-105 transition-all duration-200 py-3"
-                  onClick={() => router.push('/seller/bank-account')}
-                >
-                  <i className="fas fa-cog mr-2 group-hover:rotate-180 transition-transform duration-200"></i>
-                  {language === 'ms' ? 'Konfigurasi Akaun Bank' : 'Configure Bank Account'}
-                </button>
-                
-                <div className="mt-3 text-xs text-gray-500 text-center">
-                  {language === 'ms' 
-                    ? 'Maklumat bank diperlukan untuk pembayaran pembeli'
-                    : 'Bank information required for buyer payments'
-                  }
-                </div>
+                  </>
+                )}
               </div>
             </div>
 
@@ -532,8 +667,69 @@ export default function SellerDashboard() {
               </div>
             </div>
           </div>
+
+          {/* Receipt Management Section */}
+          <div className="mt-8">
+            <ReceiptManager seller={user} />
+          </div>
         </div>
       </main>
+      
+      {/* QR Code Modal */}
+      {showQRModal && user?.qrCodeImage && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto relative">
+            {/* Close Button */}
+            <button
+              onClick={handleCloseQRModal}
+              className="absolute top-4 right-4 z-10 w-8 h-8 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center transition-colors"
+            >
+              <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+            </button>
+            
+            <div className="p-6">
+              <div className="text-center mb-6">
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                  {language === 'ms' ? 'QR Code Pembayaran' : 'Payment QR Code'}
+                </h3>
+                {user.qrCodeDescription && (
+                  <p className="text-sm text-gray-600 italic mb-4">
+                    "{user.qrCodeDescription}"
+                  </p>
+                )}
+              </div>
+              
+              <div className="bg-gray-50 rounded-lg p-6 mb-6">
+                <img
+                  src={user.qrCodeImage}
+                  alt="QR Code"
+                  className="mx-auto max-w-full h-auto max-h-80 object-contain"
+                />
+              </div>
+              
+              <div className="flex gap-3">
+                <button
+                  onClick={handleDownloadQR}
+                  className="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 flex items-center justify-center gap-2"
+                >
+                  <i className="fas fa-download"></i>
+                  {language === 'ms' ? 'Muat Turun' : 'Download'}
+                </button>
+                
+                <button
+                  onClick={handleCloseQRModal}
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 flex items-center justify-center gap-2"
+                >
+                  <i className="fas fa-check"></i>
+                  {language === 'ms' ? 'Tutup' : 'Close'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       
       <ModernFooter />
     </div>

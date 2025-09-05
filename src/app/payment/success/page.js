@@ -2,149 +2,184 @@
 import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import ProfessionalButton from '../../../components/ProfessionalButton';
 
 function PaymentSuccessContent() {
   const searchParams = useSearchParams();
-  const [paymentDetails, setPaymentDetails] = useState(null);
+  const [orderDetails, setOrderDetails] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const reference = searchParams.get('reference');
-    if (reference) {
-      fetchPaymentDetails(reference);
-    } else {
-      setLoading(false);
-    }
-  }, [searchParams]);
-
-  const fetchPaymentDetails = async (reference) => {
-    try {
-      const res = await fetch('/api/payment/details', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reference }),
-      });
-      
-      if (res.ok) {
-        const data = await res.json();
-        setPaymentDetails(data.payment);
+    // Get order details from URL params or localStorage
+    const orderId = searchParams.get('orderId');
+    const billId = searchParams.get('billId');
+    const amount = searchParams.get('amount');
+    
+    if (orderId || billId) {
+      // Try to get order details from localStorage or fetch from API
+      const storedOrder = localStorage.getItem('pendingOrder');
+      if (storedOrder) {
+        try {
+          setOrderDetails(JSON.parse(storedOrder));
+          localStorage.removeItem('pendingOrder'); // Clean up
+        } catch (error) {
+          console.error('Error parsing stored order:', error);
+        }
       }
-    } catch (error) {
-      console.error('Error fetching payment details:', error);
-    } finally {
-      setLoading(false);
     }
-  };
+    
+    setLoading(false);
+  }, [searchParams]);
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
-          <p>Loading payment details...</p>
+          <p className="text-gray-600">Loading payment confirmation...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-2 sm:py-4 lg:py-8">
-      <div className="max-w-lg mx-auto px-2 sm:px-4 lg:px-8">
-        <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-          <div className="p-2 sm:p-3 lg:p-6">
-            {/* Success Header */}
-            <div className="text-center mb-3 sm:mb-4 lg:mb-6">
-              <div className="mx-auto flex items-center justify-center h-8 w-8 sm:h-10 sm:w-10 lg:h-12 lg:w-12 rounded-full bg-green-100 mb-2 sm:mb-3 lg:mb-4">
-                <svg className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-                </svg>
-              </div>
-              <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 mb-1 sm:mb-2">Payment Successful!</h1>
-              <p className="text-xs sm:text-sm text-gray-600">Your payment has been processed successfully.</p>
-            </div>
+    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 py-12 px-4">
+      <div className="max-w-2xl mx-auto">
+        {/* Success Header */}
+        <div className="text-center mb-8">
+          <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <svg className="w-10 h-10 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+            </svg>
+          </div>
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">Payment Successful! 🎉</h1>
+          <p className="text-xl text-gray-600">
+            Thank you for your purchase. Your payment has been processed successfully.
+          </p>
+        </div>
 
-            {/* Payment Details */}
-            {paymentDetails && (
-              <div className="bg-gray-50 rounded-lg p-2 sm:p-3 lg:p-4 mb-3 sm:mb-4 lg:mb-6">
-                <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900 mb-2 sm:mb-3">Payment Details</h3>
-                <div className="space-y-1 sm:space-y-2 text-xs sm:text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Reference:</span>
-                    <span className="font-medium text-xs break-all">{paymentDetails.reference}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Amount:</span>
-                    <span className="font-medium">RM {paymentDetails.amount.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Status:</span>
-                    <span className="font-medium text-green-600 capitalize">{paymentDetails.status}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Description:</span>
-                    <span className="font-medium text-xs break-all">{paymentDetails.description}</span>
-                  </div>
-                  {paymentDetails.paidAt && (
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Paid At:</span>
-                      <span className="font-medium text-xs">
-                        {new Date(paymentDetails.paidAt).toLocaleString()}
-                      </span>
-                    </div>
-                  )}
-                </div>
+        {/* Order Details Card */}
+        <div className="bg-white rounded-xl shadow-lg p-8 mb-8">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">Order Confirmation</h2>
+          
+          {orderDetails ? (
+            <div className="space-y-4">
+              <div className="flex justify-between items-center py-3 border-b border-gray-200">
+                <span className="text-gray-600">Order ID:</span>
+                <span className="font-semibold">#{orderDetails.orderId || 'N/A'}</span>
               </div>
-            )}
-
-            {/* Next Steps */}
-            <div className="mb-3 sm:mb-4 lg:mb-6">
-              <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900 mb-2 sm:mb-3">What&apos;s Next?</h3>
-              <div className="space-y-2 sm:space-y-3 text-xs sm:text-sm text-gray-600">
-                <div className="flex items-start">
-                  <div className="flex-shrink-0 w-5 h-5 sm:w-6 sm:h-6 bg-blue-100 rounded-full flex items-center justify-center mr-2 sm:mr-3 mt-0.5">
-                    <span className="text-blue-600 text-xs font-bold">1</span>
-                  </div>
-                  <p>You will receive a confirmation email with your order details.</p>
-                </div>
-                <div className="flex items-start">
-                  <div className="flex-shrink-0 w-5 h-5 sm:w-6 sm:h-6 bg-blue-100 rounded-full flex items-center justify-center mr-2 sm:mr-3 mt-0.5">
-                    <span className="text-blue-600 text-xs font-bold">2</span>
-                  </div>
-                  <p>The seller will contact you to arrange delivery or pickup.</p>
-                </div>
-                <div className="flex items-start">
-                  <div className="flex-shrink-0 w-5 h-5 sm:w-6 sm:h-6 bg-blue-100 rounded-full flex items-center justify-center mr-2 sm:mr-3 mt-0.5">
-                    <span className="text-blue-600 text-xs font-bold">3</span>
-                  </div>
-                  <p>You can track your order status through the seller's dashboard.</p>
-                </div>
+              
+              <div className="flex justify-between items-center py-3 border-b border-gray-200">
+                <span className="text-gray-600">Amount Paid:</span>
+                <span className="font-bold text-green-600 text-lg">
+                  RM {orderDetails.totalAmount?.toFixed(2) || 'N/A'}
+                </span>
+              </div>
+              
+              <div className="flex justify-between items-center py-3 border-b border-gray-200">
+                <span className="text-gray-600">Payment Method:</span>
+                <span className="font-semibold">Bank Transfer via Billplz</span>
+              </div>
+              
+              <div className="flex justify-between items-center py-3 border-b border-gray-200">
+                <span className="text-gray-600">Payment Status:</span>
+                <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
+                  ✅ Confirmed
+                </span>
+              </div>
+              
+              <div className="flex justify-between items-center py-3 border-b border-gray-200">
+                <span className="text-gray-600">Date:</span>
+                <span className="font-semibold">{new Date().toLocaleDateString('en-MY')}</span>
               </div>
             </div>
-
-            {/* Action Buttons */}
-            <div className="flex gap-2 sm:gap-3 mb-3 sm:mb-4 lg:mb-6">
-              <Link href="/" className="flex-1">
-                <ProfessionalButton variant="primary" size="medium" fullWidth>
-                  Return Home
-                </ProfessionalButton>
-              </Link>
-              <Link href="/buyer/orders" className="flex-1">
-                <ProfessionalButton variant="outline" size="medium" fullWidth>
-                  View Orders
-                </ProfessionalButton>
-              </Link>
-            </div>
-
-            {/* Contact Support */}
-            <div className="mt-3 sm:mt-4 lg:mt-6 pt-3 sm:pt-4 lg:pt-6 border-t border-gray-200">
-              <p className="text-xs sm:text-sm text-gray-600 text-center">
-                Need help? Contact our support team at{' '}
-                <a href="mailto:support@livesalez.com" className="text-blue-600 hover:text-blue-700">
-                  support@livesalez.com
-                </a>
+          ) : (
+            <div className="text-center py-8">
+              <p className="text-gray-600 mb-4">Order details will be available shortly.</p>
+              <p className="text-sm text-gray-500">
+                You will receive a confirmation email with all the details.
               </p>
             </div>
+          )}
+        </div>
+
+        {/* Next Steps */}
+        <div className="bg-blue-50 border border-blue-200 rounded-xl p-6 mb-8">
+          <h3 className="text-lg font-semibold text-blue-900 mb-4 flex items-center gap-2">
+            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+            </svg>
+            What Happens Next?
+          </h3>
+          <div className="space-y-3 text-sm text-blue-800">
+            <div className="flex items-start gap-3">
+              <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                <span className="text-blue-600 text-xs font-bold">1</span>
+              </div>
+              <p>You will receive a confirmation email with order details</p>
+            </div>
+            <div className="flex items-start gap-3">
+              <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                <span className="text-blue-600 text-xs font-bold">2</span>
+              </div>
+              <p>The seller will be notified of your payment</p>
+            </div>
+            <div className="flex items-start gap-3">
+              <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                <span className="text-blue-600 text-xs font-bold">3</span>
+              </div>
+              <p>Your order will be processed and shipped</p>
+            </div>
+            <div className="flex items-start gap-3">
+              <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                <span className="text-blue-600 text-xs font-bold">4</span>
+              </div>
+              <p>You can track your order status in your account</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Security Information */}
+        <div className="bg-green-50 border border-green-200 rounded-xl p-6 mb-8">
+          <div className="flex items-start gap-3">
+            <svg className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+            </svg>
+            <div>
+              <h4 className="font-semibold text-green-800 mb-2">Payment Security</h4>
+              <p className="text-sm text-green-700">
+                Your payment was processed securely through Billplz with bank-level encryption. 
+                All transaction data is protected and secure.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex flex-col sm:flex-row gap-4">
+          <Link
+            href="/"
+            className="flex-1 bg-blue-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-blue-700 transition-colors text-center"
+          >
+            Continue Shopping
+          </Link>
+          <Link
+            href="/orders"
+            className="flex-1 border border-blue-600 text-blue-600 py-3 px-6 rounded-lg font-semibold hover:bg-blue-50 transition-colors text-center"
+          >
+            View My Orders
+          </Link>
+        </div>
+
+        {/* Support Information */}
+        <div className="text-center mt-8">
+          <p className="text-gray-600 mb-2">Need help with your order?</p>
+          <div className="flex justify-center gap-4 text-sm">
+            <Link href="/contact" className="text-blue-600 hover:text-blue-800 underline">
+              Contact Support
+            </Link>
+            <Link href="/help" className="text-blue-600 hover:text-blue-800 underline">
+              Help Center
+            </Link>
           </div>
         </div>
       </div>
@@ -152,9 +187,21 @@ function PaymentSuccessContent() {
   );
 }
 
-export default function PaymentSuccess() {
+// Loading fallback component
+function PaymentSuccessLoading() {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
+        <p className="text-gray-600">Loading payment confirmation...</p>
+      </div>
+    </div>
+  );
+}
+
+export default function PaymentSuccessPage() {
+  return (
+    <Suspense fallback={<PaymentSuccessLoading />}>
       <PaymentSuccessContent />
     </Suspense>
   );

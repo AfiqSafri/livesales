@@ -1,52 +1,43 @@
-// Test script for email functionality
-const testEmail = async () => {
-  console.log('🧪 Testing Email Functionality...\n');
+// Test email functionality
+require('dotenv').config();
 
+async function testEmail() {
   try {
-    // Test 1: Test email sending
-    console.log('1️⃣ Testing email sending...');
-    const emailData = {
-      to: 'test@example.com',
-      subject: 'Test Email from Livesalez',
+    // Import the email utility using dynamic import for ES6 modules
+    const { sendEmail } = await import('./src/utils/email.js');
+    
+    console.log('📧 Testing email functionality...');
+    console.log('EMAIL_USER:', process.env.EMAIL_USER);
+    console.log('EMAIL_PASS:', process.env.EMAIL_PASS ? '***configured***' : 'NOT SET');
+    
+    const result = await sendEmail({
+      to: 'livesalez1@gmail.com',
+      subject: 'Test Email - Payment System',
       html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <h2 style="color: #28a745;">Test Email</h2>
-          <p>This is a test email from the Livesalez system.</p>
-          <p>If you receive this, the email functionality is working correctly!</p>
-        </div>
+        <h2>🧪 Email Test</h2>
+        <p>This is a test email to verify that the email system is working correctly.</p>
+        <p><strong>Test Details:</strong></p>
+        <ul>
+          <li>Time: ${new Date().toLocaleString()}</li>
+          <li>System: Livesalez Payment System</li>
+          <li>Purpose: Verify email notifications</li>
+        </ul>
+        <p>If you receive this email, the system is working correctly!</p>
       `,
-      text: 'This is a test email from the Livesalez system.'
-    };
-
-    const response = await fetch('/api/test-email', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(emailData)
+      text: 'This is a test email to verify that the email system is working correctly.'
     });
-
-    if (response.ok) {
-      const result = await response.json();
-      console.log('✅ Email test successful:', result);
+    
+    console.log('📧 Email result:', result);
+    
+    if (result.success) {
+      console.log('✅ Email sent successfully!');
     } else {
-      const error = await response.json();
-      console.log('❌ Email test failed:', error);
+      console.log('❌ Email failed:', result.error);
     }
-
-    console.log('\n🎉 Email functionality test completed!');
-    console.log('\n📋 Next Steps:');
-    console.log('- Try making a payment to see real emails sent');
-    console.log('- Check your email inbox for notifications');
-    console.log('- Verify email templates are working correctly');
-
+    
   } catch (error) {
     console.error('❌ Test error:', error);
   }
-};
+}
 
-// Run test if in browser
-if (typeof window !== 'undefined') {
-  window.testEmail = testEmail;
-  console.log('🧪 Email test loaded. Run testEmail() to test.');
-} else {
-  console.log('🔧 Email test script loaded.');
-} 
+testEmail();
