@@ -858,7 +858,7 @@ export default function MultiProductPage() {
                             }, 'image/png');
                           };
                           
-                          qrImg.src = `http://localhost:3000${sellerQRCode.qrCodeImage}`;
+                          qrImg.src = `${process.env.NEXT_PUBLIC_BASE_URL || window.location.origin}${sellerQRCode.qrCodeImage}`;
                         } catch (error) {
                           console.error('Error creating combined image:', error);
                           alert('Failed to create download image. Please try again.');

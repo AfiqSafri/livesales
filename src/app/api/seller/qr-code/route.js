@@ -1,7 +1,5 @@
 import { PrismaClient } from '@prisma/client';
 import { NextResponse } from 'next/server';
-import { writeFile, mkdir } from 'fs/promises';
-import path from 'path';
 
 const prisma = new PrismaClient();
 
@@ -25,27 +23,26 @@ export async function POST(req) {
       return NextResponse.json({ error: 'Seller not found' }, { status: 404 });
     }
 
-    // Create uploads directory if it doesn't exist
-    const uploadsDir = path.join(process.cwd(), 'public', 'uploads', 'qr-codes');
-    await mkdir(uploadsDir, { recursive: true });
+    // Validate file type
+    if (!qrCodeFile.type.startsWith('image/')) {
+      return NextResponse.json({ error: 'Please upload a valid image file' }, { status: 400 });
+    }
 
-    // Generate unique filename
-    const timestamp = Date.now();
-    const randomString = Math.random().toString(36).substring(2, 15);
-    const fileExtension = qrCodeFile.name.split('.').pop();
-    const fileName = `qr_${sellerId}_${timestamp}_${randomString}.${fileExtension}`;
-    const filePath = path.join(uploadsDir, fileName);
+    // Validate file size (max 5MB)
+    if (qrCodeFile.size > 5 * 1024 * 1024) {
+      return NextResponse.json({ error: 'File size must be less than 5MB' }, { status: 400 });
+    }
 
-    // Save file
+    // Convert file to base64 for storage in database
     const bytes = await qrCodeFile.arrayBuffer();
     const buffer = Buffer.from(bytes);
-    await writeFile(filePath, buffer);
+    const base64Image = `data:${qrCodeFile.type};base64,${buffer.toString('base64')}`;
 
-    // Update seller with QR code info
+    // Update seller with QR code info (storing as base64)
     const updatedSeller = await prisma.user.update({
       where: { id: sellerId },
       data: {
-        qrCodeImage: `/uploads/qr-codes/${fileName}`,
+        qrCodeImage: base64Image,
         qrCodeDescription: description
       }
     });
@@ -106,10 +103,9 @@ export async function DELETE(req) {
       return NextResponse.json({ error: 'Seller ID required' }, { status: 400 });
     }
 
-    // Get current QR code info
+    // Verify seller exists
     const seller = await prisma.user.findUnique({
-      where: { id: sellerId },
-      select: { qrCodeImage: true }
+      where: { id: sellerId, userType: 'seller' }
     });
 
     if (!seller) {
@@ -124,20 +120,6 @@ export async function DELETE(req) {
         qrCodeDescription: null
       }
     });
-
-    // Delete file if it exists
-    if (seller.qrCodeImage) {
-      try {
-        const fs = require('fs');
-        const filePath = path.join(process.cwd(), 'public', seller.qrCodeImage);
-        if (fs.existsSync(filePath)) {
-          fs.unlinkSync(filePath);
-        }
-      } catch (fileError) {
-        console.error('File deletion error:', fileError);
-        // Don't fail the request if file deletion fails
-      }
-    }
 
     return NextResponse.json({
       success: true,
