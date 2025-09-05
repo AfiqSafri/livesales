@@ -67,7 +67,7 @@ export default function ModernFooter({ border = false }) {
         <div className="border-t border-gray-200 py-6 sm:py-8">
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0 text-center md:text-left">
             <div className="text-xs sm:text-sm text-gray-600">
-              &copy; 2024 Livesalez. All rights reserved.
+              &copy; 2025 Livesalez v1.0. All rights reserved.
             </div>
             <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-6 text-xs sm:text-sm text-gray-600">
               <span>Made with ❤️ in Malaysia</span>
