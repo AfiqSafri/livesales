@@ -845,17 +845,66 @@ export default function MultiProductPage() {
                             ctx.font = '14px Arial';
                             ctx.fillText(`Date: ${new Date().toLocaleDateString()}`, canvas.width / 2, qrY + qrSize + 150);
                             
-                            // Download the combined image
+                            // Mobile-friendly download approach
                             canvas.toBlob((blob) => {
-                              const url = URL.createObjectURL(blob);
-                              const link = document.createElement('a');
-                              link.href = url;
-                              link.download = `qr-payment-${sellerQRCode.name || 'seller'}-${calculateGrandTotal().toFixed(2)}.png`;
-                              document.body.appendChild(link);
-                              link.click();
-                              document.body.removeChild(link);
-                              URL.revokeObjectURL(url);
-                            }, 'image/png');
+                              if (blob) {
+                                const url = URL.createObjectURL(blob);
+                                
+                                // Method 1: Try direct download first
+                                const link = document.createElement('a');
+                                link.href = url;
+                                link.download = `qr-payment-${sellerQRCode.name || 'seller'}-${calculateGrandTotal().toFixed(2)}.png`;
+                                link.style.display = 'none';
+                                document.body.appendChild(link);
+                                link.click();
+                                document.body.removeChild(link);
+                                
+                                // Method 2: Open in new tab for mobile browsers (backup method)
+                                setTimeout(() => {
+                                  const newWindow = window.open();
+                                  if (newWindow) {
+                                    newWindow.document.write(`
+                                      <html>
+                                        <head>
+                                          <title>QR Payment - Save Image</title>
+                                          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                                        </head>
+                                        <body style="margin:0; padding:20px; text-align:center; background:#f0f0f0; font-family:Arial,sans-serif;">
+                                          <h3 style="color:#333; margin-bottom:20px;">Save this QR payment image</h3>
+                                          <div style="background:white; padding:20px; border-radius:10px; box-shadow:0 2px 10px rgba(0,0,0,0.1);">
+                                            <img src="${url}" style="max-width:100%; height:auto; border:1px solid #ddd;" />
+                                          </div>
+                                          <div style="margin-top:20px; padding:15px; background:#e3f2fd; border-radius:8px;">
+                                            <p style="margin:0; color:#1976d2; font-weight:bold;">📱 How to save:</p>
+                                            <p style="margin:10px 0 0 0; color:#666; font-size:14px;">
+                                              <strong>iPhone:</strong> Long press image → "Save to Photos"<br>
+                                              <strong>Android:</strong> Long press image → "Save image" or "Download"
+                                            </p>
+                                          </div>
+                                          <button onclick="window.close()" style="margin-top:20px; padding:12px 24px; background:#007bff; color:white; border:none; border-radius:6px; cursor:pointer; font-size:16px;">
+                                            Close
+                                          </button>
+                                        </body>
+                                      </html>
+                                    `);
+                                  }
+                                }, 200);
+                                
+                                // Clean up after 30 seconds
+                                setTimeout(() => {
+                                  URL.revokeObjectURL(url);
+                                }, 30000);
+                                
+                                // Show success message
+                                alert('QR payment image generated! If it didn\'t download automatically, check the new tab that opened for instructions on how to save it to your phone.');
+                              } else {
+                                alert('Failed to generate image. Please try again.');
+                              }
+                            }, 'image/png', 0.9);
+                          };
+                          
+                          qrImg.onerror = () => {
+                            alert('Failed to load QR code image. Please try again.');
                           };
                           
                           qrImg.src = `${process.env.NEXT_PUBLIC_BASE_URL || window.location.origin}${sellerQRCode.qrCodeImage}`;

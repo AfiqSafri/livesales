@@ -1,7 +1,5 @@
 import { PrismaClient } from '@prisma/client';
 import { NextResponse } from 'next/server';
-import { writeFile, mkdir } from 'fs/promises';
-import path from 'path';
 import { sendEmail, emailTemplates } from '../../../../utils/email.js';
 
 const prisma = new PrismaClient();
@@ -29,6 +27,16 @@ export async function POST(req) {
 
     if (!sellerId || !buyerId || !amount || !receiptFile) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    }
+
+    // Validate file type
+    if (!receiptFile.type.startsWith('image/')) {
+      return NextResponse.json({ error: 'Please upload a valid image file' }, { status: 400 });
+    }
+
+    // Validate file size (max 5MB)
+    if (receiptFile.size > 5 * 1024 * 1024) {
+      return NextResponse.json({ error: 'File size must be less than 5MB' }, { status: 400 });
     }
 
     // For QR payments, we don't need to verify order exists
@@ -74,29 +82,24 @@ export async function POST(req) {
       }
     }
 
-    // Create uploads directory if it doesn't exist
-    const uploadsDir = path.join(process.cwd(), 'public', 'uploads', 'receipts');
-    await mkdir(uploadsDir, { recursive: true });
+    // Convert file to base64 for storage in database
+    const bytes = await receiptFile.arrayBuffer();
+    const buffer = Buffer.from(bytes);
+    const base64Image = `data:${receiptFile.type};base64,${buffer.toString('base64')}`;
 
-    // Generate unique filename
+    // Generate unique filename for reference
     const timestamp = Date.now();
     const randomString = Math.random().toString(36).substring(2, 15);
     const fileExtension = receiptFile.name.split('.').pop();
     const fileName = `receipt_${isQRPayment ? 'qr' : orderId}_${timestamp}_${randomString}.${fileExtension}`;
-    const filePath = path.join(uploadsDir, fileName);
 
-    // Save file
-    const bytes = await receiptFile.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-    await writeFile(filePath, buffer);
-
-    // Create receipt record
+    // Create receipt record (storing as base64)
     const receipt = await prisma.receipt.create({
       data: {
         orderId: isQRPayment ? null : parseInt(orderId), // null for QR payments
         sellerId: sellerId,
         buyerId: buyerId,
-        receiptImage: `/uploads/receipts/${fileName}`,
+        receiptImage: base64Image, // Store as base64 instead of file path
         amount: amount,
         status: 'pending',
         paymentType: isQRPayment ? 'qr_payment' : 'order_payment',
@@ -117,7 +120,7 @@ export async function POST(req) {
         where: { id: parseInt(orderId) },
         data: {
           paymentStatus: 'pending_review',
-          receiptUrl: `/uploads/receipts/${fileName}`
+          receiptUrl: base64Image // Store base64 instead of file path
         }
       });
     }
