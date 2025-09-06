@@ -228,6 +228,10 @@ export default function DualPaymentModal({ isOpen, onClose, order, seller, onSuc
                       src={seller.qrCodeImage}
                       alt="Payment QR Code"
                       className="mx-auto max-w-xs max-h-64 object-contain"
+                      onError={(e) => {
+                        console.error('QR code image failed to load:', e);
+                        e.target.style.display = 'none';
+                      }}
                     />
                     {seller.qrCodeDescription && (
                       <p className="text-sm text-gray-600 mt-2">

@@ -791,6 +791,10 @@ export default function MultiProductPage() {
                     src={sellerQRCode.qrCodeImage}
                     alt="Payment QR Code"
                     className="mx-auto max-w-xs max-h-64 object-contain"
+                    onError={(e) => {
+                      console.error('QR code image failed to load:', e);
+                      e.target.style.display = 'none';
+                    }}
                   />
                   {sellerQRCode.qrCodeDescription && (
                     <p className="text-sm text-gray-600 mt-2">
@@ -907,7 +911,7 @@ export default function MultiProductPage() {
                             alert('Failed to load QR code image. Please try again.');
                           };
                           
-                          qrImg.src = `${process.env.NEXT_PUBLIC_BASE_URL || window.location.origin}${sellerQRCode.qrCodeImage}`;
+                          qrImg.src = sellerQRCode.qrCodeImage;
                         } catch (error) {
                           console.error('Error creating combined image:', error);
                           alert('Failed to create download image. Please try again.');

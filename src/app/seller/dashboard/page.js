@@ -706,6 +706,10 @@ export default function SellerDashboard() {
                   src={user.qrCodeImage}
                   alt="QR Code"
                   className="mx-auto max-w-full h-auto max-h-80 object-contain"
+                  onError={(e) => {
+                    console.error('QR code image failed to load:', e);
+                    e.target.style.display = 'none';
+                  }}
                 />
               </div>
               

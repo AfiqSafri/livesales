@@ -389,26 +389,24 @@ export default function ReceiptManager({ seller }) {
                   <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
                     {selectedReceipt.receiptImage ? (
                       <>
-                        <div className="text-xs text-gray-500 mb-2">
-                          Image Path: {selectedReceipt.receiptImage}
-                        </div>
                         <img
-                          src={`/api/receipt/image?file=${selectedReceipt.receiptImage.split('/').pop()}`}
+                          src={selectedReceipt.receiptImage}
                           alt="Payment Receipt"
                           className="mx-auto max-w-full max-h-96 object-contain"
-                          onLoad={() => console.log('Image loaded successfully:', selectedReceipt.receiptImage)}
+                          onLoad={() => console.log('Receipt image loaded successfully')}
                           onError={(e) => {
-                            console.error('Image load error:', e.target.src);
+                            console.error('Failed to load receipt image:', e);
                             e.target.style.display = 'none';
-                            e.target.nextSibling.style.display = 'block';
+                            // Show error message
+                            const errorDiv = document.createElement('div');
+                            errorDiv.className = 'text-red-600 text-sm mt-2';
+                            errorDiv.textContent = 'Failed to load receipt image';
+                            e.target.parentNode.appendChild(errorDiv);
                           }}
                         />
-                        <div style={{ display: 'none' }} className="text-red-500 mt-2">
-                          Failed to load image: /api/receipt/image?file={selectedReceipt.receiptImage.split('/').pop()}
-                        </div>
                       </>
                     ) : (
-                      <div className="text-gray-500">No image available</div>
+                      <div className="text-gray-500 text-sm">No receipt image available</div>
                     )}
                   </div>
                 </div>
