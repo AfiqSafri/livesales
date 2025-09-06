@@ -110,6 +110,11 @@ export async function POST(req) {
     }
 
     // Send email notifications
+    console.log('📧 Starting email notifications for receipt approval/rejection...');
+    console.log('📧 Action:', action);
+    console.log('📧 Receipt ID:', receiptId);
+    console.log('📧 Seller:', receipt.seller.name, receipt.seller.email);
+    
     try {
       // Get buyer info for QR payments
       let buyer = null;
@@ -117,13 +122,19 @@ export async function POST(req) {
         buyer = await prisma.user.findUnique({
           where: { id: receipt.buyerId, userType: 'buyer' }
         });
+        console.log('📧 QR Payment Buyer:', buyer?.name, buyer?.email);
       }
 
       if (action === 'approved') {
+        console.log('📧 Processing approval emails...');
+        
         // Email to buyer - payment approved
         const buyerEmail = receipt.order?.buyer?.email || buyer?.email || receipt.buyerEmail;
+        console.log('📧 Buyer email address:', buyerEmail);
+        
         if (buyerEmail) {
-          await sendEmail({
+          console.log('📧 Sending approval email to buyer:', buyerEmail);
+          const buyerEmailResult = await sendEmail({
             to: buyerEmail,
             subject: 'Payment Approved - Order Confirmed',
             html: emailTemplates.paymentApproved({
@@ -135,10 +146,14 @@ export async function POST(req) {
               sellerNotes: sellerNotes
             })
           });
+          console.log('📧 Buyer approval email result:', buyerEmailResult);
+        } else {
+          console.log('⚠️ No buyer email address found for approval notification');
         }
 
         // Email to seller - payment approved
-        await sendEmail({
+        console.log('📧 Sending approval email to seller:', receipt.seller.email);
+        const sellerEmailResult = await sendEmail({
           to: receipt.seller.email,
           subject: 'Payment Approved - Order Confirmed',
           html: emailTemplates.paymentApprovedToSeller({
@@ -149,12 +164,18 @@ export async function POST(req) {
             orderId: createdOrder?.id || receipt.orderId || `QR-${receipt.id}`
           })
         });
+        console.log('📧 Seller approval email result:', sellerEmailResult);
 
       } else {
+        console.log('📧 Processing rejection emails...');
+        
         // Email to buyer - payment rejected
         const buyerEmail = receipt.order?.buyer?.email || buyer?.email || receipt.buyerEmail;
+        console.log('📧 Buyer email address for rejection:', buyerEmail);
+        
         if (buyerEmail) {
-          await sendEmail({
+          console.log('📧 Sending rejection email to buyer:', buyerEmail);
+          const buyerEmailResult = await sendEmail({
             to: buyerEmail,
             subject: 'Payment Rejected - Please Try Again',
             html: emailTemplates.paymentRejected({
@@ -166,10 +187,14 @@ export async function POST(req) {
               sellerNotes: sellerNotes
             })
           });
+          console.log('📧 Buyer rejection email result:', buyerEmailResult);
+        } else {
+          console.log('⚠️ No buyer email address found for rejection notification');
         }
 
         // Email to seller - payment rejected
-        await sendEmail({
+        console.log('📧 Sending rejection email to seller:', receipt.seller.email);
+        const sellerEmailResult = await sendEmail({
           to: receipt.seller.email,
           subject: 'Payment Rejected - Review Completed',
           html: emailTemplates.paymentRejectedToSeller({
@@ -181,9 +206,18 @@ export async function POST(req) {
             sellerNotes: sellerNotes
           })
         });
+        console.log('📧 Seller rejection email result:', sellerEmailResult);
       }
+      
+      console.log('✅ Email notifications completed successfully');
+      
     } catch (emailError) {
-      console.error('Email notification error:', emailError);
+      console.error('❌ Email notification error:', emailError);
+      console.error('❌ Email error details:', {
+        message: emailError.message,
+        stack: emailError.stack,
+        code: emailError.code
+      });
       // Don't fail the request if email fails
     }
 
