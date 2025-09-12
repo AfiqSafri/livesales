@@ -7,6 +7,8 @@ import { useSellerLanguage } from '../SellerLanguageContext';
 import ModernHeader from '@/components/ModernHeader';
 import ModernFooter from '@/components/ModernFooter';
 import ReceiptManager from '@/components/ReceiptManager';
+import SellerNotificationCenter from '@/components/SellerNotificationCenter';
+import ReminderFrequencySettings from '@/components/ReminderFrequencySettings';
 
 export default function SellerDashboard() {
   const router = useRouter();
@@ -61,7 +63,32 @@ export default function SellerDashboard() {
     }
     setUser(u);
     fetchDashboardData(u.id);
+    
+    // Set up 30-second reminder check
+    const reminderInterval = setInterval(() => {
+      checkPendingReceipts(u.id);
+    }, 30000); // 30 seconds
+    
+    return () => clearInterval(reminderInterval);
   }, [router]);
+
+  const checkPendingReceipts = async (sellerId) => {
+    try {
+      console.log('🔔 Checking for pending receipts...');
+      const response = await fetch('/api/receipt/reminder-30s', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sellerId })
+      });
+      
+      const data = await response.json();
+      if (data.success) {
+        console.log('🔔 Reminder check completed:', data.summary);
+      }
+    } catch (error) {
+      console.error('Error checking pending receipts:', error);
+    }
+  };
 
   async function fetchDashboardData(sellerId) {
     try {
@@ -423,9 +450,15 @@ export default function SellerDashboard() {
                       {language === 'ms' ? 'Konfigurasi Bank' : 'Setup Bank'}
                     </button>
                   )}
+
                 </div>
               </div>
 
+            </div>
+
+            {/* Notification Center */}
+            <div className="lg:col-span-1">
+              <SellerNotificationCenter seller={user} />
             </div>
 
             {/* QR Code Management */}
@@ -666,6 +699,11 @@ export default function SellerDashboard() {
                 )}
               </div>
             </div>
+          </div>
+
+          {/* Reminder Frequency Settings */}
+          <div className="mt-8">
+            <ReminderFrequencySettings seller={user} />
           </div>
 
           {/* Receipt Management Section */}

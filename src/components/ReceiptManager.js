@@ -236,6 +236,14 @@ export default function ReceiptManager({ seller }) {
         <div>
           <h3 className="text-lg font-semibold text-gray-900">{t.title}</h3>
           <p className="text-sm text-gray-600 mt-1">{t.description}</p>
+          {receipts.filter(r => r.status === 'pending').length > 0 && (
+            <div className="mt-2 flex items-center text-sm text-yellow-700 bg-yellow-100 px-3 py-2 rounded-md">
+              <i className="fas fa-exclamation-triangle mr-2"></i>
+              <span className="font-medium">
+                {receipts.filter(r => r.status === 'pending').length} pending receipt(s) require your attention
+              </span>
+            </div>
+          )}
         </div>
       </div>
 
@@ -283,7 +291,7 @@ export default function ReceiptManager({ seller }) {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {receipts.map((receipt) => (
-                <tr key={receipt.id}>
+                <tr key={receipt.id} className={`${receipt.status === 'pending' ? 'bg-yellow-50 border-l-4 border-yellow-400' : ''} hover:bg-gray-50 transition-colors`}>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {receipt.order ? receipt.order.buyerName : (receipt.buyerName || receipt.buyer?.name || `Buyer ID: ${receipt.buyerId}`)}
                   </td>
@@ -297,9 +305,17 @@ export default function ReceiptManager({ seller }) {
                     {new Date(receipt.uploadedAt).toLocaleDateString()}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(receipt.status)}`}>
-                      {getStatusText(receipt.status)}
-                    </span>
+                    <div className="flex items-center">
+                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(receipt.status)}`}>
+                        {getStatusText(receipt.status)}
+                      </span>
+                      {receipt.status === 'pending' && (
+                        <div className="ml-2 flex items-center">
+                          <div className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></div>
+                          <span className="ml-1 text-xs text-yellow-600 font-medium">NEW</span>
+                        </div>
+                      )}
+                    </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <button

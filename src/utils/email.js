@@ -944,6 +944,151 @@ Livesalez Team
     `
   }),
 
+  // Pending Receipt Reminder Template
+  pendingReceiptReminder: ({ sellerName, pendingReceipts, totalCount, reminderFrequency = '30s' }) => {
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+    
+    // Convert frequency to human readable format
+    const getFrequencyText = (freq) => {
+      switch (freq) {
+        case '30s': return 'every 30 seconds';
+        case '30m': return 'every 30 minutes';
+        case '1h': return 'every 1 hour';
+        case 'off': return 'disabled';
+        default: return 'every 30 seconds';
+      }
+    };
+    
+    const frequencyText = getFrequencyText(reminderFrequency);
+    
+    return {
+      subject: `🔔 Reminder: ${totalCount} Pending Receipt(s) Need Your Review`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="background-color: #fef3c7; padding: 20px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #f59e0b;">
+            <h2 style="color: #92400e; margin: 0;">🔔 Pending Receipt Reminder</h2>
+            <p style="color: #92400e; margin: 5px 0 0 0;">You have ${totalCount} pending receipt(s) waiting for your review</p>
+          </div>
+          
+          <p>Dear <strong>${sellerName}</strong>,</p>
+          
+          <p>This is a friendly reminder that you have <strong>${totalCount} pending receipt(s)</strong> that need your review and approval/rejection.</p>
+          
+          <div style="background-color: #ffffff; border: 1px solid #dee2e6; border-radius: 8px; padding: 20px; margin: 20px 0;">
+            <h3 style="margin-top: 0; color: #495057;">Pending Receipts Summary</h3>
+            <div style="background-color: #f8f9fa; padding: 15px; border-radius: 6px; margin-bottom: 15px;">
+              <p style="margin: 0; font-size: 18px; font-weight: bold; color: #f59e0b;">
+                📄 ${totalCount} Receipt(s) Pending Review
+              </p>
+            </div>
+            
+            ${pendingReceipts.slice(0, 5).map((receipt, index) => `
+              <div style="border-bottom: 1px solid #e5e7eb; padding: 10px 0; ${index === pendingReceipts.slice(0, 5).length - 1 ? 'border-bottom: none;' : ''}">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <div>
+                    <strong>${receipt.order?.buyerName || receipt.buyerName || receipt.buyer?.name || 'Buyer'}</strong>
+                    <br>
+                    <span style="color: #6b7280; font-size: 14px;">
+                      ${receipt.order?.product?.name || receipt.productName || 'QR Payment'} - RM ${receipt.amount.toFixed(2)}
+                    </span>
+                  </div>
+                  <div style="text-align: right;">
+                    <span style="background-color: #fef3c7; color: #92400e; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold;">
+                      PENDING
+                    </span>
+                    <br>
+                    <span style="color: #6b7280; font-size: 12px;">
+                      ${new Date(receipt.uploadedAt).toLocaleDateString()}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            `).join('')}
+            
+            ${pendingReceipts.length > 5 ? `
+              <div style="text-align: center; margin-top: 15px; padding: 10px; background-color: #f3f4f6; border-radius: 6px;">
+                <p style="margin: 0; color: #6b7280; font-size: 14px;">
+                  + ${pendingReceipts.length - 5} more receipt(s) pending review
+                </p>
+              </div>
+            ` : ''}
+          </div>
+          
+          <!-- Urgent Action Required -->
+          <div style="background-color: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 20px; margin: 20px 0;">
+            <h4 style="margin-top: 0; color: #dc2626;">⚠️ Action Required</h4>
+            <p style="margin: 0; color: #dc2626;">
+              These receipts have been pending for review. Please log into your seller dashboard to approve or reject them.
+            </p>
+          </div>
+          
+          <!-- Quick Actions -->
+          <div style="background-color: #e7f3ff; border: 1px solid #b3d9ff; border-radius: 8px; padding: 20px; margin: 20px 0;">
+            <h4 style="margin-top: 0; color: #0066cc;">Quick Actions</h4>
+            <div style="text-align: center; margin: 20px 0;">
+              <a href="${baseUrl}/seller/dashboard" 
+                 style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: bold; margin: 5px;">
+                📋 Review Receipts Now
+              </a>
+            </div>
+            <p style="text-align: center; margin: 10px 0; color: #6b7280; font-size: 14px;">
+              Click the button above to go directly to your seller dashboard
+            </p>
+          </div>
+          
+          <!-- Reminder Frequency -->
+          <div style="background-color: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px; padding: 15px; margin: 20px 0;">
+            <h4 style="margin-top: 0; color: #495057;">Reminder Frequency</h4>
+            <p style="margin: 5px 0; color: #6b7280; font-size: 14px;">
+              You will receive this reminder ${frequencyText} until all pending receipts are reviewed.
+            </p>
+            <p style="margin: 5px 0; color: #6b7280; font-size: 14px;">
+              To change your reminder frequency or stop these reminders, please review and approve/reject all pending receipts.
+            </p>
+            <p style="margin: 5px 0; color: #6b7280; font-size: 14px;">
+              <strong>Current setting:</strong> ${frequencyText}
+            </p>
+          </div>
+          
+          <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #dee2e6;">
+            <p style="margin: 0; color: #6c757d; font-size: 14px;">
+              Best regards,<br>
+              <strong>Livesalez Team</strong>
+            </p>
+          </div>
+        </div>
+      `,
+      text: `
+🔔 Reminder: ${totalCount} Pending Receipt(s) Need Your Review
+
+Dear ${sellerName},
+
+This is a friendly reminder that you have ${totalCount} pending receipt(s) that need your review and approval/rejection.
+
+Pending Receipts Summary:
+${pendingReceipts.slice(0, 5).map((receipt, index) => 
+  `${index + 1}. ${receipt.order?.buyerName || receipt.buyerName || receipt.buyer?.name || 'Buyer'} - ${receipt.order?.product?.name || receipt.productName || 'QR Payment'} - RM ${receipt.amount.toFixed(2)} (${new Date(receipt.uploadedAt).toLocaleDateString()})`
+).join('\n')}
+
+${pendingReceipts.length > 5 ? `+ ${pendingReceipts.length - 5} more receipt(s) pending review` : ''}
+
+⚠️ Action Required:
+These receipts have been pending for review. Please log into your seller dashboard to approve or reject them.
+
+Quick Actions:
+- Dashboard: ${baseUrl}/seller/dashboard
+
+Reminder Frequency:
+You will receive this reminder ${frequencyText} until all pending receipts are reviewed.
+To change your reminder frequency or stop these reminders, please review and approve/reject all pending receipts.
+Current setting: ${frequencyText}
+
+Best regards,
+Livesalez Team
+      `
+    };
+  },
+
   // Shipping Status Update Templates
   shippingStatusUpdate: ({ buyerName, orderId, productName, status, trackingNumber, courierName, sellerNotes, estimatedDelivery }) => ({
     subject: `Order #${orderId} Status Update - ${status.charAt(0).toUpperCase() + status.slice(1).replace('_', ' ')}`,

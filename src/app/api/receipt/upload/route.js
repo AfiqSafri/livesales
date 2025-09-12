@@ -125,6 +125,25 @@ export async function POST(req) {
       });
     }
 
+    // Create notification for seller
+    try {
+      console.log('🔔 Creating notification for seller...');
+      await prisma.notification.create({
+        data: {
+          userId: sellerId,
+          orderId: isQRPayment ? null : parseInt(orderId),
+          type: 'receipt_uploaded',
+          title: 'New Payment Receipt Uploaded',
+          message: `A buyer has uploaded a payment receipt for ${isQRPayment ? (productName || 'QR Payment') : order?.product?.name} (RM ${amount.toFixed(2)}). Please review and approve/reject.`,
+          isRead: false
+        }
+      });
+      console.log('✅ Notification created successfully');
+    } catch (notificationError) {
+      console.error('❌ Notification creation error:', notificationError);
+      // Don't fail the request if notification fails
+    }
+
     // Send email notifications
     console.log('📧 Starting email notifications...');
     console.log('Receipt ID:', receipt.id);
