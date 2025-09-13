@@ -1,0 +1,237 @@
+import { PrismaClient } from '@prisma/client';
+import { sendEmail } from '@/utils/email';
+
+const prisma = new PrismaClient();
+
+// Track last email sent time per seller to respect frequency settings
+const lastEmailSent = new Map();
+
+export async function POST(req) {
+  try {
+    console.log('🔔 Starting server-side email reminder check...');
+    
+    // Get all sellers with their reminder frequency preferences
+    const sellers = await prisma.user.findMany({
+      where: {
+        userType: 'seller',
+        reminderFrequency: {
+          not: 'off' // Exclude sellers who have disabled email notifications
+        }
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        reminderFrequency: true
+      }
+    });
+
+    console.log(`📧 Found ${sellers.length} sellers with email notifications enabled`);
+
+    let totalEmailsSent = 0;
+    let totalSellersChecked = 0;
+
+    for (const seller of sellers) {
+      try {
+        totalSellersChecked++;
+        
+        // Check if seller has pending receipts
+        const pendingReceipts = await prisma.receipt.findMany({
+          where: {
+            sellerId: seller.id,
+            status: 'pending'
+          },
+          include: {
+            order: {
+              include: {
+                product: true
+              }
+            }
+          },
+          orderBy: {
+            uploadedAt: 'desc'
+          }
+        });
+
+        if (pendingReceipts.length === 0) {
+          console.log(`📭 No pending receipts for seller ${seller.name} (${seller.email})`);
+          continue;
+        }
+
+        console.log(`📋 Found ${pendingReceipts.length} pending receipts for seller ${seller.name}`);
+
+        // Check if we should send email based on frequency setting
+        const shouldSendEmail = shouldSendReminderEmail(seller, pendingReceipts);
+        
+        if (!shouldSendEmail) {
+          console.log(`⏰ Skipping email for ${seller.name} - frequency limit not reached`);
+          continue;
+        }
+
+        // Send email notification
+        await sendPendingReceiptReminderEmail(seller, pendingReceipts);
+        
+        // Update last email sent time
+        lastEmailSent.set(seller.id, new Date());
+        
+        totalEmailsSent++;
+        console.log(`✅ Email sent to ${seller.name} (${seller.email})`);
+
+      } catch (sellerError) {
+        console.error(`❌ Error processing seller ${seller.name}:`, sellerError);
+      }
+    }
+
+    const summary = {
+      success: true,
+      totalSellersChecked,
+      totalEmailsSent,
+      sellersProcessed: sellers.length,
+      sellerSettings: sellers.map(seller => ({
+        id: seller.id,
+        name: seller.name,
+        email: seller.email,
+        reminderFrequency: seller.reminderFrequency
+      })),
+      timestamp: new Date().toISOString()
+    };
+
+    console.log('📊 Email reminder check completed:', summary);
+    
+    return Response.json(summary);
+
+  } catch (error) {
+    console.error('❌ Error in server-side email reminder system:', error);
+    return Response.json({ 
+      success: false, 
+      error: 'Failed to process email reminders',
+      details: error.message 
+    }, { status: 500 });
+  } finally {
+    await prisma.$disconnect();
+  }
+}
+
+function shouldSendReminderEmail(seller, pendingReceipts) {
+  const now = new Date();
+  const lastSent = lastEmailSent.get(seller.id);
+  
+  if (!lastSent) {
+    // First time checking this seller, send email
+    return true;
+  }
+
+  const timeSinceLastEmail = now - lastSent;
+  const frequencyMs = getFrequencyInMs(seller.reminderFrequency);
+  
+  return timeSinceLastEmail >= frequencyMs;
+}
+
+function getFrequencyInMs(frequency) {
+  switch (frequency) {
+    case '30s': return 30 * 1000; // 30 seconds
+    case '30m': return 30 * 60 * 1000; // 30 minutes
+    case '1h': return 60 * 60 * 1000; // 1 hour
+    default: return 30 * 60 * 1000; // Default to 30 minutes
+  }
+}
+
+async function sendPendingReceiptReminderEmail(seller, pendingReceipts) {
+  const frequencyText = getFrequencyText(seller.reminderFrequency);
+  const receiptCount = pendingReceipts.length;
+  
+  // Create email content
+  const subject = `🔔 ${receiptCount} Pending Receipt${receiptCount > 1 ? 's' : ''} Awaiting Your Review`;
+  
+  const htmlContent = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+      <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 10px 10px 0 0; text-align: center;">
+        <h1 style="margin: 0; font-size: 28px;">🔔 Pending Receipt Reminder</h1>
+        <p style="margin: 10px 0 0 0; opacity: 0.9;">You have ${receiptCount} pending receipt${receiptCount > 1 ? 's' : ''} to review</p>
+      </div>
+      
+      <div style="background: #f8f9fa; padding: 30px; border-radius: 0 0 10px 10px;">
+        <h2 style="color: #333; margin-top: 0;">Hello ${seller.name},</h2>
+        
+        <p style="color: #666; line-height: 1.6;">
+          You have <strong>${receiptCount} pending receipt${receiptCount > 1 ? 's' : ''}</strong> that require your review and approval. 
+          Please log in to your seller dashboard to process these receipts.
+        </p>
+        
+        <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #ffc107;">
+          <h3 style="color: #856404; margin-top: 0;">📋 Receipt Summary:</h3>
+          ${pendingReceipts.slice(0, 5).map(receipt => `
+            <div style="padding: 10px 0; border-bottom: 1px solid #eee;">
+              <strong>Amount:</strong> RM ${receipt.amount.toFixed(2)}<br>
+              <strong>Buyer:</strong> ${receipt.order ? receipt.order.buyerName : (receipt.buyerName || 'Unknown')}<br>
+              <strong>Product:</strong> ${receipt.order ? receipt.order.product.name : (receipt.productName || 'QR Payment')}<br>
+              <strong>Uploaded:</strong> ${new Date(receipt.uploadedAt).toLocaleDateString()}
+            </div>
+          `).join('')}
+          ${receiptCount > 5 ? `<p style="color: #666; font-style: italic;">... and ${receiptCount - 5} more receipt${receiptCount - 5 > 1 ? 's' : ''}</p>` : ''}
+        </div>
+        
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/seller/dashboard" 
+             style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 25px; font-weight: bold; display: inline-block;">
+            📱 Go to Dashboard
+          </a>
+        </div>
+        
+        <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; margin: 20px 0;">
+          <p style="margin: 0; color: #1976d2; font-size: 14px;">
+            <strong>📧 Email Frequency:</strong> ${frequencyText}<br>
+            <strong>⏰ Last Check:</strong> ${new Date().toLocaleString()}
+          </p>
+        </div>
+        
+        <p style="color: #666; font-size: 14px; margin-bottom: 0;">
+          This is an automated reminder based on your email notification settings. 
+          You can change your notification frequency in your seller dashboard settings.
+        </p>
+      </div>
+    </div>
+  `;
+
+  const textContent = `
+Pending Receipt Reminder
+
+Hello ${seller.name},
+
+You have ${receiptCount} pending receipt${receiptCount > 1 ? 's' : ''} that require your review and approval.
+
+Receipt Summary:
+${pendingReceipts.slice(0, 5).map(receipt => `
+- Amount: RM ${receipt.amount.toFixed(2)}
+- Buyer: ${receipt.order ? receipt.order.buyerName : (receipt.buyerName || 'Unknown')}
+- Product: ${receipt.order ? receipt.order.product.name : (receipt.productName || 'QR Payment')}
+- Uploaded: ${new Date(receipt.uploadedAt).toLocaleDateString()}
+`).join('')}
+${receiptCount > 5 ? `... and ${receiptCount - 5} more receipt${receiptCount - 5 > 1 ? 's' : ''}` : ''}
+
+Please log in to your seller dashboard to process these receipts:
+${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/seller/dashboard
+
+Email Frequency: ${frequencyText}
+Last Check: ${new Date().toLocaleString()}
+
+This is an automated reminder based on your email notification settings.
+  `;
+
+  await sendEmail({
+    to: seller.email,
+    subject,
+    html: htmlContent,
+    text: textContent
+  });
+}
+
+function getFrequencyText(frequency) {
+  switch (frequency) {
+    case '30s': return 'Every 30 seconds';
+    case '30m': return 'Every 30 minutes';
+    case '1h': return 'Every 1 hour';
+    case 'off': return 'Disabled';
+    default: return 'Every 30 minutes';
+  }
+}

@@ -4,7 +4,7 @@ import { useSellerLanguage } from '../app/seller/SellerLanguageContext';
 
 export default function ReminderFrequencySettings({ seller }) {
   const { language } = useSellerLanguage() || { language: 'en' };
-  const [reminderFrequency, setReminderFrequency] = useState('30s');
+  const [reminderFrequency, setReminderFrequency] = useState(seller?.reminderFrequency || '30s');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -43,15 +43,18 @@ export default function ReminderFrequencySettings({ seller }) {
   useEffect(() => {
     if (seller?.reminderFrequency) {
       setReminderFrequency(seller.reminderFrequency);
+    } else {
+      // Default to '30s' if reminderFrequency is not available
+      setReminderFrequency('30s');
     }
-  }, [seller?.reminderFrequency]);
+  }, [seller?.reminderFrequency, seller]);
 
 
   const getFrequencyDescription = (freq) => {
     switch (freq) {
-      case '30s': return 'Immediate notifications for urgent receipts';
-      case '30m': return 'Regular check-ins without overwhelming your inbox';
-      case '1h': return 'Periodic reminders for less urgent situations';
+      case '30s': return 'Every 30 seconds - Immediate notifications for urgent receipts';
+      case '30m': return 'Every 30 minutes - Regular check-ins without overwhelming your inbox';
+      case '1h': return 'Every 1 hour - Periodic reminders for less urgent situations';
       case 'off': return 'No email reminders for pending receipts';
       default: return '';
     }
@@ -162,7 +165,7 @@ export default function ReminderFrequencySettings({ seller }) {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-900">{t.frequency30s}</p>
-                <p className="text-xs text-gray-500 mt-1">{getFrequencyDescription('30s')}</p>
+                <p className="text-xs text-gray-500 mt-1">Every 30 seconds - Immediate notifications for urgent receipts</p>
               </div>
               <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
                 Urgent
@@ -186,7 +189,7 @@ export default function ReminderFrequencySettings({ seller }) {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-900">{t.frequency30m}</p>
-                <p className="text-xs text-gray-500 mt-1">{getFrequencyDescription('30m')}</p>
+                <p className="text-xs text-gray-500 mt-1">Every 30 minutes - Regular check-ins without overwhelming your inbox</p>
               </div>
               <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
                 Balanced
@@ -210,7 +213,7 @@ export default function ReminderFrequencySettings({ seller }) {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-900">{t.frequency1h}</p>
-                <p className="text-xs text-gray-500 mt-1">{getFrequencyDescription('1h')}</p>
+                <p className="text-xs text-gray-500 mt-1">Every 1 hour - Periodic reminders for less urgent situations</p>
               </div>
               <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
                 Relaxed
@@ -234,7 +237,7 @@ export default function ReminderFrequencySettings({ seller }) {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-900">{t.frequencyOff}</p>
-                <p className="text-xs text-gray-500 mt-1">{getFrequencyDescription('off')}</p>
+                <p className="text-xs text-gray-500 mt-1">No email reminders for pending receipts</p>
               </div>
               <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
                 Disabled

@@ -11,6 +11,10 @@ export default function ReceiptManager({ seller }) {
   const [showModal, setShowModal] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
   const [sellerNotes, setSellerNotes] = useState('');
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const receiptsPerPage = 10;
 
   const translations = {
     en: {
@@ -38,7 +42,13 @@ export default function ReceiptManager({ seller }) {
       rejectSuccess: 'Payment rejected successfully!',
       approveError: 'Failed to approve payment',
       rejectError: 'Failed to reject payment',
-      close: 'Close'
+      close: 'Close',
+      showing: 'Showing',
+      of: 'of',
+      results: 'results',
+      previous: 'Previous',
+      next: 'Next',
+      page: 'Page'
     },
     ms: {
       title: 'Resit Pembayaran',
@@ -65,7 +75,13 @@ export default function ReceiptManager({ seller }) {
       rejectSuccess: 'Pembayaran berjaya ditolak!',
       approveError: 'Gagal meluluskan pembayaran',
       rejectError: 'Gagal menolak pembayaran',
-      close: 'Tutup'
+      close: 'Tutup',
+      showing: 'Menunjukkan',
+      of: 'daripada',
+      results: 'hasil',
+      previous: 'Sebelum',
+      next: 'Seterusnya',
+      page: 'Halaman'
     }
   };
 
@@ -215,6 +231,33 @@ export default function ReceiptManager({ seller }) {
     }
   };
 
+  // Pagination logic
+  const totalPages = Math.ceil(receipts.length / receiptsPerPage);
+  const startIndex = (currentPage - 1) * receiptsPerPage;
+  const endIndex = startIndex + receiptsPerPage;
+  const currentReceipts = receipts.slice(startIndex, endIndex);
+
+  const goToPage = (page) => {
+    setCurrentPage(page);
+  };
+
+  const goToPreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const goToNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  // Reset to first page when receipts change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [receipts.length]);
+
   if (loading) {
     return (
       <div className="bg-white rounded-lg shadow-md p-6">
@@ -265,7 +308,8 @@ export default function ReceiptManager({ seller }) {
           <p className="text-gray-500">{t.noReceipts}</p>
         </div>
       ) : (
-        <div className="overflow-x-auto">
+        <>
+          <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
@@ -290,7 +334,7 @@ export default function ReceiptManager({ seller }) {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {receipts.map((receipt) => (
+              {currentReceipts.map((receipt) => (
                 <tr key={receipt.id} className={`${receipt.status === 'pending' ? 'bg-yellow-50 border-l-4 border-yellow-400' : ''} hover:bg-gray-50 transition-colors`}>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {receipt.order ? receipt.order.buyerName : (receipt.buyerName || receipt.buyer?.name || `Buyer ID: ${receipt.buyerId}`)}
@@ -330,6 +374,80 @@ export default function ReceiptManager({ seller }) {
             </tbody>
           </table>
         </div>
+        
+        {receipts.length > receiptsPerPage && (
+          <div className="mt-6 flex items-center justify-between">
+            <div className="text-sm text-gray-700">
+              {t.showing} {startIndex + 1} {t.of} {Math.min(endIndex, receipts.length)} {t.of} {receipts.length} {t.results}
+            </div>
+            
+            <div className="flex items-center space-x-2">
+              {/* Previous Button */}
+              <button
+                onClick={goToPreviousPage}
+                disabled={currentPage === 1}
+                className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                  currentPage === 1
+                    ? 'text-gray-400 bg-gray-100 cursor-not-allowed'
+                    : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'
+                }`}
+              >
+                {t.previous}
+              </button>
+              
+              {/* Page Numbers */}
+              <div className="flex space-x-1">
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                  // Show first page, last page, current page, and pages around current page
+                  const shouldShow = 
+                    page === 1 || 
+                    page === totalPages || 
+                    (page >= currentPage - 1 && page <= currentPage + 1);
+                  
+                  if (!shouldShow) {
+                    // Show ellipsis for gaps
+                    if (page === currentPage - 2 || page === currentPage + 2) {
+                      return (
+                        <span key={page} className="px-3 py-2 text-sm text-gray-500">
+                          ...
+                        </span>
+                      );
+                    }
+                    return null;
+                  }
+                  
+                  return (
+                    <button
+                      key={page}
+                      onClick={() => goToPage(page)}
+                      className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                        currentPage === page
+                          ? 'text-white bg-blue-600'
+                          : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  );
+                })}
+              </div>
+              
+              {/* Next Button */}
+              <button
+                onClick={goToNextPage}
+                disabled={currentPage === totalPages}
+                className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                  currentPage === totalPages
+                    ? 'text-gray-400 bg-gray-100 cursor-not-allowed'
+                    : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'
+                }`}
+              >
+                {t.next}
+              </button>
+            </div>
+          </div>
+        )}
+      </>
       )}
 
       {/* Receipt Review Modal */}

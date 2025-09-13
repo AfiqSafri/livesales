@@ -31,7 +31,8 @@ export async function POST(req) {
         bankCode: true,
         userType: true,
         qrCodeImage: true,
-        qrCodeDescription: true
+        qrCodeDescription: true,
+        reminderFrequency: true
       }
     });
 
@@ -87,7 +88,8 @@ export async function GET(req) {
         bankCode: true,
         userType: true,
         qrCodeImage: true,
-        qrCodeDescription: true
+        qrCodeDescription: true,
+        reminderFrequency: true
       }
     });
 
