@@ -5,7 +5,7 @@
  * It checks for sellers with pending receipts and sends email notifications based on
  * their individual frequency preferences.
  * 
- * CRON SCHEDULE: Every 5 minutes (*/5 * * * *)
+ * CRON SCHEDULE: Every 5 minutes
  * TRIGGER: Vercel Cron Job (vercel.json)
  * 
  * PROCESS FLOW:

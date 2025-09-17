@@ -5,7 +5,7 @@
  * for more than 3 minutes. It runs via Vercel Cron Jobs to maintain clean
  * inventory and notify buyers of cancellations.
  * 
- * CRON SCHEDULE: Every 2 minutes (*/2 * * * *)
+ * CRON SCHEDULE: Every 2 minutes
  * TRIGGER: Vercel Cron Job (vercel.json)
  * SECURITY: Requires secret parameter for authentication
  * 
