@@ -60,7 +60,8 @@ export async function POST(req) {
       where: {
         userType: 'seller',
         reminderFrequency: {
-          not: 'off' // Exclude sellers who have disabled email notifications
+          not: 'off', // Exclude sellers who have disabled email notifications
+          not: null    // Exclude sellers with null frequency (defaults to 30m)
         }
       },
       select: {
@@ -257,8 +258,10 @@ export async function POST(req) {
         id: seller.id,
         name: seller.name,
         email: seller.email,
-        reminderFrequency: seller.reminderFrequency
+        reminderFrequency: seller.reminderFrequency,
+        frequencyDescription: getFrequencyText(seller.reminderFrequency)
       })),
+      cronSchedule: "Every 2 minutes - Individual seller frequencies respected",
       timestamp: new Date().toISOString()
     };
 
@@ -284,13 +287,22 @@ function shouldSendReminderEmail(seller, pendingReceipts) {
   
   if (!lastSent) {
     // First time checking this seller, send email
+    console.log(`📧 First email for seller ${seller.name} (${seller.reminderFrequency})`);
     return true;
   }
 
   const timeSinceLastEmail = now - lastSent;
   const frequencyMs = getFrequencyInMs(seller.reminderFrequency);
   
-  return timeSinceLastEmail >= frequencyMs;
+  const shouldSend = timeSinceLastEmail >= frequencyMs;
+  
+  if (shouldSend) {
+    console.log(`📧 Email due for ${seller.name}: ${Math.round(timeSinceLastEmail / 1000)}s since last email (${seller.reminderFrequency})`);
+  } else {
+    console.log(`⏰ Email not due for ${seller.name}: ${Math.round(timeSinceLastEmail / 1000)}s since last email (${seller.reminderFrequency})`);
+  }
+  
+  return shouldSend;
 }
 
 function getFrequencyInMs(frequency) {
@@ -298,6 +310,9 @@ function getFrequencyInMs(frequency) {
     case '30s': return 30 * 1000; // 30 seconds
     case '30m': return 30 * 60 * 1000; // 30 minutes
     case '1h': return 60 * 60 * 1000; // 1 hour
+    case 'off': return Infinity; // Never send emails
+    case null:
+    case undefined:
     default: return 30 * 60 * 1000; // Default to 30 minutes
   }
 }
