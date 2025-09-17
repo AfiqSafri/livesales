@@ -62,10 +62,10 @@ export async function PUT(req) {
     }
 
     // Validate reminder frequency
-    const validFrequencies = ['30s', '30m', '1h', 'off'];
+    const validFrequencies = ['3h', '6h', '12h', 'off'];
     if (!validFrequencies.includes(reminderFrequency)) {
       return NextResponse.json({ 
-        error: 'Invalid reminder frequency. Must be one of: 30s, 30m, 1h, off' 
+        error: 'Invalid reminder frequency. Must be one of: 3h, 6h, 12h, off' 
       }, { status: 400 });
     }
 

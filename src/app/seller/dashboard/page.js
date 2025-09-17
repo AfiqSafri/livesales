@@ -8,6 +8,7 @@ import ModernHeader from '@/components/ModernHeader';
 import ModernFooter from '@/components/ModernFooter';
 import ReceiptManager from '@/components/ReceiptManager';
 import SellerNotificationCenter from '@/components/SellerNotificationCenter';
+import { downloadImage, isMobileDevice } from '@/utils/mobileDownload';
 import ReminderFrequencySettings from '@/components/ReminderFrequencySettings';
 
 export default function SellerDashboard() {
@@ -29,6 +30,8 @@ export default function SellerDashboard() {
   const [qrCodeDescription, setQrCodeDescription] = useState('');
   const [isUploading, setIsUploading] = useState(false);
   const [showQRModal, setShowQRModal] = useState(false);
+  const [downloadMessage, setDownloadMessage] = useState('');
+  const [isDownloading, setIsDownloading] = useState(false);
 
   // Custom CSS for mobile optimization
   useEffect(() => {
@@ -227,14 +230,32 @@ export default function SellerDashboard() {
     }
   };
 
-  const handleDownloadQR = () => {
-    if (user?.qrCodeImage) {
-      const link = document.createElement('a');
-      link.href = user.qrCodeImage;
-      link.download = `qr-code-${user.name || 'seller'}.jpg`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+  const handleDownloadQR = async () => {
+    if (isDownloading || !user?.qrCodeImage) return;
+    
+    setIsDownloading(true);
+    setDownloadMessage('');
+    
+    const filename = `qr-code-${user.name || 'seller'}.jpg`;
+    
+    try {
+      await downloadImage(user.qrCodeImage, filename, {
+        onSuccess: (message) => {
+          setDownloadMessage(message);
+          setTimeout(() => setDownloadMessage(''), 5000);
+        },
+        onError: (error) => {
+          setDownloadMessage(error);
+          setTimeout(() => setDownloadMessage(''), 5000);
+        },
+        showInstructions: true
+      });
+    } catch (error) {
+      console.error('Download error:', error);
+      setDownloadMessage('Download failed. Please try again.');
+      setTimeout(() => setDownloadMessage(''), 5000);
+    } finally {
+      setIsDownloading(false);
     }
   };
 
@@ -560,12 +581,25 @@ export default function SellerDashboard() {
                         
                         <button
                           onClick={handleDownloadQR}
-                          className="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-3 rounded-lg transition-all duration-200 flex items-center justify-center gap-2 text-sm"
+                          disabled={isDownloading}
+                          className={`flex-1 bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-3 rounded-lg transition-all duration-200 flex items-center justify-center gap-2 text-sm ${
+                            isDownloading ? 'opacity-50 cursor-not-allowed' : ''
+                          }`}
                         >
-                          <i className="fas fa-download"></i>
-                          {language === 'ms' ? 'Muat Turun' : 'Download'}
+                          <i className={`fas ${isDownloading ? 'fa-spinner fa-spin' : 'fa-download'}`}></i>
+                          {isDownloading 
+                            ? (language === 'ms' ? 'Muat Turun...' : 'Downloading...') 
+                            : (language === 'ms' ? 'Muat Turun' : 'Download')
+                          }
                         </button>
                       </div>
+                      
+                      {/* Download Message */}
+                      {downloadMessage && (
+                        <div className="mt-3 bg-green-100 border border-green-400 text-green-700 px-4 py-2 rounded-lg text-sm">
+                          {downloadMessage}
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
@@ -754,10 +788,16 @@ export default function SellerDashboard() {
               <div className="flex gap-3">
                 <button
                   onClick={handleDownloadQR}
-                  className="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 flex items-center justify-center gap-2"
+                  disabled={isDownloading}
+                  className={`flex-1 bg-gray-600 hover:bg-gray-700 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 flex items-center justify-center gap-2 ${
+                    isDownloading ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
                 >
-                  <i className="fas fa-download"></i>
-                  {language === 'ms' ? 'Muat Turun' : 'Download'}
+                  <i className={`fas ${isDownloading ? 'fa-spinner fa-spin' : 'fa-download'}`}></i>
+                  {isDownloading 
+                    ? (language === 'ms' ? 'Muat Turun...' : 'Downloading...') 
+                    : (language === 'ms' ? 'Muat Turun' : 'Download')
+                  }
                 </button>
                 
                 <button

@@ -261,7 +261,7 @@ export async function POST(req) {
         reminderFrequency: seller.reminderFrequency,
         frequencyDescription: getFrequencyText(seller.reminderFrequency)
       })),
-      cronSchedule: "Every 2 minutes - Individual seller frequencies respected",
+      cronSchedule: "Every 3 hours - Optimized for Vercel Hobby plan",
       timestamp: new Date().toISOString()
     };
 
@@ -307,13 +307,13 @@ function shouldSendReminderEmail(seller, pendingReceipts) {
 
 function getFrequencyInMs(frequency) {
   switch (frequency) {
-    case '30s': return 30 * 1000; // 30 seconds
-    case '30m': return 30 * 60 * 1000; // 30 minutes
-    case '1h': return 60 * 60 * 1000; // 1 hour
+    case '3h': return 3 * 60 * 60 * 1000; // 3 hours
+    case '6h': return 6 * 60 * 60 * 1000; // 6 hours
+    case '12h': return 12 * 60 * 60 * 1000; // 12 hours
     case 'off': return Infinity; // Never send emails
     case null:
     case undefined:
-    default: return 30 * 60 * 1000; // Default to 30 minutes
+    default: return 3 * 60 * 60 * 1000; // Default to 3 hours
   }
 }
 
@@ -409,10 +409,10 @@ This is an automated reminder based on your email notification settings.
 
 function getFrequencyText(frequency) {
   switch (frequency) {
-    case '30s': return 'Every 30 seconds';
-    case '30m': return 'Every 30 minutes';
-    case '1h': return 'Every 1 hour';
+    case '3h': return 'Every 3 hours';
+    case '6h': return 'Every 6 hours';
+    case '12h': return 'Every 12 hours';
     case 'off': return 'Disabled';
-    default: return 'Every 30 minutes';
+    default: return 'Every 3 hours';
   }
 }

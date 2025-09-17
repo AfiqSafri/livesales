@@ -37,7 +37,7 @@ model User {
   resetTokenExpiry      DateTime?
   qrCodeDescription     String?
   qrCodeImage           String?
-  reminderFrequency     String?        @default("30s")
+  reminderFrequency     String?        @default("3h")
   notifications         Notification[]
   orders                Order[]        @relation("buyerOrders")
   payments              Payment[]

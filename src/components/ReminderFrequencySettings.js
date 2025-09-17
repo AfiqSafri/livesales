@@ -35,7 +35,7 @@ const PropTypes = {
 
 export default function ReminderFrequencySettings({ seller }) {
   const { language } = useSellerLanguage() || { language: 'en' };
-  const [reminderFrequency, setReminderFrequency] = useState(seller?.reminderFrequency || '30s');
+  const [reminderFrequency, setReminderFrequency] = useState(seller?.reminderFrequency || '3h');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -43,10 +43,10 @@ export default function ReminderFrequencySettings({ seller }) {
   const translations = {
     en: {
       title: 'Email Notification Settings',
-      description: 'Choose your email reminder frequency for pending receipts',
-      frequency30s: 'Every 30 seconds',
-      frequency30m: 'Every 30 minutes', 
-      frequency1h: 'Every 1 hour',
+      description: 'Choose your email reminder frequency for pending receipts (Vercel Hobby Plan - timing may vary)',
+      frequency3h: 'Every 3 hours (Recommended)',
+      frequency6h: 'Every 6 hours', 
+      frequency12h: 'Every 12 hours',
       frequencyOff: 'No Email Notifications',
       currentSetting: 'Current setting:',
       changeSetting: 'Change setting',
@@ -56,10 +56,10 @@ export default function ReminderFrequencySettings({ seller }) {
     },
     ms: {
       title: 'Tetapan Pemberitahuan Email',
-      description: 'Pilih kekerapan pemberitahuan email untuk resit yang tertunggak',
-      frequency30s: 'Setiap 30 saat',
-      frequency30m: 'Setiap 30 minit',
-      frequency1h: 'Setiap 1 jam',
+      description: 'Pilih kekerapan pemberitahuan email untuk resit yang tertunggak (Vercel Hobby Plan - masa mungkin berbeza)',
+      frequency3h: 'Setiap 3 jam (Disyorkan)',
+      frequency6h: 'Setiap 6 jam',
+      frequency12h: 'Setiap 12 jam',
       frequencyOff: 'Tiada Pemberitahuan Email',
       currentSetting: 'Tetapan semasa:',
       changeSetting: 'Tukar tetapan',
@@ -83,9 +83,9 @@ export default function ReminderFrequencySettings({ seller }) {
 
   const getFrequencyDescription = (freq) => {
     switch (freq) {
-      case '30s': return 'Every 30 seconds - Immediate notifications for urgent receipts';
-      case '30m': return 'Every 30 minutes - Regular check-ins without overwhelming your inbox';
-      case '1h': return 'Every 1 hour - Periodic reminders for less urgent situations';
+      case '3h': return 'Every 3 hours - Recommended for Vercel Hobby plan (timing may vary)';
+      case '6h': return 'Every 6 hours - Less frequent reminders';
+      case '12h': return 'Every 12 hours - Minimal notifications';
       case 'off': return 'No email reminders for pending receipts';
       default: return '';
     }
@@ -93,21 +93,21 @@ export default function ReminderFrequencySettings({ seller }) {
 
   const getFrequencyLabel = (freq) => {
     switch (freq) {
-      case '30s': return t.frequency30s;
-      case '30m': return t.frequency30m;
-      case '1h': return t.frequency1h;
+      case '3h': return t.frequency3h;
+      case '6h': return t.frequency6h;
+      case '12h': return t.frequency12h;
       case 'off': return t.frequencyOff;
-      default: return t.frequency30s;
+      default: return t.frequency3h;
     }
   };
 
   const getFrequencyBadge = (freq) => {
     switch (freq) {
-      case '30s': return { text: 'Urgent', color: 'bg-red-100 text-red-800' };
-      case '30m': return { text: 'Balanced', color: 'bg-yellow-100 text-yellow-800' };
-      case '1h': return { text: 'Relaxed', color: 'bg-green-100 text-green-800' };
+      case '3h': return { text: 'Recommended', color: 'bg-green-100 text-green-800' };
+      case '6h': return { text: 'Moderate', color: 'bg-yellow-100 text-yellow-800' };
+      case '12h': return { text: 'Minimal', color: 'bg-blue-100 text-blue-800' };
       case 'off': return { text: 'Disabled', color: 'bg-gray-100 text-gray-800' };
-      default: return { text: 'Urgent', color: 'bg-red-100 text-red-800' };
+      default: return { text: 'Recommended', color: 'bg-green-100 text-green-800' };
     }
   };
 
@@ -186,74 +186,74 @@ export default function ReminderFrequencySettings({ seller }) {
       {/* Dropdown Options */}
       {isDropdownOpen && (
         <div className="mb-6 border border-gray-200 rounded-lg overflow-hidden">
-          {/* 30 Seconds Option */}
+          {/* 3 Hours Option (Recommended) */}
           <div 
             className={`p-4 transition-colors duration-200 ${
               loading 
                 ? 'cursor-not-allowed opacity-50' 
                 : 'cursor-pointer'
             } ${
-              reminderFrequency === '30s' 
+              reminderFrequency === '3h' 
                 ? 'bg-blue-50 border-l-4 border-blue-500' 
                 : 'hover:bg-gray-50'
             }`}
-            onClick={() => !loading && handleFrequencyChange('30s')}
+            onClick={() => !loading && handleFrequencyChange('3h')}
           >
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-900">{t.frequency30s}</p>
-                <p className="text-xs text-gray-500 mt-1">Every 30 seconds - Immediate notifications for urgent receipts</p>
-              </div>
-              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                Urgent
-              </span>
-            </div>
-          </div>
-
-          {/* 30 Minutes Option */}
-          <div 
-            className={`p-4 transition-colors duration-200 ${
-              loading 
-                ? 'cursor-not-allowed opacity-50' 
-                : 'cursor-pointer'
-            } ${
-              reminderFrequency === '30m' 
-                ? 'bg-blue-50 border-l-4 border-blue-500' 
-                : 'hover:bg-gray-50'
-            }`}
-            onClick={() => !loading && handleFrequencyChange('30m')}
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-900">{t.frequency30m}</p>
-                <p className="text-xs text-gray-500 mt-1">Every 30 minutes - Regular check-ins without overwhelming your inbox</p>
-              </div>
-              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                Balanced
-              </span>
-            </div>
-          </div>
-
-          {/* 1 Hour Option */}
-          <div 
-            className={`p-4 transition-colors duration-200 ${
-              loading 
-                ? 'cursor-not-allowed opacity-50' 
-                : 'cursor-pointer'
-            } ${
-              reminderFrequency === '1h' 
-                ? 'bg-blue-50 border-l-4 border-blue-500' 
-                : 'hover:bg-gray-50'
-            }`}
-            onClick={() => !loading && handleFrequencyChange('1h')}
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-900">{t.frequency1h}</p>
-                <p className="text-xs text-gray-500 mt-1">Every 1 hour - Periodic reminders for less urgent situations</p>
+                <p className="text-sm font-medium text-gray-900">{t.frequency3h}</p>
+                <p className="text-xs text-gray-500 mt-1">Every 3 hours - Recommended for Vercel Hobby plan (timing may vary)</p>
               </div>
               <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                Relaxed
+                Recommended
+              </span>
+            </div>
+          </div>
+
+          {/* 6 Hours Option */}
+          <div 
+            className={`p-4 transition-colors duration-200 ${
+              loading 
+                ? 'cursor-not-allowed opacity-50' 
+                : 'cursor-pointer'
+            } ${
+              reminderFrequency === '6h' 
+                ? 'bg-blue-50 border-l-4 border-blue-500' 
+                : 'hover:bg-gray-50'
+            }`}
+            onClick={() => !loading && handleFrequencyChange('6h')}
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-900">{t.frequency6h}</p>
+                <p className="text-xs text-gray-500 mt-1">Every 6 hours - Less frequent reminders</p>
+              </div>
+              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                Moderate
+              </span>
+            </div>
+          </div>
+
+          {/* 12 Hours Option */}
+          <div 
+            className={`p-4 transition-colors duration-200 ${
+              loading 
+                ? 'cursor-not-allowed opacity-50' 
+                : 'cursor-pointer'
+            } ${
+              reminderFrequency === '12h' 
+                ? 'bg-blue-50 border-l-4 border-blue-500' 
+                : 'hover:bg-gray-50'
+            }`}
+            onClick={() => !loading && handleFrequencyChange('12h')}
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-900">{t.frequency12h}</p>
+                <p className="text-xs text-gray-500 mt-1">Every 12 hours - Minimal notifications</p>
+              </div>
+              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                Minimal
               </span>
             </div>
           </div>

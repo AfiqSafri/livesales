@@ -24,14 +24,13 @@
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Only enable standalone output in production
-  // This creates a self-contained build for Vercel deployment
-  ...(process.env.NODE_ENV === 'production' && { output: 'standalone' }),
+  // Standalone output disabled for Vercel compatibility
+  // Vercel handles the build process automatically
   
   // Image optimization configuration
   // Allows images from localhost (dev) and vercel.app (production)
   images: {
-    domains: ['localhost', 'vercel.app'],
+    domains: ['localhost', 'vercel.app', 'livesales.vercel.app'],
     unoptimized: false, // Enable Next.js image optimization
   },
   

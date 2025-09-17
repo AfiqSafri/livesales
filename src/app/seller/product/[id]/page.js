@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { downloadImage, isMobileDevice } from '@/utils/mobileDownload';
 
 export default function SellerProductView() {
   const params = useParams();
@@ -13,6 +14,8 @@ export default function SellerProductView() {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
   const [unauthorizedAccess, setUnauthorizedAccess] = useState(false);
+  const [downloadMessage, setDownloadMessage] = useState('');
+  const [isDownloading, setIsDownloading] = useState(false);
 
   useEffect(() => {
     const currentUser = JSON.parse(localStorage.getItem('currentUser'));
@@ -28,6 +31,36 @@ export default function SellerProductView() {
       fetchProduct();
     }
   }, [user, productId]);
+
+  // Handle mobile-friendly image download
+  const handleDownloadImage = async (imageUrl, imageIndex) => {
+    if (isDownloading) return;
+    
+    setIsDownloading(true);
+    setDownloadMessage('');
+    
+    const filename = `${product?.name || 'product'}-image-${imageIndex + 1}.jpg`;
+    
+    try {
+      await downloadImage(imageUrl, filename, {
+        onSuccess: (message) => {
+          setDownloadMessage(message);
+          setTimeout(() => setDownloadMessage(''), 5000);
+        },
+        onError: (error) => {
+          setDownloadMessage(error);
+          setTimeout(() => setDownloadMessage(''), 5000);
+        },
+        showInstructions: true
+      });
+    } catch (error) {
+      console.error('Download error:', error);
+      setDownloadMessage('Download failed. Please try again.');
+      setTimeout(() => setDownloadMessage(''), 5000);
+    } finally {
+      setIsDownloading(false);
+    }
+  };
 
   const fetchProduct = async () => {
     try {
@@ -210,7 +243,7 @@ export default function SellerProductView() {
             {images && images.length > 0 ? (
               <div className="grid grid-cols-2 gap-2 sm:gap-4">
                 {images.map((img, i) => (
-                  <div key={i} className="relative">
+                  <div key={i} className="relative group">
                     <img 
                       src={img.url} 
                       alt={`Product ${i + 1}`} 
@@ -224,6 +257,20 @@ export default function SellerProductView() {
                     <div className="absolute inset-0 bg-gray-100 rounded-lg flex items-center justify-center text-xs text-gray-500" style={{ display: 'none' }}>
                       Image {i + 1}
                     </div>
+                    
+                    {/* Download Button */}
+                    <button
+                      onClick={() => handleDownloadImage(img.url, i)}
+                      disabled={isDownloading}
+                      className={`absolute top-2 right-2 bg-black bg-opacity-50 hover:bg-opacity-70 text-white p-2 rounded-full transition-all duration-200 ${
+                        isDownloading ? 'opacity-50 cursor-not-allowed' : ''
+                      }`}
+                      title="Download image"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                      </svg>
+                    </button>
                   </div>
                 ))}
               </div>
@@ -238,6 +285,13 @@ export default function SellerProductView() {
                 <div className="text-xs text-gray-400 mt-1">
                   Debug: {images ? `${images.length} images found` : 'images is null/undefined'}
                 </div>
+              </div>
+            )}
+            
+            {/* Download Message */}
+            {downloadMessage && (
+              <div className="mt-3 bg-green-100 border border-green-400 text-green-700 px-4 py-2 rounded-lg text-sm">
+                {downloadMessage}
               </div>
             )}
           </div>

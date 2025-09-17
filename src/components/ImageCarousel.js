@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect, useCallback } from 'react';
+import { downloadImage, isMobileDevice } from '@/utils/mobileDownload';
 
 export default function ImageCarousel({ images, productName, autoSlideInterval = 5000, compact = false }) {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -9,6 +10,8 @@ export default function ImageCarousel({ images, productName, autoSlideInterval =
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [imagePosition, setImagePosition] = useState({ x: 0, y: 0 });
+  const [downloadMessage, setDownloadMessage] = useState('');
+  const [isDownloading, setIsDownloading] = useState(false);
 
   // Auto-slide functionality
   useEffect(() => {
@@ -96,6 +99,36 @@ export default function ImageCarousel({ images, productName, autoSlideInterval =
     setIsAutoPlaying(true);
     setZoomLevel(1);
     setImagePosition({ x: 0, y: 0 });
+  };
+
+  // Handle mobile-friendly image download
+  const handleDownloadImage = async () => {
+    if (isDownloading) return;
+    
+    setIsDownloading(true);
+    setDownloadMessage('');
+    
+    const filename = `${productName}-image-${currentIndex + 1}.jpg`;
+    
+    try {
+      await downloadImage(images[currentIndex].url, filename, {
+        onSuccess: (message) => {
+          setDownloadMessage(message);
+          setTimeout(() => setDownloadMessage(''), 5000);
+        },
+        onError: (error) => {
+          setDownloadMessage(error);
+          setTimeout(() => setDownloadMessage(''), 5000);
+        },
+        showInstructions: true
+      });
+    } catch (error) {
+      console.error('Download error:', error);
+      setDownloadMessage('Download failed. Please try again.');
+      setTimeout(() => setDownloadMessage(''), 5000);
+    } finally {
+      setIsDownloading(false);
+    }
   };
 
   // Zoom functionality
@@ -350,13 +383,11 @@ export default function ImageCarousel({ images, productName, autoSlideInterval =
 
             {/* Download Button */}
             <button
-              onClick={() => {
-                const link = document.createElement('a');
-                link.href = images[currentIndex].url;
-                link.download = `${productName}-image-${currentIndex + 1}.jpg`;
-                link.click();
-              }}
-              className="absolute top-4 right-16 text-white hover:text-gray-300 transition-colors duration-200"
+              onClick={handleDownloadImage}
+              disabled={isDownloading}
+              className={`absolute top-4 right-16 text-white hover:text-gray-300 transition-colors duration-200 ${
+                isDownloading ? 'opacity-50 cursor-not-allowed' : ''
+              }`}
               aria-label="Download image"
             >
               <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -389,6 +420,13 @@ export default function ImageCarousel({ images, productName, autoSlideInterval =
             <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/50 text-white text-sm px-3 py-2 rounded-full">
               {currentIndex + 1} / {images.length}
             </div>
+
+            {/* Download Message */}
+            {downloadMessage && (
+              <div className="absolute bottom-16 left-1/2 transform -translate-x-1/2 bg-green-600 text-white text-sm px-4 py-2 rounded-lg max-w-xs text-center">
+                {downloadMessage}
+              </div>
+            )}
 
             {/* Zoom Controls */}
             <div className="absolute top-4 left-4 flex items-center space-x-2 bg-black/50 text-white rounded-lg p-2">
