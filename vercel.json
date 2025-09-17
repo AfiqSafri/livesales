@@ -2,11 +2,7 @@
   "crons": [
     {
       "path": "/api/notifications/send-reminders",
-      "schedule": "*/5 * * * *"
-    },
-    {
-      "path": "/api/cron/auto-cancel?secret=59d385b8d97afc714e32c5aeab2de1fffcf01eed01c68f85523f6ba44647a041",
-      "schedule": "*/2 * * * *"
+      "schedule": "0 */6 * * *"
     }
   ]
 }
