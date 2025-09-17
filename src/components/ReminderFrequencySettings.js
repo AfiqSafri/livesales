@@ -25,6 +25,14 @@
 import { useState, useEffect } from 'react';
 import { useSellerLanguage } from '../app/seller/SellerLanguageContext';
 
+// PropTypes for better type safety
+const PropTypes = {
+  seller: {
+    id: 'number',
+    reminderFrequency: 'string'
+  }
+};
+
 export default function ReminderFrequencySettings({ seller }) {
   const { language } = useSellerLanguage() || { language: 'en' };
   const [reminderFrequency, setReminderFrequency] = useState(seller?.reminderFrequency || '30s');
@@ -106,6 +114,12 @@ export default function ReminderFrequencySettings({ seller }) {
   const handleFrequencyChange = async (freq) => {
     setReminderFrequency(freq);
     setIsDropdownOpen(false);
+    
+    // Check if seller ID exists
+    if (!seller?.id) {
+      setMessage('Error: Seller information not available');
+      return;
+    }
     
     // Auto-save when frequency changes
     setLoading(true);

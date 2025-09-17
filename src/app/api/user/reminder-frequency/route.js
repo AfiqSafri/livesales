@@ -47,8 +47,18 @@ export async function PUT(req) {
   try {
     const { userId, reminderFrequency } = await req.json();
 
-    if (!userId || !reminderFrequency) {
-      return NextResponse.json({ error: 'User ID and reminder frequency are required' }, { status: 400 });
+    // Validate required fields
+    if (!userId) {
+      return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
+    }
+    
+    if (!reminderFrequency) {
+      return NextResponse.json({ error: 'Reminder frequency is required' }, { status: 400 });
+    }
+
+    // Validate userId is a number
+    if (isNaN(parseInt(userId))) {
+      return NextResponse.json({ error: 'User ID must be a valid number' }, { status: 400 });
     }
 
     // Validate reminder frequency
@@ -57,6 +67,16 @@ export async function PUT(req) {
       return NextResponse.json({ 
         error: 'Invalid reminder frequency. Must be one of: 30s, 30m, 1h, off' 
       }, { status: 400 });
+    }
+
+    // Check if user exists
+    const existingUser = await prisma.user.findUnique({
+      where: { id: parseInt(userId) },
+      select: { id: true, name: true }
+    });
+
+    if (!existingUser) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
     // Update user's reminder frequency preference
@@ -96,6 +116,11 @@ export async function GET(req) {
 
     if (!userId) {
       return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
+    }
+
+    // Validate userId is a number
+    if (isNaN(parseInt(userId))) {
+      return NextResponse.json({ error: 'User ID must be a valid number' }, { status: 400 });
     }
 
     // Get user's current reminder frequency preference
