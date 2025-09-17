@@ -1,8 +1,45 @@
 {
+  /**
+   * VERCEL CRON JOBS CONFIGURATION
+   * 
+   * This configuration sets up automated background processes that run
+   * on Vercel's servers without requiring user interaction or browser access.
+   * 
+   * CRON JOBS:
+   * 1. Email Reminders - Every 5 minutes
+   *    - Checks for sellers with pending receipts
+   *    - Sends email notifications based on individual frequency preferences
+   *    - Respects seller settings (30s, 30m, 1h, off)
+   * 
+   * 2. Auto-Cancel Orders - Every 2 minutes
+   *    - Cancels unpaid orders older than 3 minutes
+   *    - Restores inventory quantities
+   *    - Sends cancellation emails to buyers
+   *    - Includes security secret for authentication
+   * 
+   * SCHEDULE FORMAT: "* * * * *"
+   * │ │ │ │ │
+   * │ │ │ │ └── Day of week (0-7, 0=Sunday)
+   * │ │ │ └──── Month (1-12)
+   * │ │ └────── Day of month (1-31)
+   * │ └──────── Hour (0-23)
+   * └────────── Minute (0-59)
+   * 
+   * PRODUCTION BENEFITS:
+   * - Runs 24/7 without user interaction
+   * - Automatic email notifications
+   * - Clean inventory management
+   * - Professional user experience
+   * - Cost-effective serverless execution
+   */
   "crons": [
     {
       "path": "/api/notifications/send-reminders",
-      "schedule": "* * * * *"
+      "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/cron/auto-cancel?secret=59d385b8d97afc714e32c5aeab2de1fffcf01eed01c68f85523f6ba44647a041",
+      "schedule": "*/2 * * * *"
     }
   ]
 }

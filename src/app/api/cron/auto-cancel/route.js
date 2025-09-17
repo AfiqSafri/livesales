@@ -1,5 +1,48 @@
+/**
+ * AUTO-CANCEL ORDERS CRON ENDPOINT
+ * 
+ * This endpoint automatically cancels unpaid orders that have been pending
+ * for more than 3 minutes. It runs via Vercel Cron Jobs to maintain clean
+ * inventory and notify buyers of cancellations.
+ * 
+ * CRON SCHEDULE: Every 2 minutes (*/2 * * * *)
+ * TRIGGER: Vercel Cron Job (vercel.json)
+ * SECURITY: Requires secret parameter for authentication
+ * 
+ * PROCESS FLOW:
+ * 1. Verify cron secret for security
+ * 2. Find orders pending payment for >3 minutes
+ * 3. For each unpaid order:
+ *    - Update order status to 'cancelled'
+ *    - Restore product quantity to inventory
+ *    - Create order status history entry
+ *    - Send cancellation email to buyer
+ * 4. Return summary of cancelled orders
+ * 
+ * BUSINESS LOGIC:
+ * - Prevents inventory from being held indefinitely
+ * - Improves user experience by freeing up products
+ * - Sends professional cancellation emails
+ * - Maintains audit trail with status history
+ * 
+ * DATABASE: Updates Order, Product, and OrderStatusHistory tables
+ * EMAIL: Sends cancellation notifications to buyers
+ * LOGGING: Comprehensive console logging for monitoring
+ * 
+ * PRODUCTION: Runs automatically on Vercel every 2 minutes
+ * DEVELOPMENT: Can be triggered manually via GET request with secret
+ */
+
 import { prisma } from '@/lib/prisma';
 
+/**
+ * AUTO-CANCEL UNPAID ORDERS
+ * 
+ * Cancels orders that have been pending payment for more than 3 minutes
+ * 
+ * Request: GET /api/cron/auto-cancel?secret=your-secret
+ * Response: Summary of cancelled orders
+ */
 export async function GET(req) {
   try {
     // Verify cron secret (optional security measure)

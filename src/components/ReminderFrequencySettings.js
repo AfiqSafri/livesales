@@ -1,3 +1,26 @@
+/**
+ * EMAIL NOTIFICATION FREQUENCY SETTINGS COMPONENT
+ * 
+ * This component allows sellers to configure their email reminder preferences
+ * for pending receipts. It provides a user-friendly interface with multiple
+ * frequency options and real-time updates.
+ * 
+ * FEATURES:
+ * - Multi-language support (English/Malay)
+ * - Real-time frequency updates
+ * - Auto-save functionality
+ * - Visual feedback with badges and descriptions
+ * - Responsive design for mobile/desktop
+ * 
+ * FREQUENCY OPTIONS:
+ * - 30s: Every 30 seconds (urgent notifications)
+ * - 30m: Every 30 minutes (balanced approach)
+ * - 1h: Every 1 hour (relaxed notifications)
+ * - off: No email notifications
+ * 
+ * USAGE: Used in seller dashboard/profile pages
+ */
+
 "use client";
 import { useState, useEffect } from 'react';
 import { useSellerLanguage } from '../app/seller/SellerLanguageContext';

@@ -1,11 +1,51 @@
+/**
+ * EMAIL REMINDER SYSTEM - MAIN CRON ENDPOINT
+ * 
+ * This is the core email reminder system that runs automatically via Vercel Cron Jobs.
+ * It checks for sellers with pending receipts and sends email notifications based on
+ * their individual frequency preferences.
+ * 
+ * CRON SCHEDULE: Every 5 minutes (*/5 * * * *)
+ * TRIGGER: Vercel Cron Job (vercel.json)
+ * 
+ * PROCESS FLOW:
+ * 1. Fetch all sellers with email notifications enabled (not 'off')
+ * 2. For each seller, check for pending receipts
+ * 3. Verify if enough time has passed since last email (frequency check)
+ * 4. Send email notification if conditions are met
+ * 5. Track last email sent time to respect frequency settings
+ * 
+ * FREQUENCY LOGIC:
+ * - 30s: Send email every 30 seconds if pending receipts exist
+ * - 30m: Send email every 30 minutes if pending receipts exist
+ * - 1h: Send email every hour if pending receipts exist
+ * - off: Skip this seller entirely
+ * 
+ * DATABASE: Queries User and Receipt tables
+ * EMAIL: Uses sendEmail utility with HTML/text templates
+ * LOGGING: Comprehensive console logging for monitoring
+ * 
+ * PRODUCTION: Runs automatically on Vercel every 5 minutes
+ * DEVELOPMENT: Can be triggered manually via POST request
+ */
+
 import { PrismaClient } from '@prisma/client';
 import { sendEmail } from '@/utils/email';
 
 const prisma = new PrismaClient();
 
 // Track last email sent time per seller to respect frequency settings
+// This Map stores: sellerId -> lastEmailSentTimestamp
 const lastEmailSent = new Map();
 
+/**
+ * MAIN EMAIL REMINDER ENDPOINT
+ * 
+ * Processes all sellers and sends email reminders based on their preferences
+ * 
+ * Request: POST /api/notifications/send-reminders
+ * Response: Summary of emails sent and sellers processed
+ */
 export async function POST(req) {
   try {
     console.log('🔔 Starting server-side email reminder check...');
