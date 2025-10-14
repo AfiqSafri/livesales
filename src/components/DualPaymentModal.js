@@ -1,11 +1,14 @@
 "use client";
 import { useState, useEffect } from 'react';
+import { downloadImage, isMobileDevice, saveImageToPhotos } from '@/utils/mobileDownload';
 
 export default function DualPaymentModal({ isOpen, onClose, order, seller, onSuccess }) {
   const [selectedMethod, setSelectedMethod] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [showQRCode, setShowQRCode] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [downloadMessage, setDownloadMessage] = useState('');
 
   useEffect(() => {
     if (isOpen) {
@@ -55,6 +58,36 @@ export default function DualPaymentModal({ isOpen, onClose, order, seller, onSuc
   const handleQRPayment = () => {
     setShowQRCode(true);
     setSelectedMethod('qr');
+  };
+
+  // Auto-download QR image on mobile when shown
+  useEffect(() => {
+    if (showQRCode && seller?.qrCodeImage && isMobileDevice()) {
+      handleDownloadQR();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showQRCode, seller?.qrCodeImage]);
+
+  const handleDownloadQR = async () => {
+    if (!seller?.qrCodeImage || isDownloading) return;
+    setIsDownloading(true);
+    setDownloadMessage('');
+    const filename = `qr-code-${seller.name || 'seller'}.jpg`;
+    try {
+      await saveImageToPhotos(seller.qrCodeImage, filename, {
+        onSuccess: (msg) => {
+          setDownloadMessage(msg);
+          setTimeout(() => setDownloadMessage(''), 5000);
+        },
+        onError: (err) => {
+          setDownloadMessage(err);
+          setTimeout(() => setDownloadMessage(''), 5000);
+        },
+        showInstructions: true,
+      });
+    } finally {
+      setIsDownloading(false);
+    }
   };
 
   const handleReceiptUpload = async (event) => {
@@ -237,6 +270,20 @@ export default function DualPaymentModal({ isOpen, onClose, order, seller, onSuc
                       <p className="text-sm text-gray-600 mt-2">
                         {seller.qrCodeDescription}
                       </p>
+                    )}
+                    <div className="mt-3 flex items-center justify-center gap-2">
+                      <button
+                        onClick={handleDownloadQR}
+                        disabled={isDownloading}
+                        className={`px-4 py-2 rounded-md text-white bg-blue-600 hover:bg-blue-700 transition-colors ${isDownloading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      >
+                        {isDownloading ? 'Downloading...' : 'Download QR'}
+                      </button>
+                    </div>
+                    {downloadMessage && (
+                      <div className="mt-2 text-sm text-green-700 bg-green-100 border border-green-200 px-3 py-2 rounded-md">
+                        {downloadMessage}
+                      </div>
                     )}
                   </div>
                 )}

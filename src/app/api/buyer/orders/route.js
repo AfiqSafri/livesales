@@ -101,12 +101,19 @@ export async function POST(req) {
                        <p><strong>Status:</strong> <span style="color: #f59e0b; font-weight: bold;">Pending</span></p>
                      </div>
                      
-                     <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-                       <h3 style="color: #333; margin: 0 0 15px 0;">Shipping Information</h3>
-                       <p><strong>Name:</strong> ${buyerName}</p>
-                       <p><strong>Phone:</strong> ${phone}</p>
-                       <p><strong>Address:</strong> ${shippingAddress}</p>
-                     </div>
+                    <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                      <h3 style="color: #333; margin: 0 0 15px 0;">Shipping Information</h3>
+                      <p><strong>Name:</strong> ${buyerName}</p>
+                      <p><strong>Phone:</strong> ${phone}</p>
+                      <p><strong>Address:</strong> ${shippingAddress}</p>
+                    </div>
+
+                    <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                      <h3 style="color: #333; margin: 0 0 15px 0;">Seller Contact</h3>
+                      <p><strong>Seller:</strong> ${product.seller?.name || 'Seller'}</p>
+                      <p><strong>Phone:</strong> ${product.seller?.phone || 'N/A'}</p>
+                      <p><strong>Email:</strong> ${product.seller?.email || 'N/A'}</p>
+                    </div>
                      
                      <div style="background: #e8f5e8; padding: 20px; border-radius: 8px; border-left: 4px solid #10b981;">
                        <h3 style="color: #065f46; margin: 0 0 15px 0;">What's Next?</h3>
@@ -139,6 +146,11 @@ Shipping Information:
 - Name: ${buyerName}
 - Phone: ${phone}
 - Address: ${shippingAddress}
+
+Seller Contact:
+- Seller: ${product.seller?.name || 'Seller'}
+- Phone: ${product.seller?.phone || 'N/A'}
+- Email: ${product.seller?.email || 'N/A'}
 
 What's Next?
 We'll notify you when your order is processed and shipped. You can track your order status through our platform.
@@ -191,6 +203,12 @@ Powered by MyTech Padu Solutions
                 <p><strong>Email:</strong> ${email}</p>
                 <p><strong>Shipping Address:</strong> ${shippingAddress}</p>
               </div>
+
+              <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                <h3 style="color: #333; margin: 0 0 15px 0;">Buyer Contact</h3>
+                <p><strong>Buyer Phone:</strong> ${phone}</p>
+                <p><strong>Buyer Email:</strong> ${email}</p>
+              </div>
               
               <div style="background: #e8f5e8; padding: 20px; border-radius: 8px; border-left: 4px solid #10b981;">
                 <h3 style="color: #065f46; margin: 0 0 15px 0;">Action Required</h3>
@@ -224,6 +242,10 @@ Customer Information:
 - Phone: ${phone}
 - Email: ${email}
 - Shipping Address: ${shippingAddress}
+
+Buyer Contact:
+- Phone: ${phone}
+- Email: ${email}
 
 Action Required:
 Please process this order and update the status in your seller dashboard.

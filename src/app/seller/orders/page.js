@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { downloadImage, isMobileDevice, saveImageToPhotos } from '@/utils/mobileDownload';
 import { useSellerLanguage } from '../SellerLanguageContext';
 import ModernHeader from '@/components/ModernHeader';
 import ModernFooter from '@/components/ModernFooter';
@@ -13,6 +14,8 @@ export default function SellerOrders() {
   const [orders, setOrders] = useState([]);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [showReceiptModal, setShowReceiptModal] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [downloadMessage, setDownloadMessage] = useState('');
 
   useEffect(() => {
     const u = JSON.parse(localStorage.getItem('currentUser'));
@@ -60,6 +63,32 @@ export default function SellerOrders() {
       .catch(err => {
         alert('Error approving payment: ' + err.message);
       });
+  }
+
+  // Auto-download receipt on mobile when modal opens
+  useEffect(() => {
+    if (showReceiptModal && selectedOrder?.receiptUrl && isMobileDevice()) {
+      handleDownloadReceipt();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showReceiptModal, selectedOrder?.receiptUrl]);
+
+  function handleDownloadReceipt() {
+    if (!selectedOrder?.receiptUrl || isDownloading) return;
+    setIsDownloading(true);
+    setDownloadMessage('');
+    const filename = `receipt-order-${selectedOrder.id}.jpg`;
+    saveImageToPhotos(selectedOrder.receiptUrl, filename, {
+      onSuccess: (msg) => {
+        setDownloadMessage(msg);
+        setTimeout(() => setDownloadMessage(''), 5000);
+      },
+      onError: (err) => {
+        setDownloadMessage(err);
+        setTimeout(() => setDownloadMessage(''), 5000);
+      },
+      showInstructions: true,
+    }).finally(() => setIsDownloading(false));
   }
 
   function handleRejectPayment(orderId) {
@@ -572,6 +601,20 @@ export default function SellerOrders() {
                     alt="Payment Receipt" 
                     className="max-w-full h-auto rounded-lg border border-gray-200"
                   />
+                  <div className="mt-3 flex items-center justify-center gap-2">
+                    <button
+                      onClick={handleDownloadReceipt}
+                      disabled={isDownloading}
+                      className={`px-4 py-2 rounded-md text-white bg-blue-600 hover:bg-blue-700 transition-colors ${isDownloading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    >
+                      {isDownloading ? 'Downloading...' : 'Download'}
+                    </button>
+                  </div>
+                  {downloadMessage && (
+                    <div className="mt-2 text-sm text-green-700 bg-green-100 border border-green-200 px-3 py-2 rounded-md">
+                      {downloadMessage}
+                    </div>
+                  )}
                 </div>
               )}
               

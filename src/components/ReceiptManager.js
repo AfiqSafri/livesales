@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from 'react';
 import { useSellerLanguage } from '../app/seller/SellerLanguageContext';
+import { downloadImage, isMobileDevice, saveImageToPhotos } from '@/utils/mobileDownload';
 
 export default function ReceiptManager({ seller }) {
   const { language } = useSellerLanguage() || { language: 'en' };
@@ -11,6 +12,8 @@ export default function ReceiptManager({ seller }) {
   const [showModal, setShowModal] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
   const [sellerNotes, setSellerNotes] = useState('');
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [downloadMessage, setDownloadMessage] = useState('');
   
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -211,6 +214,36 @@ export default function ReceiptManager({ seller }) {
     setSelectedReceipt(receipt);
     setSellerNotes('');
     setShowModal(true);
+  };
+
+  // Auto-download receipt image on mobile when modal opens
+  useEffect(() => {
+    if (showModal && selectedReceipt?.receiptImage && isMobileDevice()) {
+      handleDownloadReceipt();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showModal, selectedReceipt?.receiptImage]);
+
+  const handleDownloadReceipt = async () => {
+    if (!selectedReceipt?.receiptImage || isDownloading) return;
+    setIsDownloading(true);
+    setDownloadMessage('');
+    const filename = `receipt-${selectedReceipt.id}.jpg`;
+    try {
+      await saveImageToPhotos(selectedReceipt.receiptImage, filename, {
+        onSuccess: (msg) => {
+          setDownloadMessage(msg);
+          setTimeout(() => setDownloadMessage(''), 5000);
+        },
+        onError: (err) => {
+          setDownloadMessage(err);
+          setTimeout(() => setDownloadMessage(''), 5000);
+        },
+        showInstructions: true,
+      });
+    } finally {
+      setIsDownloading(false);
+    }
   };
 
   const getStatusColor = (status) => {
@@ -538,6 +571,20 @@ export default function ReceiptManager({ seller }) {
                             e.target.parentNode.appendChild(errorDiv);
                           }}
                         />
+                        <div className="mt-3 flex items-center justify-center gap-2">
+                          <button
+                            onClick={handleDownloadReceipt}
+                            disabled={isDownloading}
+                            className={`px-4 py-2 rounded-md text-white bg-blue-600 hover:bg-blue-700 transition-colors ${isDownloading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                          >
+                            {isDownloading ? 'Downloading...' : 'Download'}
+                          </button>
+                        </div>
+                        {downloadMessage && (
+                          <div className="mt-2 text-sm text-green-700 bg-green-100 border border-green-200 px-3 py-2 rounded-md">
+                            {downloadMessage}
+                          </div>
+                        )}
                       </>
                     ) : (
                       <div className="text-gray-500 text-sm">No receipt image available</div>

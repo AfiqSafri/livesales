@@ -89,7 +89,16 @@ export async function downloadImageForMobile(imageUrl, filename, onSuccess, onEr
     const blobUrl = createBlobURL(blob);
 
     if (isMobileDevice()) {
-      // Mobile-specific download logic
+      // Prefer system share sheet on mobile so user can choose Photos/Gallery
+      if (await tryShareImage(blob, filename)) {
+        if (onSuccess) {
+          onSuccess('Sharing opened — choose Photos/Gallery to save.');
+        }
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
+        return;
+      }
+
+      // Fallback mobile-specific logic
       if (isIOS()) {
         // iOS: Open image in new tab to trigger save to photos
         const newWindow = window.open(blobUrl, '_blank');
@@ -145,6 +154,65 @@ export async function downloadImageForMobile(imageUrl, filename, onSuccess, onEr
     if (onError) {
       onError('Failed to download image. Please try again.');
     }
+  }
+}
+
+/**
+ * Try using the Web Share API to share image (recommended for saving to Photos/Gallery)
+ * @param {Blob} blob
+ * @param {string} filename
+ * @returns {Promise<boolean>} true if share sheet opened
+ */
+export async function tryShareImage(blob, filename) {
+  try {
+    if (typeof navigator === 'undefined' || !navigator.share) return false;
+
+    const file = new File([blob], filename, { type: blob.type || 'image/jpeg' });
+    // Check if canShare with files (Android Chrome supports; iOS partial)
+    if (navigator.canShare && !navigator.canShare({ files: [file] })) {
+      // Some browsers require plain share without files; fallback to false
+      return false;
+    }
+
+    await navigator.share({
+      files: [file],
+      title: 'Save Image',
+      text: 'Save this image to your Photos/Gallery',
+    });
+    return true;
+  } catch (err) {
+    // User cancelled or not supported — fall back
+    return false;
+  }
+}
+
+/**
+ * High-level helper to prefer saving to Photos via share sheet on mobile
+ */
+export async function saveImageToPhotos(imageUrl, filename, options = {}) {
+  const { onSuccess, onError, showInstructions = true } = options;
+  try {
+    const blob = await urlToBlob(imageUrl);
+
+    // Try share first on mobile
+    if (isMobileDevice()) {
+      const shared = await tryShareImage(blob, filename);
+      if (shared) {
+        if (onSuccess) onSuccess('Sharing opened — choose Photos/Gallery to save.');
+        return;
+      }
+
+      // If share not available, show instructions and open/tab behavior will follow in download flow
+      if (showInstructions) showMobileDownloadInstructions();
+    }
+
+    // Fallback: normal download flow
+    const blobUrl = createBlobURL(blob);
+    downloadImageFallback(blobUrl, filename);
+    if (onSuccess) onSuccess(isMobileDevice() ? 'Download started — check Photos or Downloads.' : 'Download started!');
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
+  } catch (error) {
+    if (onError) onError('Failed to save image. Please try again.');
   }
 }
 

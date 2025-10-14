@@ -463,7 +463,7 @@ Livesalez System
   }),
 
   // Receipt uploaded notification to seller
-  receiptUploadedToSeller: ({ sellerName, buyerName, productName, amount, orderId, receiptUrl }) => {
+  receiptUploadedToSeller: ({ sellerName, buyerName, buyerPhone, productName, amount, orderId, receiptImage }) => {
     // Generate security token for email actions
     const receiptId = orderId.replace('QR-', '');
     const token = `receipt_${receiptId}_${process.env.EMAIL_SECRET_TOKEN || 'default_secret'}`;
@@ -484,7 +484,7 @@ Livesalez System
           <div style="background-color: #ffffff; border: 1px solid #dee2e6; border-radius: 8px; padding: 20px; margin: 20px 0;">
             <h3 style="margin-top: 0; color: #495057;">Receipt Details</h3>
             <ul style="list-style: none; padding: 0;">
-              <li style="margin: 10px 0;"><strong>Buyer:</strong> ${buyerName}</li>
+              <li style="margin: 10px 0;"><strong>Buyer:</strong> ${buyerName}${buyerPhone ? ` (📞 ${buyerPhone})` : ''}</li>
               <li style="margin: 10px 0;"><strong>Product:</strong> ${productName}</li>
               <li style="margin: 10px 0;"><strong>Amount:</strong> RM ${amount.toFixed(2)}</li>
               <li style="margin: 10px 0;"><strong>Order ID:</strong> ${orderId}</li>
@@ -496,13 +496,13 @@ Livesalez System
           <div style="background-color: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px; padding: 20px; margin: 20px 0;">
             <h4 style="margin-top: 0; color: #495057;">Receipt Image</h4>
             <div style="text-align: center;">
-              <img src="${receiptUrl}" 
+              <img src="${receiptImage}"
                    style="max-width: 100%; height: auto; border: 1px solid #dee2e6; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);" 
                    alt="Payment Receipt"
                    onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
               <div style="display: none; padding: 20px; color: #6c757d;">
                 <p>📄 Receipt image could not be loaded</p>
-                <p><a href="${receiptUrl}" style="color: #0066cc;">Click here to view receipt</a></p>
+                <p>Receipt image was embedded inline.</p>
               </div>
             </div>
           </div>
@@ -605,13 +605,13 @@ Dear ${sellerName},
 A buyer has uploaded a payment receipt for your product. Please review and approve or reject the payment.
 
 Receipt Details:
-- Buyer: ${buyerName}
+- Buyer: ${buyerName}${buyerPhone ? ` (Phone: ${buyerPhone})` : ''}
 - Product: ${productName}
 - Amount: RM ${amount.toFixed(2)}
 - Order ID: ${orderId}
 - Status: Pending Review
 
-Receipt Image: ${receiptUrl}
+Receipt image attached inline in HTML version.
 
 Quick Actions (use dashboard for full functionality):
 - Dashboard: ${baseUrl}/seller/dashboard
@@ -623,7 +623,7 @@ Livesalez Team
   },
 
   // Receipt uploaded notification to buyer
-  receiptUploadedToBuyer: ({ buyerName, sellerName, productName, amount, orderId }) => ({
+  receiptUploadedToBuyer: ({ buyerName, sellerName, sellerPhone, productName, amount, orderId }) => ({
     subject: '📄 Payment Receipt Received - Under Review',
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
@@ -638,7 +638,7 @@ Livesalez Team
         <div style="background-color: #ffffff; border: 1px solid #dee2e6; border-radius: 8px; padding: 20px; margin: 20px 0;">
           <h3 style="margin-top: 0; color: #495057;">Order Details</h3>
           <ul style="list-style: none; padding: 0;">
-            <li style="margin: 10px 0;"><strong>Seller:</strong> ${sellerName}</li>
+            <li style="margin: 10px 0;"><strong>Seller:</strong> ${sellerName}${sellerPhone ? ` (📞 ${sellerPhone})` : ''}</li>
             <li style="margin: 10px 0;"><strong>Product:</strong> ${productName}</li>
             <li style="margin: 10px 0;"><strong>Amount:</strong> RM ${amount.toFixed(2)}</li>
             <li style="margin: 10px 0;"><strong>Order ID:</strong> ${orderId}</li>
@@ -667,7 +667,7 @@ Dear ${buyerName},
 Thank you for uploading your payment receipt! The seller has been notified and will review it shortly.
 
 Order Details:
-- Seller: ${sellerName}
+- Seller: ${sellerName}${sellerPhone ? ` (Phone: ${sellerPhone})` : ''}
 - Product: ${productName}
 - Amount: RM ${amount.toFixed(2)}
 - Order ID: ${orderId}

@@ -162,10 +162,11 @@ export async function POST(req) {
         html: emailTemplates.receiptUploadedToSeller({
           sellerName: seller.name,
           buyerName: isQRPayment ? (buyerName || buyer?.name) : order?.buyerName,
+          buyerPhone: isQRPayment ? (buyerPhone || buyer?.phone) : order?.buyer?.phone,
           productName: isQRPayment ? (productName || 'QR Payment') : order?.product?.name,
           amount: amount,
           orderId: isQRPayment ? `QR-${receipt.id}` : orderId,
-          receiptUrl: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/receipt/image?file=${fileName}`
+          receiptImage: base64Image
         }).html
       });
       console.log('✅ Seller email result:', sellerEmailResult);
@@ -182,6 +183,7 @@ export async function POST(req) {
           html: emailTemplates.receiptUploadedToBuyer({
             buyerName: isQRPayment ? (buyerName || buyer?.name) : order?.buyerName,
             sellerName: seller.name,
+            sellerPhone: seller.phone || seller?.phoneNumber || 'N/A',
             productName: isQRPayment ? (productName || 'QR Payment') : order?.product?.name,
             amount: amount,
             orderId: isQRPayment ? `QR-${receipt.id}` : orderId

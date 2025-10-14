@@ -31,12 +31,57 @@ export default function EnhancedProductPurchase({
   const [paymentSession, setPaymentSession] = useState(null);
   const [showPaymentRecovery, setShowPaymentRecovery] = useState(false);
 
+  // Storage helpers with quota-safe behavior
+  const loadSessionSafe = () => {
+    try {
+      const v = localStorage.getItem('qrPaymentSession') || sessionStorage.getItem('qrPaymentSession');
+      return v ? JSON.parse(v) : null;
+    } catch (_) {
+      try {
+        const v = sessionStorage.getItem('qrPaymentSession');
+        return v ? JSON.parse(v) : null;
+      } catch (_) {
+        return null;
+      }
+    }
+  };
+
+  const saveSessionSafe = (session) => {
+    const trimmed = {
+      // Keep only minimal fields to reduce storage size
+      timestamp: session.timestamp,
+      sellerId: session.sellerId,
+      buyerInfo: session.buyerInfo,
+      quantity: session.quantity,
+      product: {
+        id: session.product?.id,
+        name: session.product?.name,
+        price: session.product?.price,
+        shippingPrice: session.product?.shippingPrice,
+      },
+      totalAmount: session.totalAmount,
+      pageType: session.pageType,
+      pageUrl: session.pageUrl,
+    };
+    const payload = JSON.stringify(trimmed);
+    try {
+      localStorage.setItem('qrPaymentSession', payload);
+      return 'localStorage';
+    } catch (_) {
+      try {
+        sessionStorage.setItem('qrPaymentSession', payload);
+        return 'sessionStorage';
+      } catch (_) {
+        return 'none';
+      }
+    }
+  };
+
   // Check for existing payment session on component mount
   useEffect(() => {
-    const savedSession = localStorage.getItem('qrPaymentSession');
-    if (savedSession) {
+    const session = loadSessionSafe();
+    if (session) {
       try {
-        const session = JSON.parse(savedSession);
         // Check if session is not expired (24 hours) and is for single product
         const now = Date.now();
         if (session.timestamp && (now - session.timestamp) < 24 * 60 * 60 * 1000 && session.pageType === 'single-product') {
@@ -44,11 +89,13 @@ export default function EnhancedProductPurchase({
           setShowPaymentRecovery(true);
         } else {
           // Clear expired or wrong page type session
-          localStorage.removeItem('qrPaymentSession');
+          try { localStorage.removeItem('qrPaymentSession'); } catch (_) {}
+          try { sessionStorage.removeItem('qrPaymentSession'); } catch (_) {}
         }
       } catch (error) {
         console.error('Error parsing saved payment session:', error);
-        localStorage.removeItem('qrPaymentSession');
+        try { localStorage.removeItem('qrPaymentSession'); } catch (_) {}
+        try { sessionStorage.removeItem('qrPaymentSession'); } catch (_) {}
       }
     }
   }, []);
@@ -111,7 +158,15 @@ export default function EnhancedProductPurchase({
   // Payment session recovery functions
   const recoverPaymentSession = () => {
     if (paymentSession) {
-      setSellerQRCode(paymentSession.sellerData);
+      // Re-fetch seller profile using sellerId for up-to-date and to avoid storing heavy data
+      if (paymentSession.sellerId) {
+        fetch(`/api/seller/public-profile?id=${paymentSession.sellerId}`)
+          .then((r) => r.ok ? r.json() : null)
+          .then((data) => {
+            if (data?.seller) setSellerQRCode(data.seller);
+          })
+          .catch(() => {});
+      }
       setBuyerInfo(paymentSession.buyerInfo);
       setQuantity(paymentSession.quantity || 1);
       setShowQRPayment(true);
@@ -120,7 +175,8 @@ export default function EnhancedProductPurchase({
   };
 
   const clearPaymentSession = () => {
-    localStorage.removeItem('qrPaymentSession');
+    try { localStorage.removeItem('qrPaymentSession'); } catch (_) {}
+    try { sessionStorage.removeItem('qrPaymentSession'); } catch (_) {}
     setPaymentSession(null);
     setShowPaymentRecovery(false);
   };
@@ -146,7 +202,7 @@ export default function EnhancedProductPurchase({
           // Create payment session
           const session = {
             timestamp: Date.now(),
-            sellerData: sellerData.seller,
+            sellerId: product.seller.id,
             buyerInfo: buyerInfo,
             quantity: quantity,
             product: {
@@ -160,12 +216,16 @@ export default function EnhancedProductPurchase({
             pageUrl: window.location.href
           };
           
-          // Save to localStorage
-          localStorage.setItem('qrPaymentSession', JSON.stringify(session));
+          // Save with quota-safe method
+          const storageUsed = saveSessionSafe(session);
           setPaymentSession(session);
           
           setSellerQRCode(sellerData.seller);
           setShowQRPayment(true);
+          if (storageUsed === 'none') {
+            // Non-blocking notice
+            console.warn('Unable to store payment session (quota). Proceeding without persistence.');
+          }
         } else {
           alert('Seller has not uploaded a QR code yet. Please use the regular payment method.');
         }
