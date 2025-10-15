@@ -18,19 +18,18 @@ export default function EnhancedProductPurchase({
     phone: '',
     shippingAddress: ''
   });
-  const [showPaymentGuideModal, setShowPaymentGuideModal] = useState(false);
-  const [purchaseStep, setPurchaseStep] = useState('form'); // 'form', 'processing'
-  
-  // QR Payment state
+    const [showPaymentGuideModal, setShowPaymentGuideModal] = useState(false);
+  const [purchaseStep, setPurchaseStep] = useState('form');
   const [showQRPayment, setShowQRPayment] = useState(false);
   const [sellerQRCode, setSellerQRCode] = useState(null);
   const [receiptFile, setReceiptFile] = useState(null);
   const [uploadingReceipt, setUploadingReceipt] = useState(false);
-  
-  // Payment session state
   const [paymentSession, setPaymentSession] = useState(null);
   const [showPaymentRecovery, setShowPaymentRecovery] = useState(false);
 
+  // Paste here:
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [downloadMessage, setDownloadMessage] = useState('');
   // Storage helpers with quota-safe behavior
   const loadSessionSafe = () => {
     try {
@@ -528,122 +527,126 @@ export default function EnhancedProductPurchase({
                   {/* Download QR Code with Amount Button */}
                   <div className="mt-4 text-center">
                     <button
-                      onClick={async () => {
-                        try {
-                          // Create a canvas to combine QR code and amount
-                          const canvas = document.createElement('canvas');
-                          const ctx = canvas.getContext('2d');
-                          
-                          // Set canvas size
-                          canvas.width = 400;
-                          canvas.height = 500;
-                          
-                          // Load QR code image
-                          const qrImg = new Image();
-                          qrImg.crossOrigin = 'anonymous';
-                          
-                          qrImg.onload = () => {
-                            // Draw white background
-                            ctx.fillStyle = '#ffffff';
-                            ctx.fillRect(0, 0, canvas.width, canvas.height);
-                            
-                            // Draw QR code (centered, smaller)
-                            const qrSize = 300;
-                            const qrX = (canvas.width - qrSize) / 2;
-                            const qrY = 50;
-                            ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize);
-                            
-                            // Draw amount text
-                            ctx.fillStyle = '#1f2937';
-                            ctx.font = 'bold 24px Arial';
-                            ctx.textAlign = 'center';
-                            ctx.fillText('Amount to Pay:', canvas.width / 2, qrY + qrSize + 40);
-                            
-                            ctx.fillStyle = '#dc2626';
-                            ctx.font = 'bold 32px Arial';
-                            ctx.fillText(`RM ${calculateTotal().toFixed(2)}`, canvas.width / 2, qrY + qrSize + 80);
-                            
-                            // Draw seller info
-                            ctx.fillStyle = '#6b7280';
-                            ctx.font = '16px Arial';
-                            ctx.fillText(`Seller: ${sellerQRCode.name}`, canvas.width / 2, qrY + qrSize + 120);
-                            
-                            // Draw date
-                            ctx.font = '14px Arial';
-                            ctx.fillText(`Date: ${new Date().toLocaleDateString()}`, canvas.width / 2, qrY + qrSize + 150);
-                            
-                            // Mobile-friendly download approach
-                            canvas.toBlob((blob) => {
-                              if (blob) {
-                                const url = URL.createObjectURL(blob);
-                                
-                                // Method 1: Try direct download first
-                                const link = document.createElement('a');
-                                link.href = url;
-                                link.download = `qr-payment-${sellerQRCode.name || 'seller'}-${calculateTotal().toFixed(2)}.png`;
-                                link.style.display = 'none';
-                                document.body.appendChild(link);
-                                link.click();
-                                document.body.removeChild(link);
-                                
-                                // Method 2: Open in new tab for mobile browsers (backup method)
-                                setTimeout(() => {
-                                  const newWindow = window.open();
-                                  if (newWindow) {
-                                    newWindow.document.write(`
-                                      <html>
-                                        <head>
-                                          <title>QR Payment - Save Image</title>
-                                          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                                        </head>
-                                        <body style="margin:0; padding:20px; text-align:center; background:#f0f0f0; font-family:Arial,sans-serif;">
-                                          <h3 style="color:#333; margin-bottom:20px;">Save this QR payment image</h3>
-                                          <div style="background:white; padding:20px; border-radius:10px; box-shadow:0 2px 10px rgba(0,0,0,0.1);">
-                                            <img src="${url}" style="max-width:100%; height:auto; border:1px solid #ddd;" />
-                                          </div>
-                                          <div style="margin-top:20px; padding:15px; background:#e3f2fd; border-radius:8px;">
-                                            <p style="margin:0; color:#1976d2; font-weight:bold;">📱 How to save:</p>
-                                            <p style="margin:10px 0 0 0; color:#666; font-size:14px;">
-                                              <strong>iPhone:</strong> Long press image → "Save to Photos"<br>
-                                              <strong>Android:</strong> Long press image → "Save image" or "Download"
-                                            </p>
-                                          </div>
-                                          <button onclick="window.close()" style="margin-top:20px; padding:12px 24px; background:#007bff; color:white; border:none; border-radius:6px; cursor:pointer; font-size:16px;">
-                                            Close
-                                          </button>
-                                        </body>
-                                      </html>
-                                    `);
-                                  }
-                                }, 200);
-                                
-                                // Clean up after 30 seconds
-                                setTimeout(() => {
-                                  URL.revokeObjectURL(url);
-                                }, 30000);
-                                
-                                // Show success message
-                                alert('QR payment image generated! If it didn\'t download automatically, check the new tab that opened for instructions on how to save it to your phone.');
-                              } else {
-                                alert('Failed to generate image. Please try again.');
-                              }
-                            }, 'image/png', 0.9);
-                          };
-                          
-                          qrImg.onerror = () => {
-                            alert('Failed to load QR code image. Please try again.');
-                          };
-                          
-                          qrImg.src = sellerQRCode.qrCodeImage;
-                        } catch (error) {
-                          console.error('Error creating combined image:', error);
-                          alert('Failed to create download image. Please try again.');
-                        }
-                      }}
-                      className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm"
-                    >
-                      📥 Download QR + Amount
-                    </button>
+  onClick={async () => {
+    setIsDownloading(true);
+    setDownloadMessage('');
+    try {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      canvas.width = 400;
+      canvas.height = 500;
+      const qrImg = new Image();
+      qrImg.crossOrigin = 'anonymous';
+
+      qrImg.onload = () => {
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        const qrSize = 300;
+        const qrX = (canvas.width - qrSize) / 2;
+        const qrY = 50;
+        ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize);
+        ctx.fillStyle = '#1f2937';
+        ctx.font = 'bold 24px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('Amount to Pay:', canvas.width / 2, qrY + qrSize + 40);
+        ctx.fillStyle = '#dc2626';
+        ctx.font = 'bold 32px Arial';
+        ctx.fillText(`RM ${calculateTotal().toFixed(2)}`, canvas.width / 2, qrY + qrSize + 80);
+        ctx.fillStyle = '#6b7280';
+        ctx.font = '16px Arial';
+        ctx.fillText(`Seller: ${sellerQRCode.name}`, canvas.width / 2, qrY + qrSize + 120);
+        ctx.font = '14px Arial';
+        ctx.fillText(`Date: ${new Date().toLocaleDateString()}`, canvas.width / 2, qrY + qrSize + 150);
+
+        canvas.toBlob(async (blob) => {
+          if (blob) {
+            const url = URL.createObjectURL(blob);
+
+            // Try Web Share API for mobile devices
+            if (navigator.canShare && navigator.canShare({ files: [new File([blob], 'qr-payment.png', { type: 'image/png' })] })) {
+              try {
+                await navigator.share({
+                  files: [new File([blob], 'qr-payment.png', { type: 'image/png' })],
+                  title: 'QR Payment',
+                  text: 'Scan this QR code to pay.',
+                });
+                setDownloadMessage('Shared! You can now save the image to your gallery.');
+              } catch (err) {
+                setDownloadMessage('Sharing cancelled. You can also save the image manually.');
+              }
+            } else {
+              // Fallback: Download and open in new tab for manual save
+              const link = document.createElement('a');
+              link.href = url;
+              link.download = `qr-payment-${sellerQRCode.name || 'seller'}-${calculateTotal().toFixed(2)}.png`;
+              link.style.display = 'none';
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
+
+              setTimeout(() => {
+                const newWindow = window.open();
+                if (newWindow) {
+                  newWindow.document.write(`
+                    <html>
+                      <head>
+                        <title>QR Payment - Save Image</title>
+                        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                      </head>
+                      <body style="margin:0; padding:20px; text-align:center; background:#f0f0f0; font-family:Arial,sans-serif;">
+                        <h3 style="color:#333; margin-bottom:20px;">Save this QR payment image</h3>
+                        <div style="background:white; padding:20px; border-radius:10px; box-shadow:0 2px 10px rgba(0,0,0,0.1);">
+                          <img src="${url}" style="max-width:100%; height:auto; border:1px solid #ddd;" />
+                        </div>
+                        <div style="margin-top:20px; padding:15px; background:#e3f2fd; border-radius:8px;">
+                          <p style="margin:0; color:#1976d2; font-weight:bold;">📱 How to save:</p>
+                          <p style="margin:10px 0 0 0; color:#666; font-size:14px;">
+                            <strong>iPhone:</strong> Long press image → "Save to Photos"<br>
+                            <strong>Android:</strong> Long press image → "Save image" or "Download"
+                          </p>
+                        </div>
+                        <button onclick="window.close()" style="margin-top:20px; padding:12px 24px; background:#007bff; color:white; border:none; border-radius:6px; cursor:pointer; font-size:16px;">
+                          Close
+                        </button>
+                      </body>
+                    </html>
+                  `);
+                }
+              }, 200);
+
+              setDownloadMessage('QR payment image generated! If it didn\'t download automatically, check the new tab for instructions on how to save it to your phone.');
+            }
+
+            setTimeout(() => {
+              URL.revokeObjectURL(url);
+            }, 30000);
+          } else {
+            setDownloadMessage('Failed to generate image. Please try again.');
+          }
+          setIsDownloading(false);
+        }, 'image/png', 0.9);
+      };
+
+      qrImg.onerror = () => {
+        setDownloadMessage('Failed to load QR code image. Please try again.');
+        setIsDownloading(false);
+      };
+
+      qrImg.src = sellerQRCode.qrCodeImage;
+    } catch (error) {
+      console.error('Error creating combined image:', error);
+      setDownloadMessage('Failed to create download image. Please try again.');
+      setIsDownloading(false);
+    }
+  }}
+  disabled={isDownloading}
+  className={`bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm ${isDownloading ? 'opacity-60 cursor-not-allowed' : ''}`}
+>
+  {isDownloading ? 'Generating...' : '📥 Download QR + Amount'}
+</button>
+{downloadMessage && (
+  <p className="text-xs text-blue-700 mt-2 text-center">{downloadMessage}</p>
+)}
                   </div>
                 </div>
 

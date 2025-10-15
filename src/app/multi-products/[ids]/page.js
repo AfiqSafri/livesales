@@ -5,6 +5,7 @@ import { calculateDiscountedPrice, formatDiscountInfo } from '@/utils/productUti
 import ImageCarousel from '@/components/ImageCarousel';
 import DualPaymentModal from '@/components/DualPaymentModal';
 
+
 export default function MultiProductPage() {
   const params = useParams();
   const [products, setProducts] = useState([]);
@@ -17,6 +18,11 @@ export default function MultiProductPage() {
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [debugInfo, setDebugInfo] = useState({});
   const [hasFetched, setHasFetched] = useState(false);
+
+ // Add these two lines here:
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [downloadMessage, setDownloadMessage] = useState('');
+
   
   // Payment modal state
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -804,31 +810,28 @@ export default function MultiProductPage() {
                   
                   {/* Download QR Code with Amount Button */}
                   <div className="mt-4 text-center">
-                    <button
+          <button
   onClick={async () => {
+    setIsDownloading(true);
+    setDownloadMessage('');
     try {
-      // Create a canvas to combine QR code and amount
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
       canvas.width = 400;
       canvas.height = 500;
 
-      // Load QR code image
       const qrImg = new Image();
       qrImg.crossOrigin = 'anonymous';
 
       qrImg.onload = () => {
-        // Draw white background
         ctx.fillStyle = '#ffffff';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        // Draw QR code (centered, smaller)
         const qrSize = 300;
         const qrX = (canvas.width - qrSize) / 2;
         const qrY = 50;
         ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize);
 
-        // Draw amount text
         ctx.fillStyle = '#1f2937';
         ctx.font = 'bold 24px Arial';
         ctx.textAlign = 'center';
@@ -838,30 +841,23 @@ export default function MultiProductPage() {
         ctx.font = 'bold 32px Arial';
         ctx.fillText(`RM ${calculateGrandTotal().toFixed(2)}`, canvas.width / 2, qrY + qrSize + 80);
 
-        // Draw seller info
         ctx.fillStyle = '#6b7280';
         ctx.font = '16px Arial';
         ctx.fillText(`Seller: ${sellerQRCode.name}`, canvas.width / 2, qrY + qrSize + 120);
 
-        // Draw date
         ctx.font = '14px Arial';
         ctx.fillText(`Date: ${new Date().toLocaleDateString()}`, canvas.width / 2, qrY + qrSize + 150);
 
-        // Mobile-friendly download approach
         canvas.toBlob((blob) => {
           if (blob) {
             const url = URL.createObjectURL(blob);
-
-            // Method 1: Try direct download first
             const link = document.createElement('a');
             link.href = url;
             link.download = `qr-payment-${sellerQRCode.name || 'seller'}-${calculateGrandTotal().toFixed(2)}.png`;
-            link.style.display = 'none';
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
 
-            // Method 2: Open in new tab for mobile browsers (backup method)
             setTimeout(() => {
               const newWindow = window.open();
               if (newWindow) {
@@ -893,33 +889,53 @@ export default function MultiProductPage() {
               }
             }, 200);
 
-            // Clean up after 30 seconds
             setTimeout(() => {
               URL.revokeObjectURL(url);
             }, 30000);
 
-            // Show success message
-            alert('QR payment image generated! If it didn\'t download automatically, check the new tab that opened for instructions on how to save it to your phone.');
+            setDownloadMessage(
+              'QR payment image generated! If it didn\'t download automatically, check the new tab that opened for instructions on how to save it to your phone\'s gallery.'
+            );
           } else {
-            alert('Failed to generate image. Please try again.');
+            setDownloadMessage('Failed to generate image. Please try again.');
           }
+          setIsDownloading(false);
         }, 'image/png', 0.95);
       };
 
       qrImg.onerror = () => {
-        alert('Failed to load QR code image. Please try again.');
+        setDownloadMessage('Failed to load QR code image. Please try again.');
+        setIsDownloading(false);
       };
 
       qrImg.src = sellerQRCode.qrCodeImage;
     } catch (error) {
-      console.error('Error creating combined image:', error);
-      alert('Failed to create download image. Please try again.');
+      setDownloadMessage('Failed to create download image. Please try again.');
+      setIsDownloading(false);
     }
   }}
-  className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm"
+  disabled={isDownloading}
+  className={`bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm flex items-center justify-center gap-2 ${
+    isDownloading ? 'opacity-50 cursor-not-allowed' : ''
+  }`}
 >
-  📥 Download QR + Amount
+  {isDownloading ? (
+    <>
+      <svg className="animate-spin h-4 w-4 mr-2" viewBox="0 0 24 24">
+        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+      </svg>
+      Downloading...
+    </>
+  ) : (
+    <>📥 Download QR + Amount</>
+  )}
 </button>
+{downloadMessage && (
+  <div className="mt-3 bg-green-100 border border-green-400 text-green-700 px-4 py-2 rounded-lg text-sm">
+    {downloadMessage}
+  </div>
+)}
                   </div>
                 </div>
 
