@@ -35,12 +35,12 @@ export default function HomePage() {
                   </p>
                   
                   <div className="flex flex-col sm:flex-row gap-4">
-                    <button
+                    {/* <button
                       onClick={() => router.push('/register')}
                       className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-4 rounded-xl font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-200 hover:scale-105 shadow-lg hover:shadow-xl"
                     >
                       Become a Seller
-                    </button>
+                    </button> */}
                     <button
                       onClick={() => router.push('/login')}
                       className="border-2 border-gray-300 text-gray-700 px-8 py-4 rounded-xl font-semibold hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 hover:scale-105"

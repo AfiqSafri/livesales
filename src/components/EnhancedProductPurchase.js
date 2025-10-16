@@ -526,7 +526,7 @@ export default function EnhancedProductPurchase({
                   
                   {/* Download QR Code with Amount Button */}
                   <div className="mt-4 text-center">
-                    <button
+                   <button
   onClick={async () => {
     setIsDownloading(true);
     setDownloadMessage('');
@@ -535,38 +535,53 @@ export default function EnhancedProductPurchase({
       const ctx = canvas.getContext('2d');
       canvas.width = 400;
       canvas.height = 500;
+
       const qrImg = new Image();
       qrImg.crossOrigin = 'anonymous';
 
       qrImg.onload = () => {
         ctx.fillStyle = '#ffffff';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
+
         const qrSize = 300;
         const qrX = (canvas.width - qrSize) / 2;
         const qrY = 50;
         ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize);
+
         ctx.fillStyle = '#1f2937';
         ctx.font = 'bold 24px Arial';
         ctx.textAlign = 'center';
         ctx.fillText('Amount to Pay:', canvas.width / 2, qrY + qrSize + 40);
+
+        // ctx.fillStyle = '#dc2626';
+        // ctx.font = 'bold 32px Arial';
+        // ctx.fillText(`RM ${calculateGrandTotal().toFixed(2)}`, canvas.width / 2, qrY + qrSize + 80);
+        
         ctx.fillStyle = '#dc2626';
         ctx.font = 'bold 32px Arial';
         ctx.fillText(`RM ${calculateTotal().toFixed(2)}`, canvas.width / 2, qrY + qrSize + 80);
+
         ctx.fillStyle = '#6b7280';
         ctx.font = '16px Arial';
         ctx.fillText(`Seller: ${sellerQRCode.name}`, canvas.width / 2, qrY + qrSize + 120);
+
         ctx.font = '14px Arial';
         ctx.fillText(`Date: ${new Date().toLocaleDateString()}`, canvas.width / 2, qrY + qrSize + 150);
 
         canvas.toBlob(async (blob) => {
           if (blob) {
+            // const fileName = `qr-payment-${sellerQRCode.name || 'seller'}-${calculateGrandTotal().toFixed(2)}.png`;
+            const fileName = `qr-payment-${sellerQRCode.name || 'seller'}-${calculateTotal().toFixed(2)}.png`;
             const url = URL.createObjectURL(blob);
 
             // Try Web Share API for mobile devices
-            if (navigator.canShare && navigator.canShare({ files: [new File([blob], 'qr-payment.png', { type: 'image/png' })] })) {
+            if (
+              navigator.canShare &&
+              navigator.canShare({ files: [new File([blob], fileName, { type: 'image/png' })] })
+            ) {
               try {
                 await navigator.share({
-                  files: [new File([blob], 'qr-payment.png', { type: 'image/png' })],
+                  files: [new File([blob], fileName, { type: 'image/png' })],
                   title: 'QR Payment',
                   text: 'Scan this QR code to pay.',
                 });
@@ -575,11 +590,10 @@ export default function EnhancedProductPurchase({
                 setDownloadMessage('Sharing cancelled. You can also save the image manually.');
               }
             } else {
-              // Fallback: Download and open in new tab for manual save
+              // Fallback: Download for PC and open in new tab for mobile
               const link = document.createElement('a');
               link.href = url;
-              link.download = `qr-payment-${sellerQRCode.name || 'seller'}-${calculateTotal().toFixed(2)}.png`;
-              link.style.display = 'none';
+              link.download = fileName;
               document.body.appendChild(link);
               link.click();
               document.body.removeChild(link);
@@ -601,8 +615,10 @@ export default function EnhancedProductPurchase({
                         <div style="margin-top:20px; padding:15px; background:#e3f2fd; border-radius:8px;">
                           <p style="margin:0; color:#1976d2; font-weight:bold;">📱 How to save:</p>
                           <p style="margin:10px 0 0 0; color:#666; font-size:14px;">
-                            <strong>iPhone:</strong> Long press image → "Save to Photos"<br>
-                            <strong>Android:</strong> Long press image → "Save image" or "Download"
+                            <strong>PC:</strong> The image is downloaded to your Downloads folder.<br>
+                            <strong>iPhone:</strong> Long press image → "Add to Photos" or "Save Image"<br>
+                            <strong>Android:</strong> Long press image → "Download Image" or "Save image"<br>
+                            <span style="color:#1976d2;">The image will appear in your phone's Photos/Gallery app.</span>
                           </p>
                         </div>
                         <button onclick="window.close()" style="margin-top:20px; padding:12px 24px; background:#007bff; color:white; border:none; border-radius:6px; cursor:pointer; font-size:16px;">
@@ -614,7 +630,9 @@ export default function EnhancedProductPurchase({
                 }
               }, 200);
 
-              setDownloadMessage('QR payment image generated! If it didn\'t download automatically, check the new tab for instructions on how to save it to your phone.');
+              setDownloadMessage(
+                'QR payment image generated! If it didn\'t download automatically, check your Downloads folder (PC) or the new tab for instructions (mobile).'
+              );
             }
 
             setTimeout(() => {
@@ -624,7 +642,7 @@ export default function EnhancedProductPurchase({
             setDownloadMessage('Failed to generate image. Please try again.');
           }
           setIsDownloading(false);
-        }, 'image/png', 0.9);
+        }, 'image/png', 0.95);
       };
 
       qrImg.onerror = () => {
@@ -634,15 +652,26 @@ export default function EnhancedProductPurchase({
 
       qrImg.src = sellerQRCode.qrCodeImage;
     } catch (error) {
-      console.error('Error creating combined image:', error);
       setDownloadMessage('Failed to create download image. Please try again.');
       setIsDownloading(false);
     }
   }}
   disabled={isDownloading}
-  className={`bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm ${isDownloading ? 'opacity-60 cursor-not-allowed' : ''}`}
+  className={`bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm flex items-center justify-center gap-2 ${
+    isDownloading ? 'opacity-50 cursor-not-allowed' : ''
+  }`}
 >
-  {isDownloading ? 'Generating...' : '📥 Download QR + Amount'}
+  {isDownloading ? (
+    <>
+      <svg className="animate-spin h-4 w-4 mr-2" viewBox="0 0 24 24">
+        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+      </svg>
+      Downloading...
+    </>
+  ) : (
+    <>📥 Download QR + Amount</>
+  )}
 </button>
 {downloadMessage && (
   <p className="text-xs text-blue-700 mt-2 text-center">{downloadMessage}</p>

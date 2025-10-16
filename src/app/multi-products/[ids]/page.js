@@ -810,7 +810,7 @@ export default function MultiProductPage() {
                   
                   {/* Download QR Code with Amount Button */}
                   <div className="mt-4 text-center">
-          <button
+         <button
   onClick={async () => {
     setIsDownloading(true);
     setDownloadMessage('');
@@ -848,54 +848,75 @@ export default function MultiProductPage() {
         ctx.font = '14px Arial';
         ctx.fillText(`Date: ${new Date().toLocaleDateString()}`, canvas.width / 2, qrY + qrSize + 150);
 
-        canvas.toBlob((blob) => {
+        canvas.toBlob(async (blob) => {
           if (blob) {
+            const fileName = `qr-payment-${sellerQRCode.name || 'seller'}-${calculateGrandTotal().toFixed(2)}.png`;
             const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `qr-payment-${sellerQRCode.name || 'seller'}-${calculateGrandTotal().toFixed(2)}.png`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
 
-            setTimeout(() => {
-              const newWindow = window.open();
-              if (newWindow) {
-                newWindow.document.write(`
-                  <html>
-                    <head>
-                      <title>QR Payment - Save Image</title>
-                      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                    </head>
-                    <body style="margin:0; padding:20px; text-align:center; background:#f0f0f0; font-family:Arial,sans-serif;">
-                      <h3 style="color:#333; margin-bottom:20px;">Save this QR payment image</h3>
-                      <div style="background:white; padding:20px; border-radius:10px; box-shadow:0 2px 10px rgba(0,0,0,0.1);">
-                        <img src="${url}" style="max-width:100%; height:auto; border:1px solid #ddd;" />
-                      </div>
-                      <div style="margin-top:20px; padding:15px; background:#e3f2fd; border-radius:8px;">
-                        <p style="margin:0; color:#1976d2; font-weight:bold;">📱 How to save:</p>
-                        <p style="margin:10px 0 0 0; color:#666; font-size:14px;">
-                          <strong>iPhone:</strong> Long press image → "Add to Photos" or "Save Image"<br>
-                          <strong>Android:</strong> Long press image → "Download Image" or "Save image"<br>
-                          <span style="color:#1976d2;">The image will appear in your phone's Photos/Gallery app.</span>
-                        </p>
-                      </div>
-                      <button onclick="window.close()" style="margin-top:20px; padding:12px 24px; background:#007bff; color:white; border:none; border-radius:6px; cursor:pointer; font-size:16px;">
-                        Close
-                      </button>
-                    </body>
-                  </html>
-                `);
+            // Try Web Share API for mobile devices
+            if (
+              navigator.canShare &&
+              navigator.canShare({ files: [new File([blob], fileName, { type: 'image/png' })] })
+            ) {
+              try {
+                await navigator.share({
+                  files: [new File([blob], fileName, { type: 'image/png' })],
+                  title: 'QR Payment',
+                  text: 'Scan this QR code to pay.',
+                });
+                setDownloadMessage('Shared! You can now save the image to your gallery.');
+              } catch (err) {
+                setDownloadMessage('Sharing cancelled. You can also save the image manually.');
               }
-            }, 200);
+            } else {
+              // Fallback: Download for PC and open in new tab for mobile
+              const link = document.createElement('a');
+              link.href = url;
+              link.download = fileName;
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
+
+              setTimeout(() => {
+                const newWindow = window.open();
+                if (newWindow) {
+                  newWindow.document.write(`
+                    <html>
+                      <head>
+                        <title>QR Payment - Save Image</title>
+                        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                      </head>
+                      <body style="margin:0; padding:20px; text-align:center; background:#f0f0f0; font-family:Arial,sans-serif;">
+                        <h3 style="color:#333; margin-bottom:20px;">Save this QR payment image</h3>
+                        <div style="background:white; padding:20px; border-radius:10px; box-shadow:0 2px 10px rgba(0,0,0,0.1);">
+                          <img src="${url}" style="max-width:100%; height:auto; border:1px solid #ddd;" />
+                        </div>
+                        <div style="margin-top:20px; padding:15px; background:#e3f2fd; border-radius:8px;">
+                          <p style="margin:0; color:#1976d2; font-weight:bold;">📱 How to save:</p>
+                          <p style="margin:10px 0 0 0; color:#666; font-size:14px;">
+                            <strong>PC:</strong> The image is downloaded to your Downloads folder.<br>
+                            <strong>iPhone:</strong> Long press image → "Add to Photos" or "Save Image"<br>
+                            <strong>Android:</strong> Long press image → "Download Image" or "Save image"<br>
+                            <span style="color:#1976d2;">The image will appear in your phone's Photos/Gallery app.</span>
+                          </p>
+                        </div>
+                        <button onclick="window.close()" style="margin-top:20px; padding:12px 24px; background:#007bff; color:white; border:none; border-radius:6px; cursor:pointer; font-size:16px;">
+                          Close
+                        </button>
+                      </body>
+                    </html>
+                  `);
+                }
+              }, 200);
+
+              setDownloadMessage(
+                'QR payment image generated! If it didn\'t download automatically, check your Downloads folder (PC) or the new tab for instructions (mobile).'
+              );
+            }
 
             setTimeout(() => {
               URL.revokeObjectURL(url);
             }, 30000);
-
-            setDownloadMessage(
-              'QR payment image generated! If it didn\'t download automatically, check the new tab that opened for instructions on how to save it to your phone\'s gallery.'
-            );
           } else {
             setDownloadMessage('Failed to generate image. Please try again.');
           }

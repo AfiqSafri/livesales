@@ -108,12 +108,12 @@ export default function Login() {
           <p className="text-center text-lg text-gray-600 mb-2">
             Sign in to your account
           </p>
-          <p className="text-center text-sm text-gray-500">
+          {/* <p className="text-center text-sm text-gray-500">
             Or{' '}
             <Link href="/register" className="font-medium text-blue-600 hover:text-blue-500 hover:underline transition-colors duration-200">
               create a new account
             </Link>
-          </p>
+          </p> */}
         </div>
 
         <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
@@ -180,13 +180,13 @@ export default function Login() {
 
                   {/* Forgot Password Link */}
                   <div className="flex items-center justify-end">
-                    <button
+                    {/* <button
                       type="button"
                       onClick={() => setShowForgotPassword(true)}
                       className="text-sm font-medium text-blue-600 hover:text-blue-500 hover:underline transition-colors duration-200"
                     >
                       Forgot your password?
-                    </button>
+                    </button> */}
                   </div>
 
                   <div>
