@@ -43,7 +43,7 @@ export async function POST(request) {
     });
 
     // Create reset URL
-    const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/reset-password?token=${resetToken}`;
+    const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://livesales.vercel.app'}/reset-password?token=${resetToken}`;
 
     // Send password reset email
     try {

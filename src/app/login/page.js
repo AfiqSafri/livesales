@@ -180,13 +180,13 @@ export default function Login() {
 
                   {/* Forgot Password Link */}
                   <div className="flex items-center justify-end">
-                    {/* <button
+                    <button
                       type="button"
                       onClick={() => setShowForgotPassword(true)}
                       className="text-sm font-medium text-blue-600 hover:text-blue-500 hover:underline transition-colors duration-200"
                     >
                       Forgot your password?
-                    </button> */}
+                    </button>
                   </div>
 
                   <div>
@@ -337,14 +337,14 @@ export default function Login() {
                     </button>
                   </div>
                 </form>
-                <div className="text-center">
+                {/* <div className="text-center">
                   <Link
                     href="/test-email-page"
                     className="text-sm font-medium text-gray-500 hover:text-gray-700 hover:underline transition-colors duration-200"
                   >
                     🧪 Test Email Configuration
                   </Link>
-                </div>
+                </div> */}
               </div>
             )}
           </div>
